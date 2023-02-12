@@ -46,7 +46,7 @@ public class Serversync extends Plugin implements Listener {
 
     @EventHandler
     public void onSwitch(ServerConnectEvent event) {
-        String message = getConfig().getString("switch_switch");
+        String message = getConfig().getString("switch_message");
         message = message.replace("%player%", event.getPlayer().getName());
         message = message.replace("%server%", event.getTarget().getName());
         getProxy().broadcast(message);
@@ -54,7 +54,7 @@ public class Serversync extends Plugin implements Listener {
 
     @EventHandler
     public void onLeave(ServerConnectEvent event) {
-        String message = getConfig().getString("leave_switch");
+        String message = getConfig().getString("leave_message");
         message = message.replace("%player%", event.getPlayer().getName());
         message = message.replace("%server%", event.getTarget().getName());
         getProxy().broadcast(message);
