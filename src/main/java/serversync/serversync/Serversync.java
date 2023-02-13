@@ -5,7 +5,6 @@ import java.io.IOException;
 
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -27,8 +26,8 @@ public class Serversync extends Plugin implements Listener {
             try {
                 file.createNewFile();
                 Configuration configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
-                configuration.set("join_message", "%player% has joined the network!");
-                configuration.set("switch_message", "%player% has switched to server %server%");
+                configuration.set("join_message", "%player% has joined the network and is in the %server% server!");
+                configuration.set("switch_message", "%player% has switched to %server% server");
                 configuration.set("leave_message", "%player% has left the network");
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
             } catch (IOException e) {
