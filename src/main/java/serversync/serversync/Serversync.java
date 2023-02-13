@@ -29,6 +29,7 @@ public class Serversync extends Plugin implements Listener {
                 configuration.set("join_message", "%player% has joined the network and is in the %server% server!");
                 configuration.set("switch_message", "%player% has switched to %server% server");
                 configuration.set("leave_message", "%player% has left the network");
+                configuration.set("color", "b");
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -42,7 +43,7 @@ public class Serversync extends Plugin implements Listener {
     public void onJoin(PostLoginEvent event) {
         String message = getConfig().getString("join_message");
         message = message.replace("%player%", event.getPlayer().getName());
-        getProxy().broadcast(message);
+        getProxy().broadcast("§" + getConfig().getString("color") + message);
     }
 
     @EventHandler
@@ -50,14 +51,14 @@ public class Serversync extends Plugin implements Listener {
         String message = getConfig().getString("switch_message");
         message = message.replace("%player%", event.getPlayer().getName());
         message = message.replace("%server%", event.getFrom().getName());
-        getProxy().broadcast(message);
+        getProxy().broadcast("§" + getConfig().getString("color") + message);
     }
 
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
         String message = getConfig().getString("leave_message");
         message = message.replace("%player%", event.getPlayer().getName());
-        getProxy().broadcast(message);
+        getProxy().broadcast("§" + getConfig().getString("color") + message);
     }
 
     private Configuration getConfig() {
