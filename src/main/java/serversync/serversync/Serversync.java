@@ -35,7 +35,7 @@ public class Serversync extends Plugin implements Listener {
                 e.printStackTrace();
             }
         }
-
+        
         getProxy().getPluginManager().registerListener(this, this);
     }
 
