@@ -43,6 +43,13 @@ public class Serversync extends Plugin implements Listener {
 
 
     @EventHandler
+    public void onJoin(PostLoginEvent event) {
+        String message = getConfig().getString("join_message");
+        message = message.replace("%player%", event.getPlayer().getName());
+        getProxy().broadcast("§" + getConfig().getString("color") + message);
+    }
+    
+    @EventHandler
     public void onSwitch(ServerConnectedEvent event) {
         String message = getConfig().getString("switch_message");
         message = message.replace("%player%", event.getPlayer().getName());
