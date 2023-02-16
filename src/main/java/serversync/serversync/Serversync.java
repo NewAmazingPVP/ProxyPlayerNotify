@@ -5,6 +5,8 @@ import java.io.IOException;
 
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
+import net.md_5.bungee.api.event.ServerConnectEvent;
+import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -39,18 +41,12 @@ public class Serversync extends Plugin implements Listener {
         getProxy().getPluginManager().registerListener(this, this);
     }
 
-    @EventHandler
-    public void onJoin(PostLoginEvent event) {
-        String message = getConfig().getString("join_message");
-        message = message.replace("%player%", event.getPlayer().getName());
-        getProxy().broadcast("§" + getConfig().getString("color") + message);
-    }
 
     @EventHandler
-    public void onSwitch(ServerSwitchEvent event) {
+    public void onSwitch(ServerConnectedEvent event) {
         String message = getConfig().getString("switch_message");
         message = message.replace("%player%", event.getPlayer().getName());
-        message = message.replace("%server%", event.getFrom().getName());
+        message = message.replace("%server%", event.getServer().getInfo().getName());
         getProxy().broadcast("§" + getConfig().getString("color") + message);
     }
 
