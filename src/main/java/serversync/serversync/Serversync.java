@@ -29,7 +29,7 @@ public class Serversync extends Plugin implements Listener {
                 file.createNewFile();
                 Configuration configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
                 configuration.set("join_message", "%player% has joined the network!");
-                configuration.set("switch_message", "%player% has switched to %server% server");
+                configuration.set("switch_message", "%player% has switched/joined to the %server% server");
                 configuration.set("leave_message", "%player% has left the network");
                 configuration.set("color", "b");
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
