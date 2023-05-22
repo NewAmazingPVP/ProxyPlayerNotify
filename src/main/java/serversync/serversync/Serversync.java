@@ -59,8 +59,10 @@ public class Serversync extends Plugin implements Listener {
     // Called when a player joins the network
     @EventHandler
     public void onJoin(PostLoginEvent event) {
+
+
         // Get the join message from the config file and replace placeholders with actual values
-        String message = getConfig().getString("join_message");
+        String message = config.getString("join_message");
         message = message.replace("%player%", event.getPlayer().getName());
 
         // Broadcast the message to all servers in the network with the color chosen in the config file
@@ -71,7 +73,7 @@ public class Serversync extends Plugin implements Listener {
     // Called when a player switches servers in the network
     @EventHandler
     public void onSwitch(ServerConnectedEvent event) {
-        String message = getConfig().getString("switch_message");
+        String message = config.getString("switch_message");
         message = message.replace("%player%", event.getPlayer().getName());
         message = message.replace("%server%", event.getServer().getInfo().getName());
         getProxy().broadcast("§" + getConfig().getString("color") + message);
@@ -80,23 +82,9 @@ public class Serversync extends Plugin implements Listener {
     // Called when a player leaves the network
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
-        String message = getConfig().getString("leave_message");
+        String message = config.getString("leave_message");
         message = message.replace("%player%", event.getPlayer().getName());
         getProxy().broadcast("§" + getConfig().getString("color") + message);
-    }
-
-    private Configuration getConfig() {
-        // Attempt to load the config file as a YamlConfiguration object
-        try {
-            File configFile = new File(getDataFolder(), "config.yml");
-            Configuration configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
-            return configuration;
-        } catch (IOException e) {
-            // Print the stack trace if there is an error loading the file
-            e.printStackTrace();
-        }
-        // Return null if the configuration couldn't be loaded
-        return null;
     }
 
 }
