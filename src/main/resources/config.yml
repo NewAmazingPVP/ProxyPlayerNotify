@@ -1,0 +1,7 @@
+# BungeePlayer Notify Config
+join_message: "%player% has joined the network!"
+switch_message: "%player% has switched/joined to the %server% server"
+leave_message: "%player% has left the network"
+# Minecraft color code (Don't put "&" just the letter or number)
+color: b
+admin_only: false
