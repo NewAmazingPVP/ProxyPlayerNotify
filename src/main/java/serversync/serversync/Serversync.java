@@ -17,6 +17,8 @@ import net.md_5.bungee.event.EventHandler;
 
 public class Serversync extends Plugin implements Listener {
 
+    private Configuration config;
+
     // Called when the plugin is enabled
     @Override
     public void onEnable() {
@@ -26,39 +28,43 @@ public class Serversync extends Plugin implements Listener {
         }
 
         // Create the plugin data folder if it does not exist
-        File file = new File(getDataFolder(), "config.yml");
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-
-                // Set default configuration values
-                Configuration configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
-                configuration.set("join_message", "%player% has joined the network!");
-                configuration.set("switch_message", "%player% has switched/joined to the %server% server");
-                configuration.set("leave_message", "%player% has left the network");
-                configuration.set("color", "b");
-
-                // Save the configuration file
-                ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        saveDefaultConfig();
+        loadConfig();
 
         // Register the plugin's event listener
         getProxy().getPluginManager().registerListener(this, this);
     }
 
+    public void saveDefaultConfig(){
+        File file = new File(getDataFolder(), "config.yml");
+        if (!file.exists()){
+            file.getParentFile().mkdirs();
+            try (InputStream in = getClass().getResourceAsStream("/config.yml")) {
+                Files.copy(in, file.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }        
+    }
+
+    public void loadConfig(){
+        File file = new File(getDataFolder(), "config.yml");
+        try {
+            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // Called when a player joins the network
     @EventHandler
     public void onJoin(PostLoginEvent event) {
-        // Get the join message from the config file and replace placeholders with
-        // actual values
+        // Get the join message from the config file and replace placeholders with actual values
         String message = getConfig().getString("join_message");
         message = message.replace("%player%", event.getPlayer().getName());
 
-        // Broadcast the message to all servers in the network with the color chosen in
-        // the config file
+        // Broadcast the message to all servers in the network with the color chosen in the config file
+
         getProxy().broadcast("§" + getConfig().getString("color") + message);
     }
 
