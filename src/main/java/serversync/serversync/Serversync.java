@@ -63,7 +63,7 @@ public class Serversync extends Plugin implements Listener {
     public void onJoin(PostLoginEvent event) {
         // Get the join message from the config file and replace placeholders with actual values
         if (config.getBoolean("permissions")) {
-            if (event.getPlayer().hasPermission("bungeeplayernotify.notify")) {
+            if (event.getPlayer().hasPermission("bpn.notify")) {
                 String message = config.getString("join_message");
                 message = message.replace("%player%", event.getPlayer().getName());
                 message = message.replace("%server%", event.getPlayer().getServer().toString());
@@ -84,7 +84,7 @@ public class Serversync extends Plugin implements Listener {
     @EventHandler
     public void onSwitch(ServerConnectedEvent event) {
         if (config.getBoolean("permissions")) {
-            if (event.getPlayer().hasPermission("bungeeplayernotify.notify")) {
+            if (event.getPlayer().hasPermission("bpn.notify")) {
                 String message = config.getString("switch_message");
                 message = message.replace("%player%", event.getPlayer().getName());
                 message = message.replace("%server%", event.getServer().getInfo().getName());
@@ -104,7 +104,7 @@ public class Serversync extends Plugin implements Listener {
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
         if (config.getBoolean("permissions")) {
-            if (event.getPlayer().hasPermission("bungeeplayernotify.notify")) {
+            if (event.getPlayer().hasPermission("bpn.notify")) {
                 String message = config.getString("leave_message");
                 message = message.replace("%player%", event.getPlayer().getName());
                 message = message.replace("%server%", event.getPlayer().getServer().toString());

@@ -11,5 +11,5 @@ leave_message: "%player% has left the network"
 # Minecraft color code (Don't put "&" just the letter or number)
 color: b
 
-# give players bungeeplayernotify.notify permission to display their join/switch/leave messages if permissions is set to true
+# give players bpn.notify permission to display their join/switch/leave messages if permissions is set to true
 permissions: false
