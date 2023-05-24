@@ -2,6 +2,8 @@ package serversync.serversync;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -59,32 +61,61 @@ public class Serversync extends Plugin implements Listener {
     // Called when a player joins the network
     @EventHandler
     public void onJoin(PostLoginEvent event) {
-
-
         // Get the join message from the config file and replace placeholders with actual values
-        String message = config.getString("join_message");
-        message = message.replace("%player%", event.getPlayer().getName());
+        if (config.getBoolean("permissions")) {
+            if (event.getPlayer().hasPermission("bungeeplayernotify.notify")) {
+                String message = config.getString("join_message");
+                message = message.replace("%player%", event.getPlayer().getName());
+                message = message.replace("%server%", event.getPlayer().getServer().toString());
 
-        // Broadcast the message to all servers in the network with the color chosen in the config file
+                // Broadcast the message to all servers in the network with the color chosen in the config file
 
-        getProxy().broadcast("§" + getConfig().getString("color") + message);
+                getProxy().broadcast("§" + config.getString("color") + message);
+            }
+        } else {
+            String message = config.getString("join_message");
+            message = message.replace("%player%", event.getPlayer().getName());
+            message = message.replace("%server%", event.getPlayer().getServer().toString());
+            getProxy().broadcast("§" + config.getString("color") + message);
+        }
     }
 
     // Called when a player switches servers in the network
     @EventHandler
     public void onSwitch(ServerConnectedEvent event) {
-        String message = config.getString("switch_message");
-        message = message.replace("%player%", event.getPlayer().getName());
-        message = message.replace("%server%", event.getServer().getInfo().getName());
-        getProxy().broadcast("§" + getConfig().getString("color") + message);
+        if (config.getBoolean("permissions")) {
+            if (event.getPlayer().hasPermission("bungeeplayernotify.notify")) {
+                String message = config.getString("switch_message");
+                message = message.replace("%player%", event.getPlayer().getName());
+                message = message.replace("%server%", event.getServer().getInfo().getName());
+                getProxy().broadcast("§" + config.getString("color") + message);
+            }
+        } else {
+            String message = config.getString("switch_message");
+            message = message.replace("%player%", event.getPlayer().getName());
+            message = message.replace("%server%", event.getServer().getInfo().getName());
+            getProxy().broadcast("§" + config.getString("color") + message);
+        }
+
+
     }
 
     // Called when a player leaves the network
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
-        String message = config.getString("leave_message");
-        message = message.replace("%player%", event.getPlayer().getName());
-        getProxy().broadcast("§" + getConfig().getString("color") + message);
+        if (config.getBoolean("permissions")) {
+            if (event.getPlayer().hasPermission("bungeeplayernotify.notify")) {
+                String message = config.getString("leave_message");
+                message = message.replace("%player%", event.getPlayer().getName());
+                message = message.replace("%server%", event.getPlayer().getServer().toString());
+                getProxy().broadcast("§" + config.getString("color") + message);
+            }
+        } else {
+            String message = config.getString("leave_message");
+            message = message.replace("%player%", event.getPlayer().getName());
+            message = message.replace("%server%", event.getPlayer().getServer().toString());
+            getProxy().broadcast("§" + config.getString("color") + message);
+        }
     }
 
 }

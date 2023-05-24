@@ -1,4 +1,4 @@
 name: Serversync
-version: 1.0-Alpha
+version: '1.0'
 main: serversync.serversync.Serversync
 description: This plugin notifies the whole network when a player joins or switches the server in the network!
