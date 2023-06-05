@@ -64,13 +64,17 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             if (event.getPlayer().hasPermission("bpn.notify")) {
                 String message = config.getString("join_message").replace("%player%", event.getPlayer().getName());
                 String finalMessage = message.replace("&", "§");
-
+                if (finalMessage.equals("")) {
+                    return;
+                }
                 getProxy().broadcast(finalMessage);
             }
         } else {
             String message = config.getString("join_message").replace("%player%", event.getPlayer().getName());
             String finalMessage = message.replace("&", "§");
-
+            if (finalMessage.equals("")) {
+                return;
+            }
             getProxy().broadcast(finalMessage);
         }
     }
@@ -83,12 +87,18 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 String message = config.getString("switch_message").replace("%player%", event.getPlayer().getName());
                 message = message.replace("%server%", event.getServer().getInfo().getName());
                 String finalMessage = message.replace("&", "§");
+                if (finalMessage.equals("")) {
+                    return;
+                }
                 getProxy().broadcast(finalMessage);
             }
         } else {
             String message = config.getString("switch_message").replace("%player%", event.getPlayer().getName());
             message = message.replace("%server%", event.getServer().getInfo().getName());
             String finalMessage = message.replace("&", "§");
+            if (finalMessage.equals("")) {
+                return;
+            }
             getProxy().broadcast(finalMessage);
         }
 
@@ -102,11 +112,17 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             if (event.getPlayer().hasPermission("bpn.notify")) {
                 String message = config.getString("leave_message").replace("%player%", event.getPlayer().getName());
                 String finalMessage = message.replace("&", "§");
+                if (finalMessage.equals("")) {
+                    return;
+                }
                 getProxy().broadcast(finalMessage);
             }
         } else {
             String message = config.getString("leave_message").replace("%player%", event.getPlayer().getName());
             String finalMessage = message.replace("&", "§");
+            if (finalMessage.equals("")) {
+                return;
+            }
             getProxy().broadcast(finalMessage);
         }
     }
