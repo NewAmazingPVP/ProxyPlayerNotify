@@ -1,4 +1,4 @@
-package serversync.serversync;
+package bpn;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,9 +7,7 @@ import java.nio.file.Files;
 
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.event.ServerConnectedEvent;
-import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -17,7 +15,7 @@ import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
 
-public class Serversync extends Plugin implements Listener {
+public class BungeePlayerNotify extends Plugin implements Listener {
 
     private Configuration config;
 
@@ -64,19 +62,16 @@ public class Serversync extends Plugin implements Listener {
         // Get the join message from the config file and replace placeholders with actual values
         if (config.getBoolean("permissions")) {
             if (event.getPlayer().hasPermission("bpn.notify")) {
-                String message = config.getString("join_message");
-                message = message.replace("%player%", event.getPlayer().getName());
-                message = message.replace("%server%", event.getPlayer().getServer().toString());
+                String message = config.getString("join_message").replace("%player%", event.getPlayer().getName());
+                String finalMessage = message.replace("&", "§");
 
-                // Broadcast the message to all servers in the network with the color chosen in the config file
-
-                getProxy().broadcast("§" + config.getString("color") + message);
+                getProxy().broadcast(finalMessage);
             }
         } else {
-            String message = config.getString("join_message");
-            message = message.replace("%player%", event.getPlayer().getName());
-            message = message.replace("%server%", event.getPlayer().getServer().toString());
-            getProxy().broadcast("§" + config.getString("color") + message);
+            String message = config.getString("join_message").replace("%player%", event.getPlayer().getName());
+            String finalMessage = message.replace("&", "§");
+
+            getProxy().broadcast(finalMessage);
         }
     }
 
@@ -85,16 +80,16 @@ public class Serversync extends Plugin implements Listener {
     public void onSwitch(ServerConnectedEvent event) {
         if (config.getBoolean("permissions")) {
             if (event.getPlayer().hasPermission("bpn.notify")) {
-                String message = config.getString("switch_message");
-                message = message.replace("%player%", event.getPlayer().getName());
+                String message = config.getString("switch_message").replace("%player%", event.getPlayer().getName());
                 message = message.replace("%server%", event.getServer().getInfo().getName());
-                getProxy().broadcast("§" + config.getString("color") + message);
+                String finalMessage = message.replace("&", "§");
+                getProxy().broadcast(finalMessage);
             }
         } else {
-            String message = config.getString("switch_message");
-            message = message.replace("%player%", event.getPlayer().getName());
+            String message = config.getString("switch_message").replace("%player%", event.getPlayer().getName());
             message = message.replace("%server%", event.getServer().getInfo().getName());
-            getProxy().broadcast("§" + config.getString("color") + message);
+            String finalMessage = message.replace("&", "§");
+            getProxy().broadcast(finalMessage);
         }
 
 
@@ -105,16 +100,14 @@ public class Serversync extends Plugin implements Listener {
     public void onLeave(PlayerDisconnectEvent event) {
         if (config.getBoolean("permissions")) {
             if (event.getPlayer().hasPermission("bpn.notify")) {
-                String message = config.getString("leave_message");
-                message = message.replace("%player%", event.getPlayer().getName());
-                message = message.replace("%server%", event.getPlayer().getServer().toString());
-                getProxy().broadcast("§" + config.getString("color") + message);
+                String message = config.getString("leave_message").replace("%player%", event.getPlayer().getName());
+                String finalMessage = message.replace("&", "§");
+                getProxy().broadcast(finalMessage);
             }
         } else {
-            String message = config.getString("leave_message");
-            message = message.replace("%player%", event.getPlayer().getName());
-            message = message.replace("%server%", event.getPlayer().getServer().toString());
-            getProxy().broadcast("§" + config.getString("color") + message);
+            String message = config.getString("leave_message").replace("%player%", event.getPlayer().getName());
+            String finalMessage = message.replace("&", "§");
+            getProxy().broadcast(finalMessage);
         }
     }
 

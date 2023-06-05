@@ -1,15 +1,12 @@
 # BungeePlayer Notify Config
-# Network Join Message, placeholder avaiable: %player%, %server% (the server player joined in the network)
+# Network Join Message, placeholder avaiable: %player%
 join_message: "%player% has joined the network!"
 
 # Servers Switch message, placeholder avaiable: %player%, %server% (the server player joined)
 switch_message: "%player% has switched/joined to the %server% server"
 
-# Network Leave message, placeholder avaiable: %player%, %server% (the server player left from the network)
+# Network Leave message, placeholder avaiable: %player%
 leave_message: "%player% has left the network"
-
-# Minecraft color code (Don't put "&" just the letter or number)
-color: b
 
 # give players bpn.notify permission to display their join/switch/leave messages if permissions is set to true
 permissions: false
