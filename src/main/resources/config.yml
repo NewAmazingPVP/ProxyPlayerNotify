@@ -1,11 +1,11 @@
 # BungeePlayer Notify Config
-# Network Join Message, placeholder avaiable: %player%
+# Network Join Message, placeholder avaiable: %player%, %lp_prefix% for luckperms
 join_message: "%player% has joined the network!"
 
-# Servers Switch message, placeholder avaiable: %player%, %server% (the server player joined)
+# Servers Switch message, placeholder avaiable: %player%, %server% (the server player joined), %lp_prefix% for luckperms
 switch_message: "%player% has switched/joined to the %server% server"
 
-# Network Leave message, placeholder avaiable: %player%
+# Network Leave message, placeholder avaiable: %player%, %lp_prefix% for luckperms
 leave_message: "%player% has left the network"
 
 # give players bpn.notify permission to display their join/switch/leave messages if permissions is set to true
