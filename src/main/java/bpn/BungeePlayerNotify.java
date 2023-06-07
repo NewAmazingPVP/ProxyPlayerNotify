@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.function.Supplier;
 
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
@@ -29,7 +30,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     // Called when the plugin is enabled
     @Override
     public void onEnable() {
-        luckPerms = LuckPermsProvider.get();
         // Create the plugin data folder if it does not already exist
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
@@ -41,6 +41,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
         // Register the plugin's event listener
         getProxy().getPluginManager().registerListener(this, this);
+
+        if (config.getString("join_message").contains("%lp_prefix%")){
+            luckPerms = LuckPermsProvider.get();
+        }
     }
 
     public void saveDefaultConfig(){
@@ -67,6 +71,8 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     // Called when a player joins the network
     @EventHandler
     public void onJoin(PostLoginEvent event) {
+        String noob = event.getPlayer().getPermissions().toString();
+        getProxy().broadcast(noob);
         // Get the join message from the config file and replace placeholders with actual values
         if (config.getBoolean("permissions")) {
             if (event.getPlayer().hasPermission("bpn.notify")) {
