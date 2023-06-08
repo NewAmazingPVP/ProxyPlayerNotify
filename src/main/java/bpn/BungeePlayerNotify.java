@@ -75,75 +75,13 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     // Called when a player joins the network
     @EventHandler
     public void onJoin(PostLoginEvent event) {
-        // Get the join message from the config file and replace placeholders with actual values
-        if (config.getBoolean("permissions")) {
-            if (event.getPlayer().hasPermission("bpn.notify")) {
-                String finalMessage = config.getString("join_message").replace("%player%", event.getPlayer().getName());
-                if (finalMessage.equals("")) {
-                    return;
-                }
-                if (finalMessage.contains("%lp_prefix%")){
-                    ProxiedPlayer player = event.getPlayer();
-                    User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(player);
-                    String prefix = user.getCachedData().getMetaData().getPrefix();
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                }
-                finalMessage = finalMessage.replace("&", "§");
-                UUID dumb = event.getPlayer().getUniqueId();
-                Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(dumb)));
-                finalMessage = PlaceholderAPI. setPlaceholders(p , finalMessage);
-                getProxy().broadcast(finalMessage);
-            }
-        } else {
-            String finalMessage = config.getString("join_message").replace("%player%", event.getPlayer().getName());
-            if (finalMessage.equals("")) {
-                return;
-            }
-            if (finalMessage.contains("%lp_prefix%")){
-                ProxiedPlayer player = event.getPlayer();
-                User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(player);
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-            }
-            finalMessage = finalMessage.replace("&", "§");
-            getProxy().broadcast(finalMessage);
-        }
+        sendMessage("join_message", event.getPlayer(), null);
     }
 
     // Called when a player switches servers in the network
     @EventHandler
     public void onSwitch(ServerConnectedEvent event) {
-        if (config.getBoolean("permissions")) {
-            if (event.getPlayer().hasPermission("bpn.notify")) {
-                String finalMessage = config.getString("switch_message").replace("%player%", event.getPlayer().getName());
-                finalMessage = finalMessage.replace("%server%", event.getServer().getInfo().getName());
-                if (finalMessage.equals("")) {
-                    return;
-                }
-                if (finalMessage.contains("%lp_prefix%")){
-                    ProxiedPlayer player = event.getPlayer();
-                    User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(player);
-                    String prefix = user.getCachedData().getMetaData().getPrefix();
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                }
-                finalMessage = finalMessage.replace("&", "§");
-                getProxy().broadcast(finalMessage);
-            }
-        } else {
-            String finalMessage = config.getString("switch_message").replace("%player%", event.getPlayer().getName());
-            finalMessage = finalMessage.replace("%server%", event.getServer().getInfo().getName());
-            if (finalMessage.equals("")) {
-                return;
-            }
-            if (finalMessage.contains("%lp_prefix%")){
-                ProxiedPlayer player = event.getPlayer();
-                User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(player);
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-            }
-            finalMessage = finalMessage.replace("&", "§");
-            getProxy().broadcast(finalMessage);
-        }
+        sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());
 
 
     }
@@ -151,33 +89,37 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     // Called when a player leaves the network
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
+        sendMessage("leave_message", event.getPlayer(), null);
+    }
+
+    public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
         if (config.getBoolean("permissions")) {
-            if (event.getPlayer().hasPermission("bpn.notify")) {
-                String finalMessage = config.getString("leave_message").replace("%player%", event.getPlayer().getName());
+            if (targetPlayer.hasPermission("bpn.notify")) {
+                String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
                 if (finalMessage.equals("")) {
                     return;
                 }
-                if (finalMessage.contains("%lp_prefix%")){
-                    ProxiedPlayer player = event.getPlayer();
-                    User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(player);
-                    String prefix = user.getCachedData().getMetaData().getPrefix();
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                if (type.equals("switch_message")){
+                    finalMessage = finalMessage.replace("%server%", server);
                 }
                 finalMessage = finalMessage.replace("&", "§");
+                UUID uuid = targetPlayer.getUniqueId();
+                Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
+                finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
                 getProxy().broadcast(finalMessage);
             }
         } else {
-            String finalMessage = config.getString("leave_message").replace("%player%", event.getPlayer().getName());
+            String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
             if (finalMessage.equals("")) {
                 return;
             }
-            if (finalMessage.contains("%lp_prefix%")){
-                ProxiedPlayer player = event.getPlayer();
-                User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(player);
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+            if (type.equals("switch_message")){
+                finalMessage = finalMessage.replace("%server%", server);
             }
             finalMessage = finalMessage.replace("&", "§");
+            UUID uuid = targetPlayer.getUniqueId();
+            Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
+            finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
             getProxy().broadcast(finalMessage);
         }
     }
