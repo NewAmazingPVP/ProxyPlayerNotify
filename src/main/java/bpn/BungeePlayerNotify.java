@@ -7,8 +7,6 @@ import java.nio.file.Files;
 import java.util.UUID;
 
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -25,7 +23,6 @@ import org.bukkit.entity.Player;
 public class BungeePlayerNotify extends Plugin implements Listener {
 
     private Configuration config;
-    private LuckPerms luckPerms;
 
     @Override
     public void onEnable() {
@@ -39,10 +36,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
         // Register the plugin's event listener
         getProxy().getPluginManager().registerListener(this, this);
-
-        if (config.getString("join_message").contains("%lp_prefix%")){
-            luckPerms = LuckPermsProvider.get();
-        }
     }
 
     public void saveDefaultConfig(){
@@ -76,8 +69,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     @EventHandler
     public void onSwitch(ServerConnectedEvent event) {
         sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());
-
-
     }
 
     @EventHandler
@@ -86,7 +77,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     }
 
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
-        if (config.getBoolean("permissions")) {
+        if (config.getBoolean("permission.permissions")) {
             if (targetPlayer.hasPermission("bpn.notify")) {
                 String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
                 if (finalMessage.equals("")) {
@@ -99,7 +90,16 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 UUID uuid = targetPlayer.getUniqueId();
                 Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
                 finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
-                getProxy().broadcast(finalMessage);
+                for (ProxiedPlayer pl: getProxy().getPlayers() ){
+                    if (config.getBoolean("permissions.hide_message")){
+                        if (pl.hasPermission("bpn.view")){
+                            pl.sendMessage(finalMessage);
+                        }
+                    }
+                    else {
+                        getProxy().broadcast(finalMessage);
+                    }
+                }
             }
         } else {
             String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
