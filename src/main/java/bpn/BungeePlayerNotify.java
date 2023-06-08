@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.UUID;
 
-import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -17,12 +15,13 @@ import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
 
 public class BungeePlayerNotify extends Plugin implements Listener {
 
     private Configuration config;
+    private LuckPerms luckPerms;
 
     @Override
     public void onEnable() {
@@ -36,6 +35,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
         // Register the plugin's event listener
         getProxy().getPluginManager().registerListener(this, this);
+        if (config.getString("join_message").contains("%lp_prefix%")){
+            luckPerms = LuckPermsProvider.get();
+        }
+
     }
 
     public void saveDefaultConfig(){
@@ -88,9 +91,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         finalMessage = finalMessage.replace("%server%", server);
                     }
                     finalMessage = finalMessage.replace("&", "§");
-                    UUID uuid = targetPlayer.getUniqueId();
-                    Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
-                    finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
+                    finalMessage = finalMessage.replace("%lp_prefix%", luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer).getCachedData().getMetaData().getPrefix());
                     for (ProxiedPlayer pl : getProxy().getPlayers()) {
                         if (config.getBoolean("permissions.hide_message")) {
                             if (pl.hasPermission("bpn.view")) {
@@ -109,9 +110,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         finalMessage = finalMessage.replace("%server%", server);
                     }
                     finalMessage = finalMessage.replace("&", "§");
-                    UUID uuid = targetPlayer.getUniqueId();
-                    Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
-                    finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
+                    finalMessage = finalMessage.replace("%lp_prefix%", luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer).getCachedData().getMetaData().getPrefix());
                     for (ProxiedPlayer pl : getProxy().getPlayers()) {
                         if (config.getBoolean("permissions.hide_message")) {
                             if (pl.hasPermission("bpn.view")) {
@@ -131,11 +130,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     finalMessage = finalMessage.replace("%server%", server);
                 }
                 finalMessage = finalMessage.replace("&", "§");
-                UUID uuid = targetPlayer.getUniqueId();
-                Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
-                finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
+                finalMessage = finalMessage.replace("%lp_prefix%", luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer).getCachedData().getMetaData().getPrefix());
                 getProxy().broadcast(finalMessage);
             }
         }
     }
+
 }

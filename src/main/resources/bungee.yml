@@ -1,5 +1,5 @@
 name: BungeePlayerNotify
-version: '4.5'
+version: '5.0'
 main: bpn.BungeePlayerNotify
 description: This plugin notifies the whole network when a player joins or switches the server in the network!
-softdepend: [PlaceholderAPI]
+softdepend: [LuckPerms]
