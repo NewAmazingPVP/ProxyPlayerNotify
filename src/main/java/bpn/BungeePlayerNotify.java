@@ -78,43 +78,64 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
         if (config.getBoolean("permission.permissions")) {
-            if (targetPlayer.hasPermission("bpn.notify")) {
+            if (config.getBoolean("permission.notify_message")) {
+                if (targetPlayer.hasPermission("bpn.notify")) {
+                    String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
+                    if (finalMessage.equals("")) {
+                        return;
+                    }
+                    if (type.equals("switch_message")) {
+                        finalMessage = finalMessage.replace("%server%", server);
+                    }
+                    finalMessage = finalMessage.replace("&", "§");
+                    UUID uuid = targetPlayer.getUniqueId();
+                    Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
+                    finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
+                    for (ProxiedPlayer pl : getProxy().getPlayers()) {
+                        if (config.getBoolean("permissions.hide_message")) {
+                            if (pl.hasPermission("bpn.view")) {
+                                pl.sendMessage(finalMessage);
+                            }
+                        } else {
+                            getProxy().broadcast(finalMessage);
+                        }
+                    }
+                } else {
+                    String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
+                    if (finalMessage.equals("")) {
+                        return;
+                    }
+                    if (type.equals("switch_message")) {
+                        finalMessage = finalMessage.replace("%server%", server);
+                    }
+                    finalMessage = finalMessage.replace("&", "§");
+                    UUID uuid = targetPlayer.getUniqueId();
+                    Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
+                    finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
+                    for (ProxiedPlayer pl : getProxy().getPlayers()) {
+                        if (config.getBoolean("permissions.hide_message")) {
+                            if (pl.hasPermission("bpn.view")) {
+                                pl.sendMessage(finalMessage);
+                            }
+                        } else {
+                            getProxy().broadcast(finalMessage);
+                        }
+                    }
+                }
+            } else {
                 String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
                 if (finalMessage.equals("")) {
                     return;
                 }
-                if (type.equals("switch_message")){
+                if (type.equals("switch_message")) {
                     finalMessage = finalMessage.replace("%server%", server);
                 }
                 finalMessage = finalMessage.replace("&", "§");
                 UUID uuid = targetPlayer.getUniqueId();
                 Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
                 finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
-                for (ProxiedPlayer pl: getProxy().getPlayers() ){
-                    if (config.getBoolean("permissions.hide_message")){
-                        if (pl.hasPermission("bpn.view")){
-                            pl.sendMessage(finalMessage);
-                        }
-                    }
-                    else {
-                        getProxy().broadcast(finalMessage);
-                    }
-                }
+                getProxy().broadcast(finalMessage);
             }
-        } else {
-            String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-            if (finalMessage.equals("")) {
-                return;
-            }
-            if (type.equals("switch_message")){
-                finalMessage = finalMessage.replace("%server%", server);
-            }
-            finalMessage = finalMessage.replace("&", "§");
-            UUID uuid = targetPlayer.getUniqueId();
-            Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(uuid)));
-            finalMessage = PlaceholderAPI.setPlaceholders(p, finalMessage);
-            getProxy().broadcast(finalMessage);
         }
     }
-
 }

@@ -12,7 +12,7 @@ permission:
   # enable this if you want to have permissions and use next two options
   permissions: false
 
-  # notify messages. If this is true and if the player doesn't have bpn.notify permission then their join/leave/message will not been sent
+  # notify messages. If this is true and if the player doesn't have bpn.notify permission then their join/leave/message will not be sent
   notify_message: false
 
   # hide messages. If this is true and if the player doesn't have bpn.view permission they won't see the others' join/switch/leave messages
