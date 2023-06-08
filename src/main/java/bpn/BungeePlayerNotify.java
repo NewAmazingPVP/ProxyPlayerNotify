@@ -5,12 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -29,9 +27,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private Configuration config;
     private LuckPerms luckPerms;
 
-
-
-    // Called when the plugin is enabled
     @Override
     public void onEnable() {
         // Create the plugin data folder if it does not already exist
@@ -39,7 +34,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             getDataFolder().mkdir();
         }
 
-        // Create the plugin data folder if it does not exist
         saveDefaultConfig();
         loadConfig();
 
@@ -86,7 +80,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     }
 
-    // Called when a player leaves the network
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
         sendMessage("leave_message", event.getPlayer(), null);
