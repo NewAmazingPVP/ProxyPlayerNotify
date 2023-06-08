@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.UUID;
 import java.util.function.Supplier;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
@@ -19,6 +21,8 @@ import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 public class BungeePlayerNotify extends Plugin implements Listener {
 
@@ -71,8 +75,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     // Called when a player joins the network
     @EventHandler
     public void onJoin(PostLoginEvent event) {
-        String noob = event.getPlayer().getPermissions().toString();
-        getProxy().broadcast(noob);
         // Get the join message from the config file and replace placeholders with actual values
         if (config.getBoolean("permissions")) {
             if (event.getPlayer().hasPermission("bpn.notify")) {
@@ -87,6 +89,9 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                 }
                 finalMessage = finalMessage.replace("&", "§");
+                UUID dumb = event.getPlayer().getUniqueId();
+                Player p = Bukkit.getPlayer(UUID.fromString(String.valueOf(dumb)));
+                finalMessage = PlaceholderAPI. setPlaceholders(p , finalMessage);
                 getProxy().broadcast(finalMessage);
             }
         } else {
