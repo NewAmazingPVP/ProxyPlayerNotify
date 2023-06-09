@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.Objects;
 
+import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -91,15 +93,22 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         finalMessage = finalMessage.replace("%server%", server);
                     }
                     finalMessage = finalMessage.replace("&", "§");
-                    finalMessage = finalMessage.replace("%lp_prefix%", luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer).getCachedData().getMetaData().getPrefix());
-                    for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                        if (config.getBoolean("permissions.hide_message")) {
+                    if (finalMessage.contains("%lp_prefix%")){
+                        User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+                        String prefix = user.getCachedData().getMetaData().getPrefix();
+                        if (!(prefix == null)){
+                            prefix = prefix.replace("&", "§");
+                            finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                        }
+                    }
+                    if (config.getBoolean("permissions.hide_message")) {
+                        for (ProxiedPlayer pl : getProxy().getPlayers()) {
                             if (pl.hasPermission("bpn.view")) {
                                 pl.sendMessage(finalMessage);
                             }
-                        } else {
-                            getProxy().broadcast(finalMessage);
                         }
+                    } else {
+                        getProxy().broadcast(finalMessage);
                     }
                 } else {
                     String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
@@ -109,31 +118,45 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     if (type.equals("switch_message")) {
                         finalMessage = finalMessage.replace("%server%", server);
                     }
+                    if (finalMessage.contains("%lp_prefix%")){
+                        User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+                        String prefix = user.getCachedData().getMetaData().getPrefix();
+                        if (!(prefix == null)){
+                            prefix = prefix.replace("&", "§");
+                            finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                        }
+                    }
                     finalMessage = finalMessage.replace("&", "§");
-                    finalMessage = finalMessage.replace("%lp_prefix%", luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer).getCachedData().getMetaData().getPrefix());
-                    for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                        if (config.getBoolean("permissions.hide_message")) {
+                    if (config.getBoolean("permissions.hide_message")) {
+                        for (ProxiedPlayer pl : getProxy().getPlayers()) {
                             if (pl.hasPermission("bpn.view")) {
                                 pl.sendMessage(finalMessage);
                             }
-                        } else {
-                            getProxy().broadcast(finalMessage);
                         }
+                    } else {
+                        getProxy().broadcast(finalMessage);
                     }
                 }
-            } else {
-                String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-                if (finalMessage.equals("")) {
-                    return;
-                }
-                if (type.equals("switch_message")) {
-                    finalMessage = finalMessage.replace("%server%", server);
-                }
-                finalMessage = finalMessage.replace("&", "§");
-                finalMessage = finalMessage.replace("%lp_prefix%", luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer).getCachedData().getMetaData().getPrefix());
-                getProxy().broadcast(finalMessage);
             }
         }
+        else {
+            String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
+            if (finalMessage.equals("")) {
+                return;
+            }
+            if (type.equals("switch_message")) {
+                finalMessage = finalMessage.replace("%server%", server);
+            }
+            if (finalMessage.contains("%lp_prefix%")){
+                User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+                String prefix = user.getCachedData().getMetaData().getPrefix();
+                if (!(prefix == null)){
+                    prefix = prefix.replace("&", "§");
+                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                }
+            }
+            finalMessage = finalMessage.replace("&", "§");
+            getProxy().broadcast(finalMessage);
+        }
     }
-
 }
