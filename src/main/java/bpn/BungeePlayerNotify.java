@@ -26,6 +26,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     @Override
     public void onEnable() {
+        new Metrics(this, 18703);
         // Create the plugin data folder if it does not already exist
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
