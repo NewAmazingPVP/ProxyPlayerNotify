@@ -1,4 +1,4 @@
-package bpn;
+package bpn.bungeecord;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
