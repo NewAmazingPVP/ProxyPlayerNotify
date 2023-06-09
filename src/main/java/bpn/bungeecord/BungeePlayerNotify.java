@@ -1,4 +1,4 @@
-package bpn;
+package bpn.bungeecord;
 
 import java.io.File;
 import java.io.IOException;
