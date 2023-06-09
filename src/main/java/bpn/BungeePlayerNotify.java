@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.Objects;
 
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -37,7 +36,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
         // Register the plugin's event listener
         getProxy().getPluginManager().registerListener(this, this);
-        if (config.getString("join_message").contains("%lp_prefix%")){
+        if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")){
             luckPerms = LuckPermsProvider.get();
         }
 
@@ -66,20 +65,14 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     // Called when a player joins the network
     @EventHandler
-    public void onJoin(PostLoginEvent event) {
-        sendMessage("join_message", event.getPlayer(), null);
-    }
+    public void onJoin(PostLoginEvent event) {sendMessage("join_message", event.getPlayer(), null);}
 
     // Called when a player switches servers in the network
     @EventHandler
-    public void onSwitch(ServerConnectedEvent event) {
-        sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());
-    }
+    public void onSwitch(ServerConnectedEvent event) {sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());}
 
     @EventHandler
-    public void onLeave(PlayerDisconnectEvent event) {
-        sendMessage("leave_message", event.getPlayer(), null);
-    }
+    public void onLeave(PlayerDisconnectEvent event) {sendMessage("leave_message", event.getPlayer(), null);}
 
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
         if (config.getBoolean("permission.permissions")) {

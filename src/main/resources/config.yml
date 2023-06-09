@@ -1,22 +1,32 @@
 # BungeePlayer Notify Config
-# Network Join Message, placeholder avaiable: %player%, %lp_prefix% for luckperms
+# This config file contains settings for the BungeePlayer Notify plugin.
+# Use this file to customize the join/leave messages and permissions.
+
+# Network Join Message
+# This message is displayed when a player joins the network.
+# Placeholders available: %player%, %lp_prefix% for luckperms.
 join_message: "%player% has joined the network!"
 
-# Servers Switch message, placeholder avaiable: %player%, %server% (the server player joined), %lp_prefix% for luckperms
+# Servers Switch Message
+# This message is displayed when a player switches to a different server.
+# Placeholders available: %player%, %server% (the server player joined), %lp_prefix% for luckperms.
 switch_message: "%player% has switched/joined to the %server% server"
 
-# Network Leave message, placeholder avaiable: %player%, %lp_prefix% for luckperms
+# Network Leave Message
+# This message is displayed when a player leaves the network.
+# Placeholders available: %player%, %lp_prefix% for luckperms.
 leave_message: "%player% has left the network"
 
+# Permissions
+# Use these settings to control who can see the join/leave messages.
 permission:
-  # enable this if you want to have permissions and use next two options
+  # Enable this if you want to use permissions and want to use next two options.
   permissions: false
 
-  # notify messages. If this is true and if the player doesn't have bpn.notify permission then their join/leave/message will not be sent
+  # Notify Messages
+  # If this is true and the player doesn't have bpn.notify permission, then their join/leave/message will not be sent.
   notify_message: false
 
-  # hide messages. If this is true and if the player doesn't have bpn.view permission they won't see the others' join/switch/leave messages
+  # Hide Messages
+  # If this is true and the player doesn't have bpn.view permission, then they won't see the others' join/switch/leave messages.
   hide_message: false
-
-
-
