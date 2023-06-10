@@ -10,10 +10,10 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
-import ninja.leaping.configurate.ConfigurationNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,14 +96,15 @@ public class VelocityPlayerNotify {
                             finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                         }
                     }
+                    Component translatedComponent = ColorUtils.translateColorCodes(finalMessage);
                     if (config.getBoolean("permission.hide_message")) {
                         for (Player pl : proxy.getAllPlayers()) {
                             if (pl.hasPermission("bpn.view")) {
-                                pl.sendMessage(finalMessage);
+                                pl.sendMessage(translatedComponent);
                             }
                         }
                     } else {
-                        proxy.getAllPlayers().forEach(player -> player.sendMessage(finalMessage));
+                        proxy.getAllPlayers().forEach(player -> player.sendMessage(translatedComponent));
                     }
                 }
             } else if (config.getBoolean("permission.hide_message")) {
@@ -123,10 +124,11 @@ public class VelocityPlayerNotify {
                         finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                     }
                 }
+                Component translatedComponent = ColorUtils.translateColorCodes(finalMessage);
                 finalMessage = finalMessage.replace("&", "§");
                 for (Player pl : proxy.getAllPlayers()) {
                     if (pl.hasPermission("bpn.view")) {
-                        pl.sendMessage(finalMessage);
+                        pl.sendMessage(translatedComponent);
                         
                     }
                 }
