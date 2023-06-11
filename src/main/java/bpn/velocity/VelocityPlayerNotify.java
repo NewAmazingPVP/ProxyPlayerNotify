@@ -11,9 +11,10 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
+import net.kyori.adventure.text.format.NamedTextColor;
+//import net.luckperms.api.LuckPerms;
+//import net.luckperms.api.LuckPermsProvider;
+//import net.luckperms.api.model.user.User;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.nio.file.Path;
 public class VelocityPlayerNotify {
 
     private Toml config;
-    private LuckPerms luckPerms;
+    //private LuckPerms luckPerms;
     private final ProxyServer proxy;
     private final Path dataDirectory;
 
@@ -34,6 +35,9 @@ public class VelocityPlayerNotify {
         this.proxy = proxy;
         this.dataDirectory = dataDirectory;
         config = loadConfig(dataDirectory);
+        //if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")){
+            //luckPerms = LuckPermsProvider.get();
+        //}
     }
 
     private Toml loadConfig(Path path) {
@@ -87,7 +91,7 @@ public class VelocityPlayerNotify {
                         finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
                     }
                     finalMessage = finalMessage.replace("&", "§");
-                    if (finalMessage.contains("%lp_prefix%")) {
+                    /*if (finalMessage.contains("%lp_prefix%")) {
                         luckPerms = LuckPermsProvider.get();
                         User user = luckPerms.getUserManager().getUser(targetPlayer.getUniqueId());
                         String prefix = user.getCachedData().getMetaData().getPrefix();
@@ -95,8 +99,8 @@ public class VelocityPlayerNotify {
                             prefix = prefix.replace("&", "§");
                             finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                         }
-                    }
-                    Component translatedComponent = ColorUtils.translateColorCodes(finalMessage);
+                    }*/
+                    Component translatedComponent = Component.text(finalMessage);
                     if (config.getBoolean("permission.hide_message")) {
                         for (Player pl : proxy.getAllPlayers()) {
                             if (pl.hasPermission("bpn.view")) {
@@ -114,24 +118,49 @@ public class VelocityPlayerNotify {
                 }
                 if (type.equals("switch_message")) {
                     finalMessage = finalMessage.replace("%server%", connectedServer);
+                    finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
                 }
-                if (finalMessage.contains("%lp_prefix%")){
+                finalMessage = finalMessage.replace("&", "§");
+                /*if (finalMessage.contains("%lp_prefix%")) {
                     luckPerms = LuckPermsProvider.get();
                     User user = luckPerms.getUserManager().getUser(targetPlayer.getUniqueId());
                     String prefix = user.getCachedData().getMetaData().getPrefix();
-                    if (!(prefix == null)){
+                    if (!(prefix == null)) {
                         prefix = prefix.replace("&", "§");
                         finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                     }
-                }
-                Component translatedComponent = ColorUtils.translateColorCodes(finalMessage);
-                finalMessage = finalMessage.replace("&", "§");
+                }*/
+                Component translatedComponent = Component.text(finalMessage);
                 for (Player pl : proxy.getAllPlayers()) {
                     if (pl.hasPermission("bpn.view")) {
                         pl.sendMessage(translatedComponent);
-                        
+
                     }
                 }
             }
+        } else {
+            String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
+            if (finalMessage.equals("")) {
+                return;
+            }
+            if (type.equals("switch_message")) {
+                finalMessage = finalMessage.replace("%server%", connectedServer);
+                finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
+            }
+            finalMessage = finalMessage.replace("&", "§");
+            /*if (finalMessage.contains("%lp_prefix%")) {
+                luckPerms = LuckPermsProvider.get();
+                User user = luckPerms.getUserManager().getUser(targetPlayer.getUniqueId());
+                String prefix = user.getCachedData().getMetaData().getPrefix();
+                if (!(prefix == null)) {
+                    prefix = prefix.replace("&", "§");
+                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                }
+            }*/
+            Component translatedComponent = Component.text(finalMessage);
+            for (Player pl : proxy.getAllPlayers()) {
+                pl.sendMessage(translatedComponent);
+            }
         }
-        else {
+    }
+}
