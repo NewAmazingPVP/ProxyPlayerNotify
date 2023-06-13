@@ -2,10 +2,12 @@ package bpn.velocity;
 
 import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -22,24 +24,32 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@Plugin(id = "bungeeplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP")
+@Plugin(id = "bungeeplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "6.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
 public class VelocityPlayerNotify {
 
     private Toml config;
     //private LuckPerms luckPerms;
     private final ProxyServer proxy;
     private final Path dataDirectory;
+    private final velocity.Metrics.Factory metricsFactory;
 
     @Inject
-    public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory) {
+    public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, velocity.Metrics.Factory metricsFactory) {
         this.proxy = proxy;
         this.dataDirectory = dataDirectory;
         config = loadConfig(dataDirectory);
+        this.metricsFactory = metricsFactory;
         //if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")){
             //luckPerms = LuckPermsProvider.get();
         //}
     }
 
+    @Subscribe
+    public void onProxyInitialize(ProxyInitializeEvent event) {
+        config = loadConfig(dataDirectory);
+        metricsFactory.make(this, 18744);
+        proxy.getCommandManager().register("reloadNotifyConfig", new reloadPlugin());
+    }
     private Toml loadConfig(Path path) {
         File folder = path.toFile();
         File file = new File(folder, "config.toml");
@@ -63,22 +73,16 @@ public class VelocityPlayerNotify {
     }
 
     @Subscribe
-    public void onJoin(PlayerChooseInitialServerEvent event) {
-        sendMessage("join_message", event.getPlayer(), null, null);
-    }
+    public void onJoin(PlayerChooseInitialServerEvent event) {config = loadConfig(dataDirectory); sendMessage("join_message", event.getPlayer(), null, null);}
 
     @Subscribe
-    public void onSwitch(ServerConnectedEvent event) {
-        sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), event.getPreviousServer().toString());
-    }
+    public void onSwitch(ServerConnectedEvent event) {config = loadConfig(dataDirectory); sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), event.getPreviousServer().toString());}
 
     @Subscribe
-    public void onLeave(DisconnectEvent event) {
-
-        sendMessage("leave_message", event.getPlayer(), null, null);
-    }
+    public void onLeave(DisconnectEvent event) {config = loadConfig(dataDirectory); sendMessage("leave_message", event.getPlayer(), null, null);}
 
     public void sendMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
+        config = loadConfig(dataDirectory);
         if (config.getBoolean(("permission.permissions"))) {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("bpn.notify")) {
@@ -161,6 +165,13 @@ public class VelocityPlayerNotify {
             for (Player pl : proxy.getAllPlayers()) {
                 pl.sendMessage(translatedComponent);
             }
+        }
+    }
+
+    private class reloadPlugin implements SimpleCommand {
+        @Override
+        public void execute(Invocation invocation) {
+            config = loadConfig(dataDirectory);
         }
     }
 }
