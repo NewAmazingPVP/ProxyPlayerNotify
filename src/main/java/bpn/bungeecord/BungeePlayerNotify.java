@@ -6,10 +6,12 @@ import java.io.InputStream;
 import java.nio.file.Files;
 
 import net.luckperms.api.model.user.User;
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectedEvent;
+import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -37,10 +39,11 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
         // Register the plugin's event listener
         getProxy().getPluginManager().registerListener(this, this);
-        if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")){
+        if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
             luckPerms = LuckPermsProvider.get();
         }
 
+        getProxy().getPluginManager().registerCommand(this, new reloadCommand());
     }
 
     public void saveDefaultConfig(){
@@ -66,16 +69,18 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     // Called when a player joins the network
     @EventHandler
-    public void onJoin(PostLoginEvent event) {sendMessage("join_message", event.getPlayer(), null);}
+    public void onJoin(PostLoginEvent event) {saveDefaultConfig(); loadConfig(); sendMessage("join_message", event.getPlayer(), null);}
 
     // Called when a player switches servers in the network
     @EventHandler
-    public void onSwitch(ServerConnectedEvent event) {sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());}
+    public void onSwitch(ServerConnectedEvent event) {saveDefaultConfig(); loadConfig(); sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());}
 
     @EventHandler
-    public void onLeave(PlayerDisconnectEvent event) {sendMessage("leave_message", event.getPlayer(), null);}
+    public void onLeave(PlayerDisconnectEvent event) {saveDefaultConfig(); loadConfig(); sendMessage("leave_message", event.getPlayer(), null);}
 
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
+        saveDefaultConfig();
+        loadConfig();
         if (config.getBoolean("permission.permissions")) {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("bpn.notify")) {
@@ -149,4 +154,28 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             getProxy().broadcast(finalMessage);
         }
     }
+    public class reloadCommand extends Command {
+
+        public reloadCommand() {
+            super("reloadProxyConfig");
+        }
+
+        @Override
+        public void execute(CommandSender sender, String[] args) {
+            if (sender instanceof ProxiedPlayer) {
+                if (args.length < 1) {
+                    if (sender.hasPermission("ppn.reloadProxyConfig")){
+                        sender.sendMessage("Reload done");
+                        saveDefaultConfig();
+                        loadConfig();
+                    }
+                }
+            } else {
+                getProxy().broadcast("Reload done");
+                saveDefaultConfig();
+                loadConfig();
+            }
+        }
+    }
+
 }
