@@ -23,9 +23,9 @@ leave_message = "%player% has left the network"
 permissions = false
 
 # Notify Messages
-# If this is true and the player doesn't have bpn.notify permission, then their join/leave/message will not be sent.
+# If this is true and the player doesn't have ppn.notify permission, then their join/leave/message will not be sent.
 notify_message = false
 
 # Hide Messages
-# If this is true and the player doesn't have bpn.view permission, then they won't see the others' join/switch/leave messages.
+# If this is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
 hide_message = false

@@ -13,7 +13,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 //import net.luckperms.api.LuckPerms;
 //import net.luckperms.api.LuckPermsProvider;
 //import net.luckperms.api.model.user.User;
@@ -24,17 +23,17 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@Plugin(id = "bungeeplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "6.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "6.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
 public class VelocityPlayerNotify {
 
     private Toml config;
     //private LuckPerms luckPerms;
     private final ProxyServer proxy;
     private final Path dataDirectory;
-    private final velocity.Metrics.Factory metricsFactory;
+    private final Metrics.Factory metricsFactory;
 
     @Inject
-    public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, velocity.Metrics.Factory metricsFactory) {
+    public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
         this.proxy = proxy;
         this.dataDirectory = dataDirectory;
         config = loadConfig(dataDirectory);
@@ -85,7 +84,7 @@ public class VelocityPlayerNotify {
         config = loadConfig(dataDirectory);
         if (config.getBoolean(("permission.permissions"))) {
             if (config.getBoolean("permission.notify_message")) {
-                if (targetPlayer.hasPermission("bpn.notify")) {
+                if (targetPlayer.hasPermission("ppn.notify")) {
                     String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
                     if (finalMessage.equals("")) {
                         return;
@@ -107,7 +106,7 @@ public class VelocityPlayerNotify {
                     Component translatedComponent = Component.text(finalMessage);
                     if (config.getBoolean("permission.hide_message")) {
                         for (Player pl : proxy.getAllPlayers()) {
-                            if (pl.hasPermission("bpn.view")) {
+                            if (pl.hasPermission("ppn.view")) {
                                 pl.sendMessage(translatedComponent);
                             }
                         }
@@ -136,7 +135,7 @@ public class VelocityPlayerNotify {
                 }*/
                 Component translatedComponent = Component.text(finalMessage);
                 for (Player pl : proxy.getAllPlayers()) {
-                    if (pl.hasPermission("bpn.view")) {
+                    if (pl.hasPermission("ppn.view")) {
                         pl.sendMessage(translatedComponent);
 
                     }
