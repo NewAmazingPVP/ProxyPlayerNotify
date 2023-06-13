@@ -1,4 +1,4 @@
-package velocity;
+package bpn.velocity;
 
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;

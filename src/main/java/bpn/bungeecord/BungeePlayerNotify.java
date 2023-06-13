@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 
 import net.luckperms.api.model.user.User;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
@@ -83,7 +84,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         loadConfig();
         if (config.getBoolean("permission.permissions")) {
             if (config.getBoolean("permission.notify_message")) {
-                if (targetPlayer.hasPermission("bpn.notify")) {
+                if (targetPlayer.hasPermission("ppn.notify")) {
                     String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
                     if (finalMessage.equals("")) {
                         return;
@@ -102,7 +103,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     }
                     if (config.getBoolean("permission.hide_message")) {
                         for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                            if (pl.hasPermission("bpn.view")) {
+                            if (pl.hasPermission("ppn.view")) {
                                 pl.sendMessage(finalMessage);
                             }
                         }
@@ -128,7 +129,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 }
                 finalMessage = finalMessage.replace("&", "§");
                 for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                    if (pl.hasPermission("bpn.view")) {
+                    if (pl.hasPermission("ppn.view")) {
                         pl.sendMessage(finalMessage);
                     }
                 }
@@ -168,6 +169,8 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         sender.sendMessage("Reload done");
                         saveDefaultConfig();
                         loadConfig();
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
                     }
                 }
             } else {
