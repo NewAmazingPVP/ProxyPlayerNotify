@@ -157,14 +157,14 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     public class reloadCommand extends Command {
 
         public reloadCommand() {
-            super("reloadProxyConfig");
+            super("reloadProxyNotifyConfig");
         }
 
         @Override
         public void execute(CommandSender sender, String[] args) {
             if (sender instanceof ProxiedPlayer) {
                 if (args.length < 1) {
-                    if (sender.hasPermission("ppn.reloadProxyConfig")){
+                    if (sender.hasPermission("ppn.reloadProxyNotifyConfig")){
                         sender.sendMessage("Reload done");
                         saveDefaultConfig();
                         loadConfig();
