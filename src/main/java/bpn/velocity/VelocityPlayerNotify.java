@@ -48,7 +48,7 @@ public class VelocityPlayerNotify {
     public void onProxyInitialize(ProxyInitializeEvent event) {
         config = loadConfig(dataDirectory);
         metricsFactory.make(this, 18744);
-        proxy.getCommandManager().register("reloadNotifyConfig", new reloadPlugin());
+        proxy.getCommandManager().register("reloadProxyNotifyConfig", new reloadPlugin());
     }
     private Toml loadConfig(Path path) {
         File folder = path.toFile();
