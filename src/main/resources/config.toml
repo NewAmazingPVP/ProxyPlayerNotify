@@ -1,19 +1,19 @@
-# BungeePlayer Notify Config
+# ProxyPlayerNotify Config
 # This config file contains settings for the BungeePlayer Notify plugin.
 # Use this file to customize the join/leave messages and permissions.
 # Network Join Message
 # This message is displayed when a player joins the network.
-# Placeholders available: %player%, %lp_prefix% for luckperms.
+# Placeholders available: %player%
 join_message = "%player% has joined the network!"
 
 # Servers Switch Message
 # This message is displayed when a player switches to a different server.
-# Placeholders available: %player%, %previousServer%, %connectedServer% (the server player joined), %lp_prefix% for luckperms.
+# Placeholders available: %player%, %previousServer%, %connectedServer% (the server player joined)
 switch_message = "%player% has switched from %previousServer% to the %connectedServer% server"
 
 # Network Leave Message
 # This message is displayed when a player leaves the network.
-# Placeholders available: %player%, %lp_prefix% for luckperms.
+# Placeholders available: %player%
 leave_message = "%player% has left the network"
 
 # Permissions
