@@ -4,17 +4,17 @@
 
 # Network Join Message
 # This message is displayed when a player joins the network.
-# Placeholders available: %player%, %lp_prefix% for luckperms.
+# Placeholders available: %player%, %lp_prefix% for LuckPerms.
 join_message: "%player% has joined the network!"
 
 # Servers Switch Message
 # This message is displayed when a player switches to a different server.
-# Placeholders available: %player%, %server% (the server player joined), %lp_prefix% for luckperms.
+# Placeholders available: %player%, %server% (the server player joined), %lp_prefix% for LuckPerms.
 switch_message: "%player% has switched/joined to the %server% server"
 
 # Network Leave Message
 # This message is displayed when a player leaves the network.
-# Placeholders available: %player%, %lp_prefix% for luckperms.
+# Placeholders available: %player%, %lp_prefix% for LuckPerms.
 leave_message: "%player% has left the network"
 
 # Permissions
@@ -30,3 +30,9 @@ permission:
   # Hide Messages
   # If this is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
   hide_message: false
+
+# Server Names
+# Define custom server names here. Players can join/leave/switch to the server using the custom names specified below.
+ServerNames:
+  example: "example-1"
+  lobby: "Hub"
