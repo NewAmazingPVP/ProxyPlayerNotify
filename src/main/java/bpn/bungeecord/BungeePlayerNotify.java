@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
@@ -26,6 +28,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     private Configuration config;
     private LuckPerms luckPerms;
+    private Map<String, String> serverNames;
 
     @Override
     public void onEnable() {
@@ -38,28 +41,35 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         saveDefaultConfig();
         loadConfig();
 
+        // Load custom server names from the config.
+        serverNames = new HashMap<>();
+        Configuration section = config.getSection("ServerNames");
+        for (String server : section.getKeys()) {
+            serverNames.put(server.toLowerCase(), section.getString(server));
+        }
+
         // Register the plugin's event listener
         getProxy().getPluginManager().registerListener(this, this);
         if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
             luckPerms = LuckPermsProvider.get();
         }
 
-        getProxy().getPluginManager().registerCommand(this, new reloadCommand());
+        getProxy().getPluginManager().registerCommand(this, new ReloadCommand());
     }
 
-    public void saveDefaultConfig(){
+    public void saveDefaultConfig() {
         File file = new File(getDataFolder(), "config.yml");
-        if (!file.exists()){
+        if (!file.exists()) {
             file.getParentFile().mkdirs();
             try (InputStream in = getClass().getResourceAsStream("/config.yml")) {
                 Files.copy(in, file.toPath());
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }        
+        }
     }
 
-    public void loadConfig(){
+    public void loadConfig() {
         File file = new File(getDataFolder(), "config.yml");
         try {
             config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
@@ -68,16 +78,26 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         }
     }
 
-    // Called when a player joins the network
     @EventHandler
-    public void onJoin(PostLoginEvent event) {saveDefaultConfig(); loadConfig(); sendMessage("join_message", event.getPlayer(), null);}
+    public void onJoin(PostLoginEvent event) {
+        saveDefaultConfig();
+        loadConfig();
+        sendMessage("join_message", event.getPlayer(), null);
+    }
 
-    // Called when a player switches servers in the network
     @EventHandler
-    public void onSwitch(ServerConnectedEvent event) {saveDefaultConfig(); loadConfig(); sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());}
+    public void onSwitch(ServerConnectedEvent event) {
+        saveDefaultConfig();
+        loadConfig();
+        sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());
+    }
 
     @EventHandler
-    public void onLeave(PlayerDisconnectEvent event) {saveDefaultConfig(); loadConfig(); sendMessage("leave_message", event.getPlayer(), null);}
+    public void onLeave(PlayerDisconnectEvent event) {
+        saveDefaultConfig();
+        loadConfig();
+        sendMessage("leave_message", event.getPlayer(), null);
+    }
 
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
         saveDefaultConfig();
@@ -90,13 +110,17 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         return;
                     }
                     if (type.equals("switch_message")) {
+                        String customServerName = serverNames.get(server.toLowerCase());
+                        if (customServerName != null) {
+                            server = customServerName;
+                        }
                         finalMessage = finalMessage.replace("%server%", server);
                     }
                     finalMessage = finalMessage.replace("&", "§");
                     if (finalMessage.contains("%lp_prefix%")) {
                         User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                         String prefix = user.getCachedData().getMetaData().getPrefix();
-                        if (!(prefix == null)) {
+                        if (prefix != null) {
                             prefix = prefix.replace("&", "§");
                             finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                         }
@@ -117,12 +141,16 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     return;
                 }
                 if (type.equals("switch_message")) {
+                    String customServerName = serverNames.get(server.toLowerCase());
+                    if (customServerName != null) {
+                        server = customServerName;
+                    }
                     finalMessage = finalMessage.replace("%server%", server);
                 }
-                if (finalMessage.contains("%lp_prefix%")){
+                if (finalMessage.contains("%lp_prefix%")) {
                     User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                     String prefix = user.getCachedData().getMetaData().getPrefix();
-                    if (!(prefix == null)){
+                    if (prefix != null) {
                         prefix = prefix.replace("&", "§");
                         finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                     }
@@ -134,19 +162,22 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     }
                 }
             }
-        }
-        else {
+        } else {
             String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
             if (finalMessage.equals("")) {
                 return;
             }
             if (type.equals("switch_message")) {
+                String customServerName = serverNames.get(server.toLowerCase());
+                if (customServerName != null) {
+                    server = customServerName;
+                }
                 finalMessage = finalMessage.replace("%server%", server);
             }
-            if (finalMessage.contains("%lp_prefix%")){
+            if (finalMessage.contains("%lp_prefix%")) {
                 User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                 String prefix = user.getCachedData().getMetaData().getPrefix();
-                if (!(prefix == null)){
+                if (prefix != null) {
                     prefix = prefix.replace("&", "§");
                     finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                 }
@@ -155,9 +186,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             getProxy().broadcast(finalMessage);
         }
     }
-    public class reloadCommand extends Command {
 
-        public reloadCommand() {
+    public class ReloadCommand extends Command {
+
+        public ReloadCommand() {
             super("reloadProxyNotifyConfig");
         }
 
@@ -165,10 +197,17 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         public void execute(CommandSender sender, String[] args) {
             if (sender instanceof ProxiedPlayer) {
                 if (args.length < 1) {
-                    if (sender.hasPermission("ppn.reloadProxyNotifyConfig")){
+                    if (sender.hasPermission("ppn.reloadProxyNotifyConfig")) {
                         sender.sendMessage("Reload done");
                         saveDefaultConfig();
                         loadConfig();
+
+                        // Reload custom server names.
+                        serverNames.clear();
+                        Configuration section = config.getSection("ServerNames");
+                        for (String server : section.getKeys()) {
+                            serverNames.put(server.toLowerCase(), section.getString(server));
+                        }
                     } else {
                         sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
                     }
@@ -177,8 +216,14 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 getProxy().broadcast("Reload done");
                 saveDefaultConfig();
                 loadConfig();
+
+                // Reload custom server names.
+                serverNames.clear();
+                Configuration section = config.getSection("ServerNames");
+                for (String server : section.getKeys()) {
+                    serverNames.put(server.toLowerCase(), section.getString(server));
+                }
             }
         }
     }
-
 }
