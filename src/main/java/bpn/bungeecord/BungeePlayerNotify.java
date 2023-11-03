@@ -10,6 +10,7 @@ import java.util.Map;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -116,19 +117,20 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         }
                         finalMessage = finalMessage.replace("%server%", server);
                     }
-                    finalMessage = finalMessage.replace("&", "§");
+                    //finalMessage = finalMessage.replace("&", "§");
                     if (finalMessage.contains("%lp_prefix%")) {
                         User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                         String prefix = user.getCachedData().getMetaData().getPrefix();
                         if (prefix != null) {
-                            prefix = prefix.replace("&", "§");
+                            //prefix = prefix.replace("&", "§");
                             finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                         }
                     }
                     if (config.getBoolean("permission.hide_message")) {
                         for (ProxiedPlayer pl : getProxy().getPlayers()) {
                             if (pl.hasPermission("ppn.view")) {
-                                pl.sendMessage(finalMessage);
+                                TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+                                pl.sendMessage(message);
                             }
                         }
                     } else {
@@ -151,14 +153,15 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                     String prefix = user.getCachedData().getMetaData().getPrefix();
                     if (prefix != null) {
-                        prefix = prefix.replace("&", "§");
+                        //prefix = prefix.replace("&", "§");
                         finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                     }
                 }
-                finalMessage = finalMessage.replace("&", "§");
+                //finalMessage = finalMessage.replace("&", "§");
                 for (ProxiedPlayer pl : getProxy().getPlayers()) {
                     if (pl.hasPermission("ppn.view")) {
-                        pl.sendMessage(finalMessage);
+                        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+                        pl.sendMessage(message);
                     }
                 }
             }
@@ -178,12 +181,13 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                 String prefix = user.getCachedData().getMetaData().getPrefix();
                 if (prefix != null) {
-                    prefix = prefix.replace("&", "§");
+                    //prefix = prefix.replace("&", "§");
                     finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                 }
             }
-            finalMessage = finalMessage.replace("&", "§");
-            getProxy().broadcast(finalMessage);
+            //finalMessage = finalMessage.replace("&", "§");
+            TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+            getProxy().broadcast(message);
         }
     }
 
