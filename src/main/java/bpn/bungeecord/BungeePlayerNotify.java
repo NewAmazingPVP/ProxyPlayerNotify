@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
@@ -24,6 +26,8 @@ import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+
+import static net.md_5.bungee.api.ChatColor.COLOR_CHAR;
 
 public class BungeePlayerNotify extends Plugin implements Listener {
 
@@ -129,7 +133,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     if (config.getBoolean("permission.hide_message")) {
                         for (ProxiedPlayer pl : getProxy().getPlayers()) {
                             if (pl.hasPermission("ppn.view")) {
-                                TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+                                TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', translateHexColorCodes(finalMessage)));
                                 pl.sendMessage(message);
                             }
                         }
@@ -160,7 +164,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 //finalMessage = finalMessage.replace("&", "§");
                 for (ProxiedPlayer pl : getProxy().getPlayers()) {
                     if (pl.hasPermission("ppn.view")) {
-                        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+                        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', translateHexColorCodes(finalMessage)));
                         pl.sendMessage(message);
                     }
                 }
@@ -186,7 +190,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 }
             }
             //finalMessage = finalMessage.replace("&", "§");
-            TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+            TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', translateHexColorCodes(finalMessage)));
             getProxy().broadcast(message);
         }
     }
@@ -230,4 +234,22 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             }
         }
     }
+    public String translateHexColorCodes(String message)
+    {
+        final Pattern hexPattern = Pattern.compile("#([A-Fa-f0-9]{6})");
+        Matcher matcher = hexPattern.matcher(message);
+        StringBuffer buffer = new StringBuffer(message.length() + 4 * 8);
+        while (matcher.find())
+        {
+            String group = matcher.group(1);
+            matcher.appendReplacement(buffer, COLOR_CHAR + "x"
+                    + COLOR_CHAR + group.charAt(0) + COLOR_CHAR + group.charAt(1)
+                    + COLOR_CHAR + group.charAt(2) + COLOR_CHAR + group.charAt(3)
+                    + COLOR_CHAR + group.charAt(4) + COLOR_CHAR + group.charAt(5)
+            );
+        }
+        return matcher.appendTail(buffer).toString();
+    }
+
+
 }
