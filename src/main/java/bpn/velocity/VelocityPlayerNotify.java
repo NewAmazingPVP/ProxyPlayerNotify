@@ -72,7 +72,14 @@ public class VelocityPlayerNotify {
     public void onJoin(PlayerChooseInitialServerEvent event) {config = loadConfig(dataDirectory); sendMessage("join_message", event.getPlayer(), null, null);}
 
     @Subscribe
-    public void onSwitch(ServerConnectedEvent event) {config = loadConfig(dataDirectory); sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), event.getPreviousServer().get().getServerInfo().getName());}
+    public void onSwitch(ServerConnectedEvent event) {
+        config = loadConfig(dataDirectory);
+        if(event.getPreviousServer().isPresent()) {
+            sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), event.getPreviousServer().get().getServerInfo().getName());
+        } else {
+            sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), "");
+        }
+    }
 
     @Subscribe
     public void onLeave(DisconnectEvent event) {config = loadConfig(dataDirectory); sendMessage("leave_message", event.getPlayer(), null, null);}
