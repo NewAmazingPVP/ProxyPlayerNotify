@@ -13,9 +13,9 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
-//import net.luckperms.api.LuckPerms;
-//import net.luckperms.api.LuckPermsProvider;
-//import net.luckperms.api.model.user.User;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.nio.file.Path;
 public class VelocityPlayerNotify {
 
     private Toml config;
-    //private LuckPerms luckPerms;
+    private LuckPerms luckPerms;
     private final ProxyServer proxy;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
@@ -45,6 +45,9 @@ public class VelocityPlayerNotify {
         config = loadConfig(dataDirectory);
         metricsFactory.make(this, 18744);
         proxy.getCommandManager().register("reloadProxyNotifyConfig", new reloadPlugin());
+        if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
+            luckPerms = LuckPermsProvider.get();
+        }
     }
     private Toml loadConfig(Path path) {
         File folder = path.toFile();
@@ -97,6 +100,13 @@ public class VelocityPlayerNotify {
                         finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
                         finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
                     }
+                    if (finalMessage.contains("%lp_prefix%")) {
+                        User user = luckPerms.getPlayerAdapter(Player.class).getUser(targetPlayer);
+                        String prefix = user.getCachedData().getMetaData().getPrefix();
+                        if (prefix != null) {
+                            finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                        }
+                    }
                     finalMessage = finalMessage.replace("&", "§");
                     Component translatedComponent = Component.text(finalMessage);
                     if (config.getBoolean("permission.hide_message")) {
@@ -118,6 +128,13 @@ public class VelocityPlayerNotify {
                     finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
                     finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
                 }
+                if (finalMessage.contains("%lp_prefix%")) {
+                    User user = luckPerms.getPlayerAdapter(Player.class).getUser(targetPlayer);
+                    String prefix = user.getCachedData().getMetaData().getPrefix();
+                    if (prefix != null) {
+                        finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                    }
+                }
                 finalMessage = finalMessage.replace("&", "§");
                 Component translatedComponent = Component.text(finalMessage);
                 for (Player pl : proxy.getAllPlayers()) {
@@ -135,6 +152,13 @@ public class VelocityPlayerNotify {
             if (type.equals("switch_message")) {
                 finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
                 finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
+            }
+            if (finalMessage.contains("%lp_prefix%")) {
+                User user = luckPerms.getPlayerAdapter(Player.class).getUser(targetPlayer);
+                String prefix = user.getCachedData().getMetaData().getPrefix();
+                if (prefix != null) {
+                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                }
             }
             finalMessage = finalMessage.replace("&", "§");
             Component translatedComponent = Component.text(finalMessage);
