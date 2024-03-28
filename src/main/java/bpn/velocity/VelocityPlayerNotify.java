@@ -24,10 +24,11 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "7.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "7.5", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
 public class VelocityPlayerNotify {
 
     private Toml config;
@@ -35,7 +36,7 @@ public class VelocityPlayerNotify {
     private final ProxyServer proxy;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
-    private Map<UUID, Boolean> messageToggles = new HashMap<>();
+    private HashSet<UUID> messageToggles = new HashSet<>();
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -118,11 +119,18 @@ public class VelocityPlayerNotify {
                     if (config.getBoolean("permission.hide_message")) {
                         for (Player pl : proxy.getAllPlayers()) {
                             if (pl.hasPermission("ppn.view")) {
-                                pl.sendMessage(translatedComponent);
+                                if(!messageToggles.contains(pl.getUniqueId())) {
+                                    pl.sendMessage(translatedComponent);
+                                }
                             }
                         }
                     } else {
-                        proxy.getAllPlayers().forEach(player -> player.sendMessage(translatedComponent));
+                        //proxy.getAllPlayers().forEach(player -> player.sendMessage(translatedComponent));
+                        for (Player pl : proxy.getAllPlayers()) {
+                            if(!messageToggles.contains(pl.getUniqueId())) {
+                                pl.sendMessage(translatedComponent);
+                            }
+                        }
                     }
                 }
             } else if (config.getBoolean("permission.hide_message")) {
@@ -145,7 +153,9 @@ public class VelocityPlayerNotify {
                 Component translatedComponent = Component.text(finalMessage);
                 for (Player pl : proxy.getAllPlayers()) {
                     if (pl.hasPermission("ppn.view")) {
-                        pl.sendMessage(translatedComponent);
+                        if(!messageToggles.contains(pl.getUniqueId())) {
+                            pl.sendMessage(translatedComponent);
+                        }
 
                     }
                 }
@@ -169,7 +179,8 @@ public class VelocityPlayerNotify {
             finalMessage = finalMessage.replace("&", "§");
             Component translatedComponent = Component.text(finalMessage);
             for (Player pl : proxy.getAllPlayers()) {
-                pl.sendMessage(translatedComponent);
+                if(!messageToggles.contains(pl.getUniqueId()))
+                    pl.sendMessage(translatedComponent);
             }
         }
     }
@@ -181,18 +192,20 @@ public class VelocityPlayerNotify {
         }
     }
 
-    // Command to toggle message notifications for individual players
+
     private class ToggleMessagesCommand implements SimpleCommand {
         @Override
         public void execute(Invocation invocation) {
             CommandSource source = invocation.source();
             if (source instanceof Player) {
                 Player player = (Player) source;
-                UUID playerId = player.getUniqueId();
-                boolean toggle = messageToggles.getOrDefault(playerId, true); // Default to true if not set
-                toggle = !toggle; // Toggle the value
-                messageToggles.put(playerId, toggle);
-                player.sendMessage(Component.text("Message notifications toggled " + (toggle ? "on" : "off")));
+                if(messageToggles.contains(player.getUniqueId())){
+                    messageToggles.remove(player.getUniqueId());
+                    player.sendMessage(Component.text("Message notifications toggled on"));
+                } else {
+                    messageToggles.add(player.getUniqueId());
+                    player.sendMessage(Component.text("Message notifications toggled off"));
+                }
             } else {
                 source.sendMessage(Component.text("Only players can use this command."));
             }
