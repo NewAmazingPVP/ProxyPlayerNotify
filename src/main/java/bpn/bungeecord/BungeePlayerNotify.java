@@ -4,8 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +33,8 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private Configuration config;
     private LuckPerms luckPerms;
     private Map<String, String> serverNames;
+    private Map<UUID, Set<String>> playerToggle = new HashMap<>();
+
 
     @Override
     public void onEnable() {
@@ -60,6 +61,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         }
 
         getProxy().getPluginManager().registerCommand(this, new ReloadCommand());
+        getProxy().getPluginManager().registerCommand(this, new ToggleMessagesCommand(this));
     }
 
     public void saveDefaultConfig() {
@@ -104,6 +106,24 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         sendMessage("leave_message", event.getPlayer(), null);
     }
 
+    public boolean toggleMessage(ProxiedPlayer player, String messageType) {
+        if (playerToggle.containsKey(player.getUniqueId())) {
+            Set<String> enabledMessages = playerToggle.get(player.getUniqueId());
+            if (enabledMessages.contains(messageType)) {
+                enabledMessages.remove(messageType);
+                return false;
+            } else {
+                enabledMessages.add(messageType);
+                return true;
+            }
+        } else {
+            Set<String> enabledMessages = new HashSet<>();
+            enabledMessages.add(messageType);
+            playerToggle.put(player.getUniqueId(), enabledMessages);
+            return true;
+        }
+    }
+
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
         saveDefaultConfig();
         loadConfig();
@@ -111,7 +131,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("ppn.notify")) {
                     String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-                    if (finalMessage.equals("")) {
+                    if (finalMessage.isEmpty()) {
                         return;
                     }
                     if (type.equals("switch_message")) {
@@ -126,14 +146,14 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                         String prefix = user.getCachedData().getMetaData().getPrefix();
                         if (prefix != null) {
-                            //prefix = prefix.replace("&", "§");
+                            prefix = prefix.replace("&", "§");
                             finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                         }
                     }
                     if (config.getBoolean("permission.hide_message")) {
                         for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                            if (pl.hasPermission("ppn.view")) {
-                                TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', translateHexColorCodes(finalMessage)));
+                            if (pl.hasPermission("ppn.view") && playerToggle.containsKey(pl.getUniqueId())) {
+                                TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
                                 pl.sendMessage(message);
                             }
                         }
@@ -143,7 +163,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 }
             } else if (config.getBoolean("permission.hide_message")) {
                 String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-                if (finalMessage.equals("")) {
+                if (finalMessage.isEmpty()) {
                     return;
                 }
                 if (type.equals("switch_message")) {
@@ -157,21 +177,21 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                     User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                     String prefix = user.getCachedData().getMetaData().getPrefix();
                     if (prefix != null) {
-                        //prefix = prefix.replace("&", "§");
+                        prefix = prefix.replace("&", "§");
                         finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                     }
                 }
-                //finalMessage = finalMessage.replace("&", "§");
+                finalMessage = finalMessage.replace("&", "§");
                 for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                    if (pl.hasPermission("ppn.view")) {
-                        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', translateHexColorCodes(finalMessage)));
+                    if (pl.hasPermission("ppn.view") && playerToggle.containsKey(pl.getUniqueId())) {
+                        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
                         pl.sendMessage(message);
                     }
                 }
             }
         } else {
             String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-            if (finalMessage.equals("")) {
+            if (finalMessage.isEmpty()) {
                 return;
             }
             if (type.equals("switch_message")) {
@@ -190,9 +210,17 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 }
             }
             //finalMessage = finalMessage.replace("&", "§");
-            TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', translateHexColorCodes(finalMessage)));
-            getProxy().broadcast(message);
+            TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+            for (ProxiedPlayer pl : getProxy().getPlayers()) {
+                if (playerToggle.containsKey(pl.getUniqueId())) {
+                    pl.sendMessage(message);
+                }
+            }
+            //TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+            //getProxy().broadcast(message);
         }
+
+
     }
 
     public class ReloadCommand extends Command {
@@ -234,22 +262,35 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             }
         }
     }
-    public String translateHexColorCodes(String message)
-    {
-        final Pattern hexPattern = Pattern.compile("#([A-Fa-f0-9]{6})");
-        Matcher matcher = hexPattern.matcher(message);
-        StringBuffer buffer = new StringBuffer(message.length() + 4 * 8);
-        while (matcher.find())
-        {
-            String group = matcher.group(1);
-            matcher.appendReplacement(buffer, COLOR_CHAR + "x"
-                    + COLOR_CHAR + group.charAt(0) + COLOR_CHAR + group.charAt(1)
-                    + COLOR_CHAR + group.charAt(2) + COLOR_CHAR + group.charAt(3)
-                    + COLOR_CHAR + group.charAt(4) + COLOR_CHAR + group.charAt(5)
-            );
+
+        public class ToggleMessagesCommand extends Command {
+
+            private BungeePlayerNotify plugin;
+
+            public ToggleMessagesCommand(BungeePlayerNotify plugin) {
+                super("togglemessages");
+                this.plugin = plugin;
+            }
+
+            @Override
+            public void execute(CommandSender sender, String[] args) {
+                if (sender instanceof ProxiedPlayer) {
+                    ProxiedPlayer player = (ProxiedPlayer) sender;
+                    if (args.length == 1) {
+                        String messageType = args[0];
+                        boolean isEnabled = plugin.toggleMessage(player, messageType);
+                        if (isEnabled) {
+                            sender.sendMessage(ChatColor.GREEN + "Messages of type '" + messageType + "' are now enabled.");
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "Messages of type '" + messageType + "' are now disabled.");
+                        }
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Usage: /togglemessages <join|switch|leave>");
+                    }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+                }
+            }
         }
-        return matcher.appendTail(buffer).toString();
+
     }
-
-
-}

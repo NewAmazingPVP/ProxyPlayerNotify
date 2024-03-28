@@ -2,6 +2,7 @@ package bpn.velocity;
 
 import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
@@ -22,8 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "6.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "7.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
 public class VelocityPlayerNotify {
 
     private Toml config;
@@ -31,6 +35,7 @@ public class VelocityPlayerNotify {
     private final ProxyServer proxy;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
+    private Map<UUID, Boolean> messageToggles = new HashMap<>();
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -45,6 +50,7 @@ public class VelocityPlayerNotify {
         config = loadConfig(dataDirectory);
         metricsFactory.make(this, 18744);
         proxy.getCommandManager().register("reloadProxyNotifyConfig", new reloadPlugin());
+        proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
         if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
             luckPerms = LuckPermsProvider.get();
         }
@@ -80,7 +86,7 @@ public class VelocityPlayerNotify {
         if(event.getPreviousServer().isPresent()) {
             sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), event.getPreviousServer().get().getServerInfo().getName());
         } else {
-            sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), "");
+            //sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), "");
         }
     }
 
@@ -93,7 +99,7 @@ public class VelocityPlayerNotify {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("ppn.notify")) {
                     String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
-                    if (finalMessage.equals("")) {
+                    if (finalMessage.isEmpty()) {
                         return;
                     }
                     if (type.equals("switch_message")) {
@@ -121,7 +127,7 @@ public class VelocityPlayerNotify {
                 }
             } else if (config.getBoolean("permission.hide_message")) {
                 String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
-                if (finalMessage.equals("")) {
+                if (finalMessage.isEmpty()) {
                     return;
                 }
                 if (type.equals("switch_message")) {
@@ -146,7 +152,7 @@ public class VelocityPlayerNotify {
             }
         } else {
             String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
-            if (finalMessage.equals("")) {
+            if (finalMessage.isEmpty()) {
                 return;
             }
             if (type.equals("switch_message")) {
@@ -172,6 +178,24 @@ public class VelocityPlayerNotify {
         @Override
         public void execute(Invocation invocation) {
             config = loadConfig(dataDirectory);
+        }
+    }
+
+    // Command to toggle message notifications for individual players
+    private class ToggleMessagesCommand implements SimpleCommand {
+        @Override
+        public void execute(Invocation invocation) {
+            CommandSource source = invocation.source();
+            if (source instanceof Player) {
+                Player player = (Player) source;
+                UUID playerId = player.getUniqueId();
+                boolean toggle = messageToggles.getOrDefault(playerId, true); // Default to true if not set
+                toggle = !toggle; // Toggle the value
+                messageToggles.put(playerId, toggle);
+                player.sendMessage(Component.text("Message notifications toggled " + (toggle ? "on" : "off")));
+            } else {
+                source.sendMessage(Component.text("Only players can use this command."));
+            }
         }
     }
 }
