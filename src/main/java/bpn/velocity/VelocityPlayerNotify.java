@@ -38,7 +38,6 @@ import java.util.UUID;
 public class VelocityPlayerNotify {
 
     private Toml config;
-    private LuckPerms luckPerms;
     private final ProxyServer proxy;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
@@ -58,9 +57,6 @@ public class VelocityPlayerNotify {
         metricsFactory.make(this, 18744);
         proxy.getCommandManager().register("reloadProxyNotifyConfig", new reloadPlugin());
         proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
-        if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
-            luckPerms = LuckPermsProvider.get();
-        }
     }
     private Toml loadConfig(Path path) {
         File folder = path.toFile();
@@ -124,12 +120,16 @@ public class VelocityPlayerNotify {
                         finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
                         finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
                     }
-                    if (finalMessage.contains("%lp_prefix%")) {
-                        User user = luckPerms.getPlayerAdapter(Player.class).getUser(targetPlayer);
-                        String prefix = user.getCachedData().getMetaData().getPrefix();
-                        if (prefix != null) {
-                            finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                    try {
+                        if(this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
+                            if (finalMessage.contains("%lp_prefix%")) {
+                                String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
+                                if (prefix != null) {
+                                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                                }
+                            }
                         }
+                    } catch (Exception ignored){
                     }
                     finalMessage = finalMessage.replace("&", "§");
                     Component translatedComponent = Component.text(finalMessage);
@@ -159,12 +159,16 @@ public class VelocityPlayerNotify {
                     finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
                     finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
                 }
-                if (finalMessage.contains("%lp_prefix%")) {
-                    User user = luckPerms.getPlayerAdapter(Player.class).getUser(targetPlayer);
-                    String prefix = user.getCachedData().getMetaData().getPrefix();
-                    if (prefix != null) {
-                        finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                try {
+                    if(this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
+                        if (finalMessage.contains("%lp_prefix%")) {
+                            String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
+                            if (prefix != null) {
+                                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                            }
+                        }
                     }
+                } catch (Exception ignored){
                 }
                 finalMessage = finalMessage.replace("&", "§");
                 Component translatedComponent = Component.text(finalMessage);
@@ -186,12 +190,16 @@ public class VelocityPlayerNotify {
                 finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
                 finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
             }
-            if (finalMessage.contains("%lp_prefix%")) {
-                User user = luckPerms.getPlayerAdapter(Player.class).getUser(targetPlayer);
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                if (prefix != null) {
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+            try {
+                if(this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
+                    if (finalMessage.contains("%lp_prefix%")) {
+                        String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
+                        if (prefix != null) {
+                            finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                        }
+                    }
                 }
+            } catch (Exception ignored){
             }
             finalMessage = finalMessage.replace("&", "§");
             Component translatedComponent = Component.text(finalMessage);
