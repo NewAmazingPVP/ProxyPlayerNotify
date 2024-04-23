@@ -4,11 +4,15 @@ import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.event.PostOrder;
+import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -28,7 +32,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "7.5", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/" )
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "7.5", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/",  dependencies = {
+        @Dependency(id = "luckperms", optional = true)
+})
 public class VelocityPlayerNotify {
 
     private Toml config;
@@ -78,8 +84,11 @@ public class VelocityPlayerNotify {
         return new Toml().read(file);
     }
 
-    @Subscribe
-    public void onJoin(PlayerChooseInitialServerEvent event) {config = loadConfig(dataDirectory); sendMessage("join_message", event.getPlayer(), null, null);}
+    @Subscribe(order = PostOrder.LAST)
+    public void onJoin(PlayerChooseInitialServerEvent event) {
+        config = loadConfig(dataDirectory);
+        sendMessage("join_message", event.getPlayer(), null, null);
+    }
 
     @Subscribe
     public void onSwitch(ServerConnectedEvent event) {
@@ -91,8 +100,16 @@ public class VelocityPlayerNotify {
         }
     }
 
-    @Subscribe
-    public void onLeave(DisconnectEvent event) {config = loadConfig(dataDirectory); sendMessage("leave_message", event.getPlayer(), null, null);}
+    @Subscribe(order = PostOrder.LAST)
+    public void onLeave(DisconnectEvent event) {
+        if(event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_PROXY &&
+            event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER &&
+            event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
+            event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
+            config = loadConfig(dataDirectory);
+            sendMessage("leave_message", event.getPlayer(), null, null);
+        }
+    }
 
     public void sendMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         config = loadConfig(dataDirectory);
