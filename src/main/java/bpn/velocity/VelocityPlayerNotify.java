@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "7.5", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/",  dependencies = {
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "8.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/",  dependencies = {
         @Dependency(id = "luckperms", optional = true)
 })
 public class VelocityPlayerNotify {
