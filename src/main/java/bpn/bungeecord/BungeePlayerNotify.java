@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
@@ -25,6 +24,7 @@ import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.md_5.bungee.event.EventPriority;
 
 public class BungeePlayerNotify extends Plugin implements Listener {
 
@@ -33,6 +33,8 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private Map<String, String> serverNames;
     private HashSet<UUID> playerToggle = new HashSet<>();
     private Set<String> disabledServers;
+    private ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
+
 
     @Override
     public void onEnable() {
@@ -82,11 +84,14 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PostLoginEvent event) {
-        saveDefaultConfig();
-        loadConfig();
-        sendMessage("join_message", event.getPlayer(), null);
+        if(event.getPlayer().isConnected()) {
+            validPlayers.add(event.getPlayer());
+            saveDefaultConfig();
+            loadConfig();
+            sendMessage("join_message", event.getPlayer(), null);
+        }
     }
 
     @EventHandler
@@ -98,9 +103,11 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
-        saveDefaultConfig();
-        loadConfig();
-        sendMessage("leave_message", event.getPlayer(), null);
+        if(validPlayers.remove(event.getPlayer())) {
+            saveDefaultConfig();
+            loadConfig();
+            sendMessage("leave_message", event.getPlayer(), null);
+        }
     }
 
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
