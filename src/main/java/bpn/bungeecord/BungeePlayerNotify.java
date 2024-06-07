@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import net.luckperms.api.model.user.User;
@@ -163,6 +165,8 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 finalMessage = finalMessage.replace("%lp_prefix%", prefix);
             }
         }
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        finalMessage = finalMessage.replace("%time%", time);
         finalMessage = finalMessage.replace("&", "§");
         TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
         for (ProxiedPlayer pl : getProxy().getPlayers()) {

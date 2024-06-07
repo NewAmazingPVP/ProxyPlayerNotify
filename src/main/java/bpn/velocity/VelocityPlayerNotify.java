@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -91,7 +93,7 @@ public class VelocityPlayerNotify {
                 sendMessage("join_message", player, server, null);
                 playerLastServer.put(player.getUniqueId(), server);
             }
-        }).delay(1, TimeUnit.SECONDS);
+        }).delay(1, TimeUnit.SECONDS).schedule();
     }
 
     @Subscribe
@@ -112,9 +114,9 @@ public class VelocityPlayerNotify {
     @Subscribe(order = PostOrder.LAST)
     public void onLeave(DisconnectEvent event) {
         if(event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_PROXY &&
-            event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER &&
-            event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
-            event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
+                event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER &&
+                event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
+                event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
             config = loadConfig(dataDirectory);
             Player player = event.getPlayer();
             String lastServer = playerLastServer.remove(player.getUniqueId());
@@ -166,6 +168,8 @@ public class VelocityPlayerNotify {
             }
         } catch (Exception ignored) {
         }
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        finalMessage = finalMessage.replace("%time%", time);
         finalMessage = finalMessage.replace("&", "§");
         Component translatedComponent = Component.text(finalMessage);
         for (Player pl : proxy.getAllPlayers()) {
