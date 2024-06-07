@@ -5,10 +5,8 @@ import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.PostOrder;
-import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -18,21 +16,18 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
-import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "8.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/",  dependencies = {
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "8.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
 })
 public class VelocityPlayerNotify {
@@ -42,6 +37,7 @@ public class VelocityPlayerNotify {
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
     private HashSet<UUID> messageToggles = new HashSet<>();
+    private Set<String> disabledServers;
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -57,7 +53,9 @@ public class VelocityPlayerNotify {
         metricsFactory.make(this, 18744);
         proxy.getCommandManager().register("reloadProxyNotifyConfig", new reloadPlugin());
         proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
+        disabledServers = new HashSet<>(config.getList("disabledServers"));
     }
+
     private Toml loadConfig(Path path) {
         File folder = path.toFile();
         File file = new File(folder, "config.toml");
@@ -109,7 +107,12 @@ public class VelocityPlayerNotify {
 
     public void sendMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         config = loadConfig(dataDirectory);
-        if (config.getBoolean(("permission.permissions"))) {
+
+        if (connectedServer != null && disabledServers.contains(connectedServer.toLowerCase())) {
+            return;
+        }
+
+        if (config.getBoolean("permission.permissions")) {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("ppn.notify")) {
                     String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
@@ -177,7 +180,6 @@ public class VelocityPlayerNotify {
                         if(!messageToggles.contains(pl.getUniqueId())) {
                             pl.sendMessage(translatedComponent);
                         }
-
                     }
                 }
             }
@@ -214,9 +216,9 @@ public class VelocityPlayerNotify {
         @Override
         public void execute(Invocation invocation) {
             config = loadConfig(dataDirectory);
+            disabledServers = new HashSet<>(config.getList("disabledServers"));
         }
     }
-
 
     private class ToggleMessagesCommand implements SimpleCommand {
         @Override

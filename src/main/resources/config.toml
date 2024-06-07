@@ -1,6 +1,7 @@
 # ProxyPlayerNotify Config
 # This config file contains settings for the BungeePlayer Notify plugin.
 # Use this file to customize the join/leave messages and permissions.
+
 # Network Join Message
 # This message is displayed when a player joins the network.
 # Placeholders available: %player%, %lp_prefix% for LuckPerms.
@@ -29,3 +30,7 @@ notify_message = false
 # Hide Messages
 # If this is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
 hide_message = false
+
+# Disabled Servers
+# Define the backend servers where the join/switch/leave messages should not be sent.
+disabledServers = ["example-1", "other-backend-server"]

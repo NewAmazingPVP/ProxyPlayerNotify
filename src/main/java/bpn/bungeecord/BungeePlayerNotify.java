@@ -26,20 +26,17 @@ import net.md_5.bungee.event.EventHandler;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 
-import static net.md_5.bungee.api.ChatColor.COLOR_CHAR;
-
 public class BungeePlayerNotify extends Plugin implements Listener {
 
     private Configuration config;
     private LuckPerms luckPerms;
     private Map<String, String> serverNames;
     private HashSet<UUID> playerToggle = new HashSet<>();
-
+    private Set<String> disabledServers;
 
     @Override
     public void onEnable() {
         new Metrics(this, 18703);
-        // Create the plugin data folder if it does not already exist
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
         }
@@ -47,14 +44,14 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         saveDefaultConfig();
         loadConfig();
 
-        // Load custom server names from the config.
         serverNames = new HashMap<>();
         Configuration section = config.getSection("ServerNames");
         for (String server : section.getKeys()) {
             serverNames.put(server.toLowerCase(), section.getString(server));
         }
 
-        // Register the plugin's event listener
+        disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
+
         getProxy().getPluginManager().registerListener(this, this);
         if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
             luckPerms = LuckPermsProvider.get();
@@ -109,6 +106,11 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
         saveDefaultConfig();
         loadConfig();
+
+        if (server != null && disabledServers.contains(server.toLowerCase())) {
+            return;
+        }
+
         if (config.getBoolean("permission.permissions")) {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("ppn.notify")) {
@@ -207,8 +209,6 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             //TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
             //getProxy().broadcast(message);
         }
-
-
     }
 
     public class ReloadCommand extends Command {
@@ -226,12 +226,13 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         saveDefaultConfig();
                         loadConfig();
 
-                        // Reload custom server names.
                         serverNames.clear();
                         Configuration section = config.getSection("ServerNames");
                         for (String server : section.getKeys()) {
                             serverNames.put(server.toLowerCase(), section.getString(server));
                         }
+
+                        disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
                     } else {
                         sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
                     }
@@ -241,40 +242,40 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 saveDefaultConfig();
                 loadConfig();
 
-                // Reload custom server names.
                 serverNames.clear();
                 Configuration section = config.getSection("ServerNames");
                 for (String server : section.getKeys()) {
                     serverNames.put(server.toLowerCase(), section.getString(server));
                 }
+
+                disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
             }
         }
     }
 
-        public class ToggleMessagesCommand extends Command {
+    public class ToggleMessagesCommand extends Command {
 
-            private BungeePlayerNotify plugin;
+        private BungeePlayerNotify plugin;
 
-            public ToggleMessagesCommand(BungeePlayerNotify plugin) {
-                super("togglemessages");
-                this.plugin = plugin;
-            }
+        public ToggleMessagesCommand(BungeePlayerNotify plugin) {
+            super("togglemessages");
+            this.plugin = plugin;
+        }
 
-            @Override
-            public void execute(CommandSender sender, String[] args) {
-                if (sender instanceof ProxiedPlayer) {
-                    ProxiedPlayer player = (ProxiedPlayer) sender;
-                        if (playerToggle.contains(player.getUniqueId())) {
-                            playerToggle.remove(player.getUniqueId());
-                            sender.sendMessage(ChatColor.GREEN + "Message notifications toggled on");
-                        } else {
-                            playerToggle.add(player.getUniqueId());
-                            sender.sendMessage(ChatColor.RED + "Message notifications toggled off");
-                        }
+        @Override
+        public void execute(CommandSender sender, String[] args) {
+            if (sender instanceof ProxiedPlayer) {
+                ProxiedPlayer player = (ProxiedPlayer) sender;
+                if (playerToggle.contains(player.getUniqueId())) {
+                    playerToggle.remove(player.getUniqueId());
+                    sender.sendMessage(ChatColor.GREEN + "Message notifications toggled on");
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+                    playerToggle.add(player.getUniqueId());
+                    sender.sendMessage(ChatColor.RED + "Message notifications toggled off");
                 }
+            } else {
+                sender.sendMessage(ChatColor.RED + "Only players can use this command.");
             }
         }
-
     }
+}
