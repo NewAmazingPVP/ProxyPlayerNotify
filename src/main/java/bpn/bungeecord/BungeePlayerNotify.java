@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.*;
-
-
+import java.util.concurrent.TimeUnit;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -32,9 +31,9 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private LuckPerms luckPerms;
     private Map<String, String> serverNames;
     private HashSet<UUID> playerToggle = new HashSet<>();
+    private Map<UUID, String> playerLastServer = new HashMap<>();
     private Set<String> disabledServers;
     private ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
-
 
     @Override
     public void onEnable() {
@@ -86,31 +85,43 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PostLoginEvent event) {
-        if(event.getPlayer().isConnected()) {
-            validPlayers.add(event.getPlayer());
-            saveDefaultConfig();
-            loadConfig();
-            sendMessage("join_message", event.getPlayer(), null);
-        }
+        ProxiedPlayer player = event.getPlayer();
+        getProxy().getScheduler().schedule(this, () -> {
+            if (player.isConnected()) {
+                validPlayers.add(event.getPlayer());
+                saveDefaultConfig();
+                loadConfig();
+                String server = player.getServer().getInfo().getName();
+                sendMessage("join_message", player, server, null);
+                playerLastServer.put(player.getUniqueId(), server);
+            }
+        }, 1, TimeUnit.SECONDS);
     }
 
     @EventHandler
     public void onSwitch(ServerConnectedEvent event) {
+        ProxiedPlayer player = event.getPlayer();
+        String lastServer = playerLastServer.get(player.getUniqueId());
+        String currentServer = event.getServer().getInfo().getName();
         saveDefaultConfig();
         loadConfig();
-        sendMessage("switch_message", event.getPlayer(), event.getServer().getInfo().getName());
+        sendMessage("switch_message", player, currentServer, lastServer);
+        playerLastServer.put(player.getUniqueId(), currentServer);
     }
 
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
         if(validPlayers.remove(event.getPlayer())) {
+            ProxiedPlayer player = event.getPlayer();
+            String lastServer = playerLastServer.remove(player.getUniqueId());
             saveDefaultConfig();
             loadConfig();
-            sendMessage("leave_message", event.getPlayer(), null);
+            sendMessage("leave_message", player, null, lastServer);
         }
+
     }
 
-    public void sendMessage(String type, ProxiedPlayer targetPlayer, String server) {
+    public void sendMessage(String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
         saveDefaultConfig();
         loadConfig();
 
@@ -121,100 +132,43 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         if (config.getBoolean("permission.permissions")) {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("ppn.notify")) {
-                    String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-                    if (finalMessage.isEmpty()) {
-                        return;
-                    }
-                    if (type.equals("switch_message")) {
-                        String customServerName = serverNames.get(server.toLowerCase());
-                        if (customServerName != null) {
-                            server = customServerName;
-                        }
-                        finalMessage = finalMessage.replace("%server%", server);
-                    }
-                    //finalMessage = finalMessage.replace("&", "§");
-                    if (finalMessage.contains("%lp_prefix%")) {
-                        User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-                        String prefix = user.getCachedData().getMetaData().getPrefix();
-                        if (prefix != null) {
-                            prefix = prefix.replace("&", "§");
-                            finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                        }
-                    }
-                    if (config.getBoolean("permission.hide_message")) {
-                        for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                            if (pl.hasPermission("ppn.view") && !playerToggle.contains(pl.getUniqueId())) {
-                                TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
-                                pl.sendMessage(message);
-                            }
-                        }
-                    } else {
-                        for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                            if (!playerToggle.contains(pl.getUniqueId())) {
-                                TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
-                                pl.sendMessage(message);
-                            }
-                        }
-                        //getProxy().broadcast(finalMessage);
-                    }
+                    sendFormattedMessage(type, targetPlayer, server, lastServer);
                 }
             } else if (config.getBoolean("permission.hide_message")) {
-                String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-                if (finalMessage.isEmpty()) {
-                    return;
-                }
-                if (type.equals("switch_message")) {
-                    String customServerName = serverNames.get(server.toLowerCase());
-                    if (customServerName != null) {
-                        server = customServerName;
-                    }
-                    finalMessage = finalMessage.replace("%server%", server);
-                }
-                if (finalMessage.contains("%lp_prefix%")) {
-                    User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-                    String prefix = user.getCachedData().getMetaData().getPrefix();
-                    if (prefix != null) {
-                        prefix = prefix.replace("&", "§");
-                        finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                    }
-                }
-                finalMessage = finalMessage.replace("&", "§");
-                for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                    if (pl.hasPermission("ppn.view") && !playerToggle.contains(pl.getUniqueId())) {
-                        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
-                        pl.sendMessage(message);
-                    }
-                }
+                sendFormattedMessage(type, targetPlayer, server, lastServer);
             }
         } else {
-            String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
-            if (finalMessage.isEmpty()) {
-                return;
-            }
-            if (type.equals("switch_message")) {
-                String customServerName = serverNames.get(server.toLowerCase());
-                if (customServerName != null) {
-                    server = customServerName;
-                }
+            sendFormattedMessage(type, targetPlayer, server, lastServer);
+        }
+    }
+
+    private void sendFormattedMessage(String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
+        String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
+        if (finalMessage.isEmpty()) {
+            return;
+        }
+        if (type.equals("switch_message") || type.equals("join_message") || type.equals("leave_message")) {
+            if (server != null) {
                 finalMessage = finalMessage.replace("%server%", server);
             }
-            if (finalMessage.contains("%lp_prefix%")) {
-                User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                if (prefix != null) {
-                    //prefix = prefix.replace("&", "§");
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                }
+            if (lastServer != null) {
+                finalMessage = finalMessage.replace("%last_server%", lastServer);
             }
-            //finalMessage = finalMessage.replace("&", "§");
-            TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
-            for (ProxiedPlayer pl : getProxy().getPlayers()) {
-                if (!playerToggle.contains(pl.getUniqueId())) {
-                    pl.sendMessage(message);
-                }
+        }
+        if (finalMessage.contains("%lp_prefix%")) {
+            User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+            String prefix = user.getCachedData().getMetaData().getPrefix();
+            if (prefix != null) {
+                prefix = prefix.replace("&", "§");
+                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
             }
-            //TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
-            //getProxy().broadcast(message);
+        }
+        finalMessage = finalMessage.replace("&", "§");
+        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+        for (ProxiedPlayer pl : getProxy().getPlayers()) {
+            if (!playerToggle.contains(pl.getUniqueId())) {
+                pl.sendMessage(message);
+            }
         }
     }
 
