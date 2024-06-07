@@ -1,4 +1,5 @@
 # ProxyPlayerNotify Config
+
 # This config file contains settings for the BungeePlayer Notify plugin.
 # Use this file to customize the join/leave messages and permissions.
 
@@ -36,3 +37,9 @@ permission:
 ServerNames:
   example: "example-1"
   lobby: "Hub"
+
+# Disabled Servers
+# Define the backend servers where the join/switch/leave messages should not be sent.
+DisabledServers:
+  - "example-1"
+  - "other-backend-server"
