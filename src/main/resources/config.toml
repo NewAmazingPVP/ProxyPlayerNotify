@@ -4,18 +4,18 @@
 
 # Network Join Message
 # This message is displayed when a player joins the network.
-# Placeholders available: %player%, %lp_prefix% for LuckPerms.
-join_message = "%player% has joined the network!"
+# Placeholders available: %player%, %lp_prefix%, %server% (the server player joined).
+join_message = "%player% has joined the network (Logged in server: %server%)"
 
 # Servers Switch Message
 # This message is displayed when a player switches to a different server.
-# Placeholders available: %player%, %previousServer%, %connectedServer% (the server player joined), %lp_prefix% for LuckPerms.
+# Placeholders available: %player%, %last_server% , %server% (the server player joined), %lp_prefix%.
 switch_message = "%player% has switched from %previousServer% to the %connectedServer% server"
 
 # Network Leave Message
 # This message is displayed when a player leaves the network.
-# Placeholders available: %player%, %lp_prefix% for LuckPerms.
-leave_message = "%player% has left the network"
+# Placeholders available: %player%, %lp_prefix%, %last_server% (the last server player was on).
+leave_message = "%player% has left the network (Last server: %last_server%)"
 
 # Permissions
 # Use these settings to control who can see the join/leave messages.

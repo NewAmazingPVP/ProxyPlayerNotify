@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "8.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
@@ -36,8 +38,9 @@ public class VelocityPlayerNotify {
     private final ProxyServer proxy;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
-    private HashSet<UUID> messageToggles = new HashSet<>();
+    private Set<UUID> messageToggles = new HashSet<>();
     private Set<String> disabledServers;
+    private ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -80,18 +83,30 @@ public class VelocityPlayerNotify {
 
     @Subscribe(order = PostOrder.LAST)
     public void onJoin(PlayerChooseInitialServerEvent event) {
-        config = loadConfig(dataDirectory);
-        sendMessage("join_message", event.getPlayer(), null, null);
+        Player player = event.getPlayer();
+        proxy.getScheduler().buildTask(this, () -> {
+            if (player.isActive()) {
+                String server = player.getCurrentServer().get().getServerInfo().getName();
+                config = loadConfig(dataDirectory);
+                sendMessage("join_message", player, server, null);
+                playerLastServer.put(player.getUniqueId(), server);
+            }
+        }).delay(1, TimeUnit.SECONDS);
     }
 
     @Subscribe
     public void onSwitch(ServerConnectedEvent event) {
         config = loadConfig(dataDirectory);
         if(event.getPreviousServer().isPresent()) {
-            sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), event.getPreviousServer().get().getServerInfo().getName());
+            Player player = event.getPlayer();
+            String lastServer = event.getPreviousServer().get().getServerInfo().getName();
+            String currentServer = event.getServer().getServerInfo().getName();
+            sendMessage("switch_message", player, currentServer, lastServer);
+            playerLastServer.put(player.getUniqueId(), currentServer);
         } else {
             //sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), "");
         }
+
     }
 
     @Subscribe(order = PostOrder.LAST)
@@ -101,7 +116,9 @@ public class VelocityPlayerNotify {
             event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
             event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
             config = loadConfig(dataDirectory);
-            sendMessage("leave_message", event.getPlayer(), null, null);
+            Player player = event.getPlayer();
+            String lastServer = playerLastServer.remove(player.getUniqueId());
+            sendMessage("leave_message", player, null, lastServer);
         }
     }
 
@@ -115,99 +132,45 @@ public class VelocityPlayerNotify {
         if (config.getBoolean("permission.permissions")) {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("ppn.notify")) {
-                    String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
-                    if (finalMessage.isEmpty()) {
-                        return;
-                    }
-                    if (type.equals("switch_message")) {
-                        finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
-                        finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
-                    }
-                    try {
-                        if(this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
-                            if (finalMessage.contains("%lp_prefix%")) {
-                                String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
-                                if (prefix != null) {
-                                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                                }
-                            }
-                        }
-                    } catch (Exception ignored){
-                    }
-                    finalMessage = finalMessage.replace("&", "§");
-                    Component translatedComponent = Component.text(finalMessage);
-                    if (config.getBoolean("permission.hide_message")) {
-                        for (Player pl : proxy.getAllPlayers()) {
-                            if (pl.hasPermission("ppn.view")) {
-                                if(!messageToggles.contains(pl.getUniqueId())) {
-                                    pl.sendMessage(translatedComponent);
-                                }
-                            }
-                        }
-                    } else {
-                        //proxy.getAllPlayers().forEach(player -> player.sendMessage(translatedComponent));
-                        for (Player pl : proxy.getAllPlayers()) {
-                            if(!messageToggles.contains(pl.getUniqueId())) {
-                                pl.sendMessage(translatedComponent);
-                            }
-                        }
-                    }
+                    sendFormattedMessage(type, targetPlayer, connectedServer, disconnectedServer);
                 }
             } else if (config.getBoolean("permission.hide_message")) {
-                String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
-                if (finalMessage.isEmpty()) {
-                    return;
-                }
-                if (type.equals("switch_message")) {
-                    finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
-                    finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
-                }
-                try {
-                    if(this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
-                        if (finalMessage.contains("%lp_prefix%")) {
-                            String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
-                            if (prefix != null) {
-                                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                            }
-                        }
-                    }
-                } catch (Exception ignored){
-                }
-                finalMessage = finalMessage.replace("&", "§");
-                Component translatedComponent = Component.text(finalMessage);
-                for (Player pl : proxy.getAllPlayers()) {
-                    if (pl.hasPermission("ppn.view")) {
-                        if(!messageToggles.contains(pl.getUniqueId())) {
-                            pl.sendMessage(translatedComponent);
-                        }
-                    }
-                }
+                sendFormattedMessage(type, targetPlayer, connectedServer, disconnectedServer);
             }
         } else {
-            String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
-            if (finalMessage.isEmpty()) {
-                return;
+            sendFormattedMessage(type, targetPlayer, connectedServer, disconnectedServer);
+        }
+    }
+
+    private void sendFormattedMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
+        String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
+        if (finalMessage.isEmpty()) {
+            return;
+        }
+        if (type.equals("switch_message") || type.equals("join_message") || type.equals("leave_message")) {
+            if (connectedServer != null) {
+                finalMessage = finalMessage.replace("%server%", connectedServer);
             }
-            if (type.equals("switch_message")) {
-                finalMessage = finalMessage.replace("%connectedServer%", connectedServer);
-                finalMessage = finalMessage.replace("%previousServer%", disconnectedServer);
+            if (disconnectedServer != null) {
+                finalMessage = finalMessage.replace("%last_server%", disconnectedServer);
             }
-            try {
-                if(this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
-                    if (finalMessage.contains("%lp_prefix%")) {
-                        String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
-                        if (prefix != null) {
-                            finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                        }
+        }
+        try {
+            if (this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
+                if (finalMessage.contains("%lp_prefix%")) {
+                    String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
+                    if (prefix != null) {
+                        finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                     }
                 }
-            } catch (Exception ignored){
             }
-            finalMessage = finalMessage.replace("&", "§");
-            Component translatedComponent = Component.text(finalMessage);
-            for (Player pl : proxy.getAllPlayers()) {
-                if(!messageToggles.contains(pl.getUniqueId()))
-                    pl.sendMessage(translatedComponent);
+        } catch (Exception ignored) {
+        }
+        finalMessage = finalMessage.replace("&", "§");
+        Component translatedComponent = Component.text(finalMessage);
+        for (Player pl : proxy.getAllPlayers()) {
+            if (!messageToggles.contains(pl.getUniqueId())) {
+                pl.sendMessage(translatedComponent);
             }
         }
     }
@@ -226,7 +189,7 @@ public class VelocityPlayerNotify {
             CommandSource source = invocation.source();
             if (source instanceof Player) {
                 Player player = (Player) source;
-                if(messageToggles.contains(player.getUniqueId())){
+                if (messageToggles.contains(player.getUniqueId())) {
                     messageToggles.remove(player.getUniqueId());
                     player.sendMessage(Component.text("Message notifications toggled on"));
                 } else {
