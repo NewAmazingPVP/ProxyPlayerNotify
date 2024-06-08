@@ -17,6 +17,10 @@ switch_message = "%player% has switched from %previousServer% to the %connectedS
 # Placeholders available: %player%, %lp_prefix%, %last_server%, %time%.
 leave_message = "%player% has left the network (Last server: %last_server%) at %time%"
 
+# Disabled Servers
+# Define the backend servers (lowercase) where the join/switch/leave messages should not be sent.
+disabled_servers = ["example-1", "other-backend-server"]
+
 # Permissions
 # Use these settings to control who can see the join/leave messages.
 [permission]
@@ -30,7 +34,3 @@ notify_message = false
 # Hide Messages
 # If this is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
 hide_message = false
-
-# Disabled Servers
-# Define the backend servers where the join/switch/leave messages should not be sent.
-disabledServers = ["example-1", "other-backend-server"]
