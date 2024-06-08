@@ -56,9 +56,9 @@ public class VelocityPlayerNotify {
     public void onProxyInitialize(ProxyInitializeEvent event) {
         config = loadConfig(dataDirectory);
         metricsFactory.make(this, 18744);
-        proxy.getCommandManager().register("reloadProxyNotifyConfig", new reloadPlugin());
+        proxy.getCommandManager().register("reloadProxyNotifyConfig", new ReloadPlugin());
         proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
-        disabledServers = new HashSet<>(config.getList("disabledServers"));
+        disabledServers = new HashSet<>(config.getList("disabled_servers"));
     }
 
     private Toml loadConfig(Path path) {
@@ -88,10 +88,12 @@ public class VelocityPlayerNotify {
         Player player = event.getPlayer();
         proxy.getScheduler().buildTask(this, () -> {
             if (player.isActive()) {
-                String server = player.getCurrentServer().get().getServerInfo().getName();
-                config = loadConfig(dataDirectory);
-                sendMessage("join_message", player, server, null);
-                playerLastServer.put(player.getUniqueId(), server);
+                String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
+                if (server != null) {
+                    config = loadConfig(dataDirectory);
+                    sendMessage("join_message", player, server, null);
+                    playerLastServer.put(player.getUniqueId(), server);
+                }
             }
         }).delay(1, TimeUnit.SECONDS).schedule();
     }
@@ -99,7 +101,7 @@ public class VelocityPlayerNotify {
     @Subscribe
     public void onSwitch(ServerConnectedEvent event) {
         config = loadConfig(dataDirectory);
-        if(event.getPreviousServer().isPresent()) {
+        if (event.getPreviousServer().isPresent()) {
             Player player = event.getPlayer();
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
             String currentServer = event.getServer().getServerInfo().getName();
@@ -108,12 +110,11 @@ public class VelocityPlayerNotify {
         } else {
             //sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), "");
         }
-
     }
 
     @Subscribe(order = PostOrder.LAST)
     public void onLeave(DisconnectEvent event) {
-        if(event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_PROXY &&
+        if (event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_PROXY &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
@@ -179,11 +180,11 @@ public class VelocityPlayerNotify {
         }
     }
 
-    private class reloadPlugin implements SimpleCommand {
+    private class ReloadPlugin implements SimpleCommand {
         @Override
         public void execute(Invocation invocation) {
             config = loadConfig(dataDirectory);
-            disabledServers = new HashSet<>(config.getList("disabledServers"));
+            disabledServers = new HashSet<>(config.getList("disabled_servers"));
         }
     }
 
