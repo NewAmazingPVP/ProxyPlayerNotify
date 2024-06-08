@@ -21,6 +21,10 @@ leave_message = "%player% has left the network (Last server: %last_server%) at %
 # Define the backend servers (lowercase) where the join/switch/leave messages should not be sent.
 disabled_servers = ["example-1", "other-backend-server"]
 
+# Private Servers
+# Specify the private servers (lowercase) where if player joins, leaves, and switches from and to, notifications should not be sent.
+private_servers = ["sample-1", "private-server"]
+
 # Permissions
 # Use these settings to control who can see the join/leave messages.
 [permission]

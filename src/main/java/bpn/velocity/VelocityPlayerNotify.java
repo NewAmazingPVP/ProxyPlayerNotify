@@ -42,6 +42,7 @@ public class VelocityPlayerNotify {
     private final Metrics.Factory metricsFactory;
     private Set<UUID> messageToggles = new HashSet<>();
     private Set<String> disabledServers;
+    private Set<String> privateServers;
     private ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
 
     @Inject
@@ -59,6 +60,7 @@ public class VelocityPlayerNotify {
         proxy.getCommandManager().register("reloadProxyNotifyConfig", new ReloadPlugin());
         proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
         disabledServers = new HashSet<>(config.getList("disabled_servers"));
+        privateServers = new HashSet<>(config.getList("private_servers"));
     }
 
     private Toml loadConfig(Path path) {
@@ -128,7 +130,11 @@ public class VelocityPlayerNotify {
     public void sendMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         config = loadConfig(dataDirectory);
 
-        if (connectedServer != null && disabledServers.contains(connectedServer.toLowerCase())) {
+        if (connectedServer != null && privateServers.contains(connectedServer.toLowerCase())) {
+            return;
+        }
+
+        if (disconnectedServer != null && privateServers.contains(disconnectedServer.toLowerCase())) {
             return;
         }
 
@@ -174,7 +180,7 @@ public class VelocityPlayerNotify {
         finalMessage = finalMessage.replace("&", "§");
         Component translatedComponent = Component.text(finalMessage);
         for (Player pl : proxy.getAllPlayers()) {
-            if (!messageToggles.contains(pl.getUniqueId())) {
+            if (!messageToggles.contains(pl.getUniqueId()) && !disabledServers.contains(pl.getCurrentServer().toString().toLowerCase())) {
                 pl.sendMessage(translatedComponent);
             }
         }
@@ -185,6 +191,7 @@ public class VelocityPlayerNotify {
         public void execute(Invocation invocation) {
             config = loadConfig(dataDirectory);
             disabledServers = new HashSet<>(config.getList("disabled_servers"));
+            privateServers = new HashSet<>(config.getList("private_servers"));
         }
     }
 
