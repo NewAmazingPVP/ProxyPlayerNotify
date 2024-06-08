@@ -35,6 +35,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private HashSet<UUID> playerToggle = new HashSet<>();
     private Map<UUID, String> playerLastServer = new HashMap<>();
     private Set<String> disabledServers;
+    private Set<String> privateServers;
     private ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
 
     @Override
@@ -54,6 +55,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         }
 
         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
+        privateServers = new HashSet<>(config.getStringList("PrivateServers"));
 
         getProxy().getPluginManager().registerListener(this, this);
         if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
@@ -127,7 +129,11 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         saveDefaultConfig();
         loadConfig();
 
-        if (server != null && disabledServers.contains(server.toLowerCase())) {
+        if (server != null && privateServers.contains(server.toLowerCase())) {
+            return;
+        }
+
+        if (lastServer != null && privateServers.contains(lastServer.toLowerCase())) {
             return;
         }
 
@@ -170,7 +176,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         finalMessage = finalMessage.replace("&", "§");
         TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
         for (ProxiedPlayer pl : getProxy().getPlayers()) {
-            if (!playerToggle.contains(pl.getUniqueId())) {
+            if (!playerToggle.contains(pl.getUniqueId()) && !disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())) {
                 pl.sendMessage(message);
             }
         }
@@ -198,6 +204,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         }
 
                         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
+                        privateServers = new HashSet<>(config.getStringList("PrivateServers"));
                     } else {
                         sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
                     }
@@ -214,6 +221,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 }
 
                 disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
+                privateServers = new HashSet<>(config.getStringList("PrivateServers"));
             }
         }
     }

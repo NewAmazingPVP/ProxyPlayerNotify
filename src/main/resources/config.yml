@@ -39,7 +39,13 @@ ServerNames:
   lobby: "Hub"
 
 # Disabled Servers
-# Define the backend servers where the join/switch/leave messages should not be sent.
+# Define the backend servers (lowercase) where the join/switch/leave messages from proxy should not be sent.
 DisabledServers:
   - "example-1"
   - "other-backend-server"
+
+# Private Servers
+# Specify the private servers (lowercase) where if player joins, leaves, and switches from and to, notifications should not be sent.
+PrivateServers:
+  - "example"
+  - "private-server"
