@@ -10,7 +10,7 @@ join_message = "%player% has joined the network (Logged in server: %server%) at 
 # Servers Switch Message
 # This message is displayed when a player switches to a different server.
 # Placeholders available: %player%, %last_server%, %server%, %time%, %lp_prefix%.
-switch_message = "%player% has switched from %previousServer% to the %connectedServer% server at %time%"
+switch_message = "%player% has switched from %last_server% to the %server% server at %time%"
 
 # Network Leave Message
 # This message is displayed when a player leaves the network.

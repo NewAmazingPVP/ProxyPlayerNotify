@@ -180,8 +180,15 @@ public class VelocityPlayerNotify {
         finalMessage = finalMessage.replace("&", "§");
         Component translatedComponent = Component.text(finalMessage);
         for (Player pl : proxy.getAllPlayers()) {
-            if (!messageToggles.contains(pl.getUniqueId()) && !disabledServers.contains(pl.getCurrentServer().toString().toLowerCase())) {
-                pl.sendMessage(translatedComponent);
+            if (!messageToggles.contains(pl.getUniqueId())) {
+                if(pl.getCurrentServer().isPresent())
+                {
+                    if(!disabledServers.contains(pl.getCurrentServer().get().getServerInfo().getName().toLowerCase())){
+                        pl.sendMessage(translatedComponent);
+                    }
+                } else {
+                    pl.sendMessage(translatedComponent);
+                }
             }
         }
     }
