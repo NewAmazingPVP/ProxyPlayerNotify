@@ -19,10 +19,15 @@ leave_message = "%player% has left the network (Last server: %last_server%) at %
 
 # Disabled Servers
 # Define the backend servers (lowercase) where the join/switch/leave messages should not be sent.
+# In simple words, no messages of this plugin will be sent to players on that server
+# In short: No activity notifications are sent to players on these servers.
 disabled_servers = ["example-1", "other-backend-server"]
 
 # Private Servers
 # Specify the private servers (lowercase) where if player joins, leaves, and switches from and to, notifications should not be sent.
+# Think about them like admin servers
+# When someone joins it, the whole proxy should not be notified about that because you kind of want to keep that server private/secret and not let the players know.
+# In short: Activity notifications related to these servers are not broadcasted across the entire network.
 private_servers = ["sample-1", "private-server"]
 
 # Permissions
