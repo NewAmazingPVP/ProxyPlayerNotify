@@ -31,7 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "8.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "9.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
 })
 public class VelocityPlayerNotify {
