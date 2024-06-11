@@ -16,6 +16,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectedEvent;
+import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -103,14 +104,16 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     }
 
     @EventHandler
-    public void onSwitch(ServerConnectedEvent event) {
+    public void onSwitch(ServerSwitchEvent event) {
         ProxiedPlayer player = event.getPlayer();
-        String lastServer = playerLastServer.get(player.getUniqueId());
-        String currentServer = event.getServer().getInfo().getName();
-        saveDefaultConfig();
-        loadConfig();
-        sendMessage("switch_message", player, currentServer, lastServer);
-        playerLastServer.put(player.getUniqueId(), currentServer);
+        String lastServer = event.getFrom().getName();
+        if (player.isConnected()) {
+            String currentServer = player.getServer().getInfo().getName();
+            saveDefaultConfig();
+            loadConfig();
+            sendMessage("switch_message", player, currentServer, lastServer);
+            playerLastServer.put(player.getUniqueId(), currentServer);
+        }
     }
 
     @EventHandler
