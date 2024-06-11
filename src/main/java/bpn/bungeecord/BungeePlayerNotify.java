@@ -129,11 +129,11 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         saveDefaultConfig();
         loadConfig();
 
-        if (server != null && privateServers.contains(server.toLowerCase())) {
+        if (server != null && privateServers != null && privateServers.contains(server.toLowerCase())) {
             return;
         }
 
-        if (lastServer != null && privateServers.contains(lastServer.toLowerCase())) {
+        if (lastServer != null && privateServers != null && privateServers.contains(lastServer.toLowerCase())) {
             return;
         }
 
@@ -176,8 +176,15 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         finalMessage = finalMessage.replace("&", "§");
         TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
         for (ProxiedPlayer pl : getProxy().getPlayers()) {
-            if (!playerToggle.contains(pl.getUniqueId()) && !disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())) {
-                pl.sendMessage(message);
+            if (!playerToggle.contains(pl.getUniqueId())) {
+                if(pl.getServer() != null && disabledServers != null)
+                {
+                    if(!disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())){
+                        pl.sendMessage(translatedComponent);
+                    }
+                } else {
+                    pl.sendMessage(translatedComponent);
+                }
             }
         }
     }

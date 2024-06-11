@@ -130,11 +130,11 @@ public class VelocityPlayerNotify {
     public void sendMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         config = loadConfig(dataDirectory);
 
-        if (connectedServer != null && privateServers.contains(connectedServer.toLowerCase())) {
+        if (connectedServer != null && privateServers != null && privateServers.contains(connectedServer.toLowerCase())) {
             return;
         }
 
-        if (disconnectedServer != null && privateServers.contains(disconnectedServer.toLowerCase())) {
+        if (disconnectedServer != null && privateServers != null && privateServers.contains(disconnectedServer.toLowerCase())) {
             return;
         }
 
@@ -181,7 +181,7 @@ public class VelocityPlayerNotify {
         Component translatedComponent = Component.text(finalMessage);
         for (Player pl : proxy.getAllPlayers()) {
             if (!messageToggles.contains(pl.getUniqueId())) {
-                if(pl.getCurrentServer().isPresent())
+                if(pl.getCurrentServer().isPresent() && disabledServers != null)
                 {
                     if(!disabledServers.contains(pl.getCurrentServer().get().getServerInfo().getName().toLowerCase())){
                         pl.sendMessage(translatedComponent);
