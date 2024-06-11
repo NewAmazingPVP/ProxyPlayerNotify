@@ -180,10 +180,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 if(pl.getServer() != null && disabledServers != null)
                 {
                     if(!disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())){
-                        pl.sendMessage(translatedComponent);
+                        pl.sendMessage(message);
                     }
                 } else {
-                    pl.sendMessage(translatedComponent);
+                    pl.sendMessage(message);
                 }
             }
         }
