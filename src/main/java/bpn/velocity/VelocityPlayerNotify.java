@@ -199,6 +199,7 @@ public class VelocityPlayerNotify {
             config = loadConfig(dataDirectory);
             disabledServers = new HashSet<>(config.getList("disabled_servers"));
             privateServers = new HashSet<>(config.getList("private_servers"));
+            proxy.getConsoleCommandSource().sendMessage(Component.text("Reload done"));
         }
     }
 
