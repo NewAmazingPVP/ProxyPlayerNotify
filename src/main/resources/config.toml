@@ -30,6 +30,12 @@ disabled_servers = ["example-1", "other-backend-server"]
 # In short: Activity notifications related to these servers are not broadcasted across the entire network.
 private_servers = ["sample-1", "private-server"]
 
+# Server Names
+# Define custom server names here. Players can join/leave/switch to the server using the custom names specified below.
+[ServerNames]
+example = "example-1"
+lobby = "Hub"
+
 # Permissions
 # Use these settings to control who can see the join/leave messages.
 [permission]
