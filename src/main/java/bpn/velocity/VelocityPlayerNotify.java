@@ -16,6 +16,8 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextColor;
 import net.luckperms.api.LuckPermsProvider;
 
 import java.io.File;
@@ -30,6 +32,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "9.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
@@ -178,7 +182,7 @@ public class VelocityPlayerNotify {
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
         finalMessage = finalMessage.replace("&", "§");
-        Component translatedComponent = Component.text(finalMessage);
+        Component translatedComponent = parseHexColors(finalMessage);
         for (Player pl : proxy.getAllPlayers()) {
             if (!messageToggles.contains(pl.getUniqueId())) {
                 if(pl.getCurrentServer().isPresent() && disabledServers != null)
@@ -191,6 +195,39 @@ public class VelocityPlayerNotify {
                 }
             }
         }
+    }
+
+    private Component parseHexColors(String message) {
+        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
+        Matcher matcher = pattern.matcher(message);
+        int lastEnd = 0;
+        TextComponent.Builder componentBuilder = Component.text();
+
+        while (matcher.find()) {
+            String hexColor = matcher.group();
+            TextColor color = TextColor.fromHexString(hexColor);
+            
+            if (matcher.start() > lastEnd) {
+                componentBuilder.append(Component.text(message.substring(lastEnd, matcher.start())));
+            }
+
+            int nextStart = matcher.end();
+            int nextColorStart = nextStart;
+
+            while (nextColorStart < message.length() && !pattern.matcher(message.substring(nextColorStart)).find()) {
+                nextColorStart++;
+            }
+
+            String text = message.substring(nextStart, nextColorStart);
+            componentBuilder.append(Component.text(text).color(color));
+            lastEnd = nextColorStart;
+        }
+
+        if (lastEnd < message.length()) {
+            componentBuilder.append(Component.text(message.substring(lastEnd)));
+        }
+
+        return componentBuilder.build();
     }
 
     private class ReloadPlugin implements SimpleCommand {
