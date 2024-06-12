@@ -27,9 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -48,6 +46,7 @@ public class VelocityPlayerNotify {
     private Set<String> disabledServers;
     private Set<String> privateServers;
     private ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
+    private Map<String, String> serverNames = new HashMap<>();
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -65,6 +64,7 @@ public class VelocityPlayerNotify {
         proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
         disabledServers = new HashSet<>(config.getList("disabled_servers"));
         privateServers = new HashSet<>(config.getList("private_servers"));
+        loadServerNames();
     }
 
     private Toml loadConfig(Path path) {
@@ -89,6 +89,16 @@ public class VelocityPlayerNotify {
         return new Toml().read(file);
     }
 
+    private void loadServerNames() {
+        serverNames.clear();
+        Toml serverNamesConfig = config.getTable("ServerNames");
+        if (serverNamesConfig != null) {
+            for (Map.Entry<String, Object> entry : serverNamesConfig.entrySet()) {
+                serverNames.put(entry.getKey().toLowerCase(), entry.getValue().toString());
+            }
+        }
+    }
+
     @Subscribe(order = PostOrder.LAST)
     public void onJoin(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
@@ -97,6 +107,7 @@ public class VelocityPlayerNotify {
                 String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
                 if (server != null) {
                     config = loadConfig(dataDirectory);
+                    loadServerNames();
                     sendMessage("join_message", player, server, null);
                     playerLastServer.put(player.getUniqueId(), server);
                 }
@@ -107,6 +118,7 @@ public class VelocityPlayerNotify {
     @Subscribe
     public void onSwitch(ServerConnectedEvent event) {
         config = loadConfig(dataDirectory);
+        loadServerNames();
         if (event.getPreviousServer().isPresent()) {
             Player player = event.getPlayer();
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
@@ -125,6 +137,7 @@ public class VelocityPlayerNotify {
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
             config = loadConfig(dataDirectory);
+            loadServerNames();
             Player player = event.getPlayer();
             String lastServer = playerLastServer.remove(player.getUniqueId());
             sendMessage("leave_message", player, null, lastServer);
@@ -133,6 +146,7 @@ public class VelocityPlayerNotify {
 
     public void sendMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         config = loadConfig(dataDirectory);
+        loadServerNames();
 
         if (connectedServer != null && privateServers != null && privateServers.contains(connectedServer.toLowerCase())) {
             return;
@@ -162,10 +176,10 @@ public class VelocityPlayerNotify {
         }
         if (type.equals("switch_message") || type.equals("join_message") || type.equals("leave_message")) {
             if (connectedServer != null) {
-                finalMessage = finalMessage.replace("%server%", connectedServer);
+                finalMessage = finalMessage.replace("%server%", getFriendlyServerName(connectedServer));
             }
             if (disconnectedServer != null) {
-                finalMessage = finalMessage.replace("%last_server%", disconnectedServer);
+                finalMessage = finalMessage.replace("%last_server%", getFriendlyServerName(disconnectedServer));
             }
         }
         try {
@@ -195,6 +209,10 @@ public class VelocityPlayerNotify {
                 }
             }
         }
+    }
+
+    private String getFriendlyServerName(String serverName) {
+        return serverNames.getOrDefault(serverName.toLowerCase(), serverName);
     }
 
     private Component parseHexColors(String message) {
@@ -243,6 +261,7 @@ public class VelocityPlayerNotify {
             config = loadConfig(dataDirectory);
             disabledServers = new HashSet<>(config.getList("disabled_servers"));
             privateServers = new HashSet<>(config.getList("private_servers"));
+            loadServerNames();
             proxy.getConsoleCommandSource().sendMessage(Component.text("Reload done"));
         }
     }
