@@ -198,13 +198,13 @@ public class VelocityPlayerNotify {
     }
 
     private Component parseHexColors(String message) {
-        String temp = "";
+        StringBuilder temp = new StringBuilder();
         for(int i = 0; i < message.length()-2; i++){
-            if(!(message.substring(i, i+1).equals("&") && message.substring(i+1, i+2).equals("#"))){
-                temp += message.substring(i, i+1);
+            if(!(message.charAt(i) == '&' && message.charAt(i + 1) == '#')){
+                temp.append(message.charAt(i));
             }
         }
-        message = temp;
+        message = temp.toString();
         Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
         Matcher matcher = pattern.matcher(message);
         int lastEnd = 0;
