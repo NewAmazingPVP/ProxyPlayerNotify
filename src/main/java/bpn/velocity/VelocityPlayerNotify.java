@@ -206,7 +206,7 @@ public class VelocityPlayerNotify {
         while (matcher.find()) {
             String hexColor = matcher.group();
             TextColor color = TextColor.fromHexString(hexColor);
-            
+
             if (matcher.start() > lastEnd) {
                 componentBuilder.append(Component.text(message.substring(lastEnd, matcher.start())));
             }

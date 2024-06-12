@@ -8,14 +8,16 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import net.luckperms.api.model.user.User;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Listener;
@@ -24,9 +26,10 @@ import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
+import net.md_5.bungee.event.EventPriority;
+import net.md_5.bungee.api.ChatColor;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
-import net.md_5.bungee.event.EventPriority;
 
 public class BungeePlayerNotify extends Plugin implements Listener {
 
@@ -106,6 +109,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     @EventHandler
     public void onSwitch(ServerSwitchEvent event) {
         ProxiedPlayer player = event.getPlayer();
+        if(event.getFrom() == null) return;
         String lastServer = event.getFrom().getName();
         if (player.isConnected()) {
             String currentServer = player.getServer().getInfo().getName();
@@ -118,14 +122,13 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
-        if(validPlayers.remove(event.getPlayer())) {
+        if (validPlayers.remove(event.getPlayer())) {
             ProxiedPlayer player = event.getPlayer();
             String lastServer = playerLastServer.remove(player.getUniqueId());
             saveDefaultConfig();
             loadConfig();
             sendMessage("leave_message", player, null, lastServer);
         }
-
     }
 
     public void sendMessage(String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
@@ -177,19 +180,55 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
         finalMessage = finalMessage.replace("&", "§");
-        TextComponent message = new TextComponent(ChatColor.translateAlternateColorCodes('&', finalMessage));
+
+        BaseComponent[] messageComponents = parseHexColors(finalMessage);
+
         for (ProxiedPlayer pl : getProxy().getPlayers()) {
             if (!playerToggle.contains(pl.getUniqueId())) {
-                if(pl.getServer() != null && disabledServers != null)
-                {
-                    if(!disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())){
-                        pl.sendMessage(message);
+                if (pl.getServer() != null && disabledServers != null) {
+                    if (!disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())) {
+                        pl.sendMessage(messageComponents);
                     }
                 } else {
-                    pl.sendMessage(message);
+                    pl.sendMessage(messageComponents);
                 }
             }
         }
+    }
+
+    private BaseComponent[] parseHexColors(String message) {
+        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
+        Matcher matcher = pattern.matcher(message);
+        int lastEnd = 0;
+        List<BaseComponent> components = new ArrayList<>();
+
+        while (matcher.find()) {
+            String hexColor = matcher.group();
+            ChatColor color = ChatColor.of(hexColor);
+
+            if (matcher.start() > lastEnd) {
+                components.add(new TextComponent(message.substring(lastEnd, matcher.start())));
+            }
+
+            int nextStart = matcher.end();
+            int nextColorStart = nextStart;
+
+            while (nextColorStart < message.length() && !pattern.matcher(message.substring(nextColorStart)).find()) {
+                nextColorStart++;
+            }
+
+            String text = message.substring(nextStart, nextColorStart);
+            TextComponent coloredComponent = new TextComponent(text);
+            coloredComponent.setColor(color);
+            components.add(coloredComponent);
+            lastEnd = nextColorStart;
+        }
+
+        if (lastEnd < message.length()) {
+            components.add(new TextComponent(message.substring(lastEnd)));
+        }
+
+        return components.toArray(new BaseComponent[0]);
     }
 
     public class ReloadCommand extends Command {
