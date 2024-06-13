@@ -198,11 +198,12 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     private BaseComponent[] parseHexColors(String message) {
         StringBuilder temp = new StringBuilder();
-        for(int i = 0; i < message.length()-2; i++){
+        for(int i = 0; i < message.length()-1; i++){
             if(!(message.charAt(i) == '&' && message.charAt(i + 1) == '#')){
                 temp.append(message.charAt(i));
             }
         }
+        temp.append(message.charAt(message.length()-1));
         message = temp.toString();
         Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
         Matcher matcher = pattern.matcher(message);
