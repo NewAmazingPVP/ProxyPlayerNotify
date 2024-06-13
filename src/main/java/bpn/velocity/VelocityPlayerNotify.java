@@ -18,6 +18,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
 
 import java.io.File;
@@ -195,8 +196,15 @@ public class VelocityPlayerNotify {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        finalMessage = finalMessage.replace("&", "§");
-        Component translatedComponent = parseHexColors(finalMessage);
+        finalMessage = finalMessage.replace("&#", "#");
+
+        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
+                .character('&')
+                .hexCharacter('#')
+                .hexColors()
+                .build();
+
+        Component translatedComponent = serializer.deserialize(finalMessage);
         for (Player pl : proxy.getAllPlayers()) {
             if (!messageToggles.contains(pl.getUniqueId())) {
                 if(pl.getCurrentServer().isPresent() && disabledServers != null)
@@ -213,46 +221,6 @@ public class VelocityPlayerNotify {
 
     private String getFriendlyServerName(String serverName) {
         return serverNames.getOrDefault(serverName.toLowerCase(), serverName);
-    }
-
-    private Component parseHexColors(String message) {
-        StringBuilder temp = new StringBuilder();
-        for(int i = 0; i < message.length()-2; i++){
-            if(!(message.charAt(i) == '&' && message.charAt(i + 1) == '#')){
-                temp.append(message.charAt(i));
-            }
-        }
-        message = temp.toString();
-        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
-        Matcher matcher = pattern.matcher(message);
-        int lastEnd = 0;
-        TextComponent.Builder componentBuilder = Component.text();
-
-        while (matcher.find()) {
-            String hexColor = matcher.group();
-            TextColor color = TextColor.fromHexString(hexColor);
-
-            if (matcher.start() > lastEnd) {
-                componentBuilder.append(Component.text(message.substring(lastEnd, matcher.start())));
-            }
-
-            int nextStart = matcher.end();
-            int nextColorStart = nextStart;
-
-            while (nextColorStart < message.length() && !pattern.matcher(message.substring(nextColorStart)).find()) {
-                nextColorStart++;
-            }
-
-            String text = message.substring(nextStart, nextColorStart);
-            componentBuilder.append(Component.text(text).color(color));
-            lastEnd = nextColorStart;
-        }
-
-        if (lastEnd < message.length()) {
-            componentBuilder.append(Component.text(message.substring(lastEnd)));
-        }
-
-        return componentBuilder.build();
     }
 
     private class ReloadPlugin implements SimpleCommand {
