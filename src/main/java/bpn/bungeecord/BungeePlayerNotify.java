@@ -1,16 +1,9 @@
 package bpn.bungeecord;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
@@ -24,20 +17,27 @@ import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
-import net.md_5.bungee.api.ChatColor;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class BungeePlayerNotify extends Plugin implements Listener {
 
     private Configuration config;
     private LuckPerms luckPerms;
     private Map<String, String> serverNames;
-    private HashSet<UUID> playerToggle = new HashSet<>();
-    private Map<UUID, String> playerLastServer = new HashMap<>();
+    private final HashSet<UUID> playerToggle = new HashSet<>();
+    private final Map<UUID, String> playerLastServer = new HashMap<>();
     private Set<String> disabledServers;
     private Set<String> privateServers;
-    private ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
+    private final ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
     private static final Pattern HEX_REGEX = Pattern.compile("&#([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])", Pattern.CASE_INSENSITIVE);
 
     @Override
@@ -107,7 +107,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     @EventHandler
     public void onSwitch(ServerSwitchEvent event) {
         ProxiedPlayer player = event.getPlayer();
-        if(event.getFrom() == null) return;
+        if (event.getFrom() == null) return;
         String lastServer = event.getFrom().getName();
         if (player.isConnected()) {
             String currentServer = player.getServer().getInfo().getName();
@@ -192,11 +192,12 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             }
         }
     }
+
     public String replace(String s) {
         return HEX_REGEX.matcher(s).replaceAll("&x&$1&$2&$3&$4&$5&$6");
     }
 
-        public class ReloadCommand extends Command {
+    public class ReloadCommand extends Command {
 
         public ReloadCommand() {
             super("reloadProxyNotifyConfig");
@@ -242,7 +243,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
     public class ToggleMessagesCommand extends Command {
 
-        private BungeePlayerNotify plugin;
+        private final BungeePlayerNotify plugin;
 
         public ToggleMessagesCommand(BungeePlayerNotify plugin) {
             super("togglemessages");

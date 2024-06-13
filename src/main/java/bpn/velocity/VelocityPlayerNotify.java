@@ -16,8 +16,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
 
@@ -31,8 +29,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "9.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
@@ -43,11 +39,11 @@ public class VelocityPlayerNotify {
     private final ProxyServer proxy;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
-    private Set<UUID> messageToggles = new HashSet<>();
+    private final Set<UUID> messageToggles = new HashSet<>();
     private Set<String> disabledServers;
     private Set<String> privateServers;
-    private ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
-    private Map<String, String> serverNames = new HashMap<>();
+    private final ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
+    private final Map<String, String> serverNames = new HashMap<>();
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -196,7 +192,6 @@ public class VelocityPlayerNotify {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        //finalMessage = finalMessage.replace("&#", "#");
 
         LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
                 .character('&')
@@ -206,9 +201,8 @@ public class VelocityPlayerNotify {
         Component translatedComponent = serializer.deserialize(finalMessage);
         for (Player pl : proxy.getAllPlayers()) {
             if (!messageToggles.contains(pl.getUniqueId())) {
-                if(pl.getCurrentServer().isPresent() && disabledServers != null)
-                {
-                    if(!disabledServers.contains(pl.getCurrentServer().get().getServerInfo().getName().toLowerCase())){
+                if (pl.getCurrentServer().isPresent() && disabledServers != null) {
+                    if (!disabledServers.contains(pl.getCurrentServer().get().getServerInfo().getName().toLowerCase())) {
                         pl.sendMessage(translatedComponent);
                     }
                 } else {
