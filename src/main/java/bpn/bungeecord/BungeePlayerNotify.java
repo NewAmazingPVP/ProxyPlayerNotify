@@ -8,13 +8,10 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -41,6 +38,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private Set<String> disabledServers;
     private Set<String> privateServers;
     private ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
+    private static final Pattern HEX_REGEX = Pattern.compile("&#([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])", Pattern.CASE_INSENSITIVE);
 
     @Override
     public void onEnable() {
@@ -173,73 +171,32 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
             String prefix = user.getCachedData().getMetaData().getPrefix();
             if (prefix != null) {
-                prefix = prefix.replace("&", "§");
                 finalMessage = finalMessage.replace("%lp_prefix%", prefix);
             }
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
+        finalMessage = replace(finalMessage);
         finalMessage = finalMessage.replace("&", "§");
-
-        BaseComponent[] messageComponents = parseHexColors(finalMessage);
+        finalMessage = ChatColor.translateAlternateColorCodes('§', finalMessage);
 
         for (ProxiedPlayer pl : getProxy().getPlayers()) {
             if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && disabledServers != null) {
                     if (!disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())) {
-                        pl.sendMessage(messageComponents);
+                        pl.sendMessage(finalMessage);
                     }
                 } else {
-                    pl.sendMessage(messageComponents);
+                    pl.sendMessage(finalMessage);
                 }
             }
         }
     }
-
-    private BaseComponent[] parseHexColors(String message) {
-        StringBuilder temp = new StringBuilder();
-        for(int i = 0; i < message.length()-1; i++){
-            if(!(message.charAt(i) == '&' && message.charAt(i + 1) == '#')){
-                temp.append(message.charAt(i));
-            }
-        }
-        temp.append(message.charAt(message.length()-1));
-        message = temp.toString();
-        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
-        Matcher matcher = pattern.matcher(message);
-        int lastEnd = 0;
-        List<BaseComponent> components = new ArrayList<>();
-
-        while (matcher.find()) {
-            String hexColor = matcher.group();
-            ChatColor color = ChatColor.of(hexColor);
-
-            if (matcher.start() > lastEnd) {
-                components.add(new TextComponent(message.substring(lastEnd, matcher.start())));
-            }
-
-            int nextStart = matcher.end();
-            int nextColorStart = nextStart;
-
-            while (nextColorStart < message.length() && !pattern.matcher(message.substring(nextColorStart)).find()) {
-                nextColorStart++;
-            }
-
-            String text = message.substring(nextStart, nextColorStart);
-            TextComponent coloredComponent = new TextComponent(text);
-            coloredComponent.setColor(color);
-            components.add(coloredComponent);
-            lastEnd = nextColorStart;
-        }
-
-        if (lastEnd < message.length()) {
-            components.add(new TextComponent(message.substring(lastEnd)));
-        }
-
-        return components.toArray(new BaseComponent[0]);
+    public String replace(String s) {
+        return HEX_REGEX.matcher(s).replaceAll("&x&$1&$2&$3&$4&$5&$6");
     }
 
-    public class ReloadCommand extends Command {
+        public class ReloadCommand extends Command {
 
         public ReloadCommand() {
             super("reloadProxyNotifyConfig");

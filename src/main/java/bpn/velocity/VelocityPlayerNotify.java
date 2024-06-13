@@ -196,11 +196,10 @@ public class VelocityPlayerNotify {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        finalMessage = finalMessage.replace("&#", "#");
+        //finalMessage = finalMessage.replace("&#", "#");
 
         LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
                 .character('&')
-                .hexCharacter('#')
                 .hexColors()
                 .build();
 
