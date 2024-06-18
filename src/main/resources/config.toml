@@ -4,17 +4,17 @@
 
 # Network Join Message
 # This message is displayed when a player joins the network.
-# Placeholders available: %player%, %lp_prefix%, %server%, %time%.
+# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
 join_message = "%player% has joined the network (Logged in server: %server%) at %time%"
 
 # Servers Switch Message
 # This message is displayed when a player switches to a different server.
-# Placeholders available: %player%, %last_server%, %server%, %time%, %lp_prefix%.
+# Placeholders available: %player%, %last_server%, %server%, %time%, %lp_prefix%, %lp_suffix%.
 switch_message = "%player% has switched from %last_server% to the %server% server at %time%"
 
 # Network Leave Message
 # This message is displayed when a player leaves the network.
-# Placeholders available: %player%, %lp_prefix%, %last_server%, %time%.
+# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %last_server%, %time%.
 leave_message = "%player% has left the network (Last server: %last_server%) at %time%"
 
 # Disabled Servers

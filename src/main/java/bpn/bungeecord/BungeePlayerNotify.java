@@ -60,7 +60,8 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         privateServers = new HashSet<>(config.getStringList("PrivateServers"));
 
         getProxy().getPluginManager().registerListener(this, this);
-        if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")) {
+        if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")
+        || config.getString("join_message").contains("%lp_suffix%") || config.getString("switch_message").contains("%lp_suffix%") || config.getString("leave_message").contains("%lp_suffix%")) {
             luckPerms = LuckPermsProvider.get();
         }
 
@@ -172,6 +173,13 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             String prefix = user.getCachedData().getMetaData().getPrefix();
             if (prefix != null) {
                 finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+            }
+        }
+        if (finalMessage.contains("%lp_suffix%")) {
+            User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+            String suffix = user.getCachedData().getMetaData().getSuffix();
+            if (suffix != null) {
+                finalMessage = finalMessage.replace("%lp_suffix%", suffix);
             }
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
