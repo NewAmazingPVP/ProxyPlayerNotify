@@ -187,6 +187,12 @@ public class VelocityPlayerNotify {
                         finalMessage = finalMessage.replace("%lp_prefix%", prefix);
                     }
                 }
+                if (finalMessage.contains("%lp_suffix%")) {
+                    String suffix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getSuffix();
+                    if (suffix != null) {
+                        finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+                    }
+                }
             }
         } catch (Exception ignored) {
         }
