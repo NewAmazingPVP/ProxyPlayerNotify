@@ -1,5 +1,8 @@
 package bpn.bungeecord;
 
+import de.myzelyam.api.vanish.BungeeVanishAPI;
+import de.myzelyam.api.vanish.VanishAPI;
+import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
@@ -37,6 +40,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private final Map<UUID, String> playerLastServer = new HashMap<>();
     private Set<String> disabledServers;
     private Set<String> privateServers;
+    private boolean noVanishNotifications;
     private final ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
     private static final Pattern HEX_REGEX = Pattern.compile("&#([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])", Pattern.CASE_INSENSITIVE);
 
@@ -58,6 +62,8 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
         privateServers = new HashSet<>(config.getStringList("PrivateServers"));
+
+        noVanishNotifications = config.getBoolean("disable_vanish_notifications");
 
         getProxy().getPluginManager().registerListener(this, this);
         if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")
@@ -139,6 +145,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         }
 
         if (lastServer != null && privateServers != null && privateServers.contains(lastServer.toLowerCase())) {
+            return;
+        }
+
+        if(noVanishNotifications && BungeeVanishAPI.isInvisible(targetPlayer)){
             return;
         }
 

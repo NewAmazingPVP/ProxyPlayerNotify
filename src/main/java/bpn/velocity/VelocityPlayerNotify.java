@@ -15,6 +15,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
@@ -42,6 +43,7 @@ public class VelocityPlayerNotify {
     private final Set<UUID> messageToggles = new HashSet<>();
     private Set<String> disabledServers;
     private Set<String> privateServers;
+    private boolean noVanishNotifications;
     private final ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
     private final Map<String, String> serverNames = new HashMap<>();
 
@@ -61,6 +63,7 @@ public class VelocityPlayerNotify {
         proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
         disabledServers = new HashSet<>(config.getList("disabled_servers"));
         privateServers = new HashSet<>(config.getList("private_servers"));
+        noVanishNotifications = config.getBoolean("disable_vanish_notifications");
         loadServerNames();
     }
 
@@ -150,6 +153,10 @@ public class VelocityPlayerNotify {
         }
 
         if (disconnectedServer != null && privateServers != null && privateServers.contains(disconnectedServer.toLowerCase())) {
+            return;
+        }
+
+        if(noVanishNotifications && VelocityVanishAPI.isInvisible(targetPlayer)){
             return;
         }
 
