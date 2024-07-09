@@ -1,6 +1,6 @@
 # ProxyPlayerNotify
 
-**ProxyPlayerNotify** is a plugin that notifies players when someone joins, leaves, or switches servers on your network. It is compatible with both Bungeecord and Velocity for Minecraft versions 1.8 and above.
+**ProxyPlayerNotify** is a plugin that notifies players when someone joins, leaves, or switches servers on your network. It is compatible with both Bungeecord and Velocity.
 
 ### Features
 - Join, leave, and switch notifications.
