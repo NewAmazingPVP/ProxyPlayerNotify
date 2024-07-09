@@ -21,7 +21,7 @@ Here’s a sample `config.yml`:
 ```yaml
 # ProxyPlayerNotify Config
 
-# This config file contains settings for the BungeePlayer Notify plugin.
+# This config file contains settings for the ProxyPlayerNotify plugin.
 # Use this file to customize the join/leave messages and permissions.
 
 # Network Join Message
