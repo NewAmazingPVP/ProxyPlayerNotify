@@ -19,7 +19,7 @@ switch_message: "%player% has switched from %last_server% and joined to the %ser
 leave_message: "%player% has left the network (Last server: %last_server%) at %time%"
 
 # Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
-disable_vanish_notifications: true
+disable_vanish_notifications: false
 
 # Permissions
 # Use these settings to control who can see the join/leave messages.
