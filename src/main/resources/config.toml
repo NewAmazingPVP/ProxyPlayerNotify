@@ -31,7 +31,7 @@ disabled_servers = ["example-1", "other-backend-server"]
 private_servers = ["sample-1", "private-server"]
 
 # Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
-disable_vanish_notifications = true
+disable_vanish_notifications = false
 
 # Server Names
 # Define custom server names here. Players can join/leave/switch to the server using the custom names specified below.
