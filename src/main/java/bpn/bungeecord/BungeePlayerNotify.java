@@ -40,6 +40,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     private final Map<UUID, String> playerLastServer = new HashMap<>();
     private Set<String> disabledServers;
     private Set<String> privateServers;
+    private Set<String> limboServers;
     private boolean noVanishNotifications;
     private final ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
     private static final Pattern HEX_REGEX = Pattern.compile("&#([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])", Pattern.CASE_INSENSITIVE);
@@ -62,12 +63,13 @@ public class BungeePlayerNotify extends Plugin implements Listener {
 
         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
         privateServers = new HashSet<>(config.getStringList("PrivateServers"));
+        limboServers = new HashSet<>(config.getStringList("LimboServers"));
 
         noVanishNotifications = config.getBoolean("disable_vanish_notifications");
 
         getProxy().getPluginManager().registerListener(this, this);
         if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")
-        || config.getString("join_message").contains("%lp_suffix%") || config.getString("switch_message").contains("%lp_suffix%") || config.getString("leave_message").contains("%lp_suffix%")) {
+                || config.getString("join_message").contains("%lp_suffix%") || config.getString("switch_message").contains("%lp_suffix%") || config.getString("leave_message").contains("%lp_suffix%")) {
             luckPerms = LuckPermsProvider.get();
         }
 
@@ -105,7 +107,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 saveDefaultConfig();
                 loadConfig();
                 String server = player.getServer().getInfo().getName();
-                sendMessage("join_message", player, server, null);
+                if (limboServers != null && limboServers.contains(server.toLowerCase())) {
+                } else {
+                    sendMessage("join_message", player, server, null);
+                }
                 playerLastServer.put(player.getUniqueId(), server);
             }
         }, 1, TimeUnit.SECONDS);
@@ -120,7 +125,13 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             String currentServer = player.getServer().getInfo().getName();
             saveDefaultConfig();
             loadConfig();
-            sendMessage("switch_message", player, currentServer, lastServer);
+            if (limboServers != null && limboServers.contains(currentServer.toLowerCase())) {
+                sendMessage("leave_message", player, null, lastServer);
+            } else if (limboServers != null && limboServers.contains(lastServer.toLowerCase())) {
+                sendMessage("join_message", player, currentServer, null);
+            } else {
+                sendMessage("switch_message", player, currentServer, lastServer);
+            }
             playerLastServer.put(player.getUniqueId(), currentServer);
         }
     }
@@ -132,7 +143,10 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             String lastServer = playerLastServer.remove(player.getUniqueId());
             saveDefaultConfig();
             loadConfig();
-            sendMessage("leave_message", player, null, lastServer);
+            if (limboServers != null && limboServers.contains(lastServer.toLowerCase())) {
+            } else {
+                sendMessage("leave_message", player, null, lastServer);
+            }
         }
     }
 

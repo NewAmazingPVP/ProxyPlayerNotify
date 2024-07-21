@@ -30,6 +30,16 @@ disabled_servers = ["example-1", "other-backend-server"]
 # In short: Activity notifications related to these servers are not broadcasted across the entire network.
 private_servers = ["sample-1", "private-server"]
 
+# Limbo Servers
+# Specify the limbo servers (lowercase) where player join, leave, and switch notifications should be managed differently.
+# These servers act as pass-throughs most of the time and can be configured to adjust notification behavior accordingly.
+# When a player joins a limbo server, no network-wide join notification is sent.
+# When a player switches from a limbo server to a game server, it should send a join notification as if the player is joining the network for the first time.
+# Conversely, when a player switches from a game server to a limbo server, it should send a leave notification as if the player is leaving the network.
+# This configuration helps avoid unnecessary notifications and prevents stealthy movements between public and private parts of the network.
+# In short: Join and leave notifications are sent based on transitions to and from these servers to manage network-wide notifications effectively.
+limbo_servers = ["limbo-afk"]
+
 # Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
 disable_vanish_notifications = false
 
