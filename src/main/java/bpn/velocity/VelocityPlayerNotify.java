@@ -43,6 +43,7 @@ public class VelocityPlayerNotify {
     private final Set<UUID> messageToggles = new HashSet<>();
     private Set<String> disabledServers;
     private Set<String> privateServers;
+    private Set<String> limboServers;
     private boolean noVanishNotifications;
     private final ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
     private final Map<String, String> serverNames = new HashMap<>();
@@ -63,6 +64,7 @@ public class VelocityPlayerNotify {
         proxy.getCommandManager().register("togglemessages", new ToggleMessagesCommand());
         disabledServers = new HashSet<>(config.getList("disabled_servers"));
         privateServers = new HashSet<>(config.getList("private_servers"));
+        limboServers = new HashSet<>(config.getList("limbo_servers"));
         noVanishNotifications = config.getBoolean("disable_vanish_notifications");
         loadServerNames();
     }
@@ -108,7 +110,11 @@ public class VelocityPlayerNotify {
                 if (server != null) {
                     config = loadConfig(dataDirectory);
                     loadServerNames();
-                    sendMessage("join_message", player, server, null);
+                    if(limboServers != null && limboServers.contains(server.toLowerCase())){
+
+                    } else {
+                        sendMessage("join_message", player, server, null);
+                    }
                     playerLastServer.put(player.getUniqueId(), server);
                 }
             }
@@ -123,7 +129,13 @@ public class VelocityPlayerNotify {
             Player player = event.getPlayer();
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
             String currentServer = event.getServer().getServerInfo().getName();
-            sendMessage("switch_message", player, currentServer, lastServer);
+            if(limboServers != null && limboServers.contains(currentServer.toLowerCase())){
+                sendMessage("leave_message", player, null, lastServer);
+            } else if (limboServers != null && limboServers.contains(lastServer.toLowerCase())){
+                sendMessage("join_message", player, currentServer, null);
+            } else {
+                sendMessage("switch_message", player, currentServer, lastServer);
+            }
             playerLastServer.put(player.getUniqueId(), currentServer);
         } else {
             //sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), "");
@@ -140,7 +152,11 @@ public class VelocityPlayerNotify {
             loadServerNames();
             Player player = event.getPlayer();
             String lastServer = playerLastServer.remove(player.getUniqueId());
-            sendMessage("leave_message", player, null, lastServer);
+            if(limboServers != null && limboServers.contains(lastServer.toLowerCase())){
+
+            } else {
+                sendMessage("leave_message", player, null, lastServer);
+            }
         }
     }
 
