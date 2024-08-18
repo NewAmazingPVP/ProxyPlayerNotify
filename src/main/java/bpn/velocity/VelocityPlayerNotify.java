@@ -129,9 +129,9 @@ public class VelocityPlayerNotify {
             Player player = event.getPlayer();
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
             String currentServer = event.getServer().getServerInfo().getName();
-            if(limboServers != null && limboServers.contains(currentServer.toLowerCase())){
+            if(limboServers != null && currentServer != null && limboServers.contains(currentServer.toLowerCase())){
                 sendMessage("leave_message", player, null, lastServer);
-            } else if (limboServers != null && limboServers.contains(lastServer.toLowerCase())){
+            } else if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())){
                 sendMessage("join_message", player, currentServer, null);
             } else {
                 sendMessage("switch_message", player, currentServer, lastServer);
@@ -152,7 +152,7 @@ public class VelocityPlayerNotify {
             loadServerNames();
             Player player = event.getPlayer();
             String lastServer = playerLastServer.remove(player.getUniqueId());
-            if(limboServers != null && limboServers.contains(lastServer.toLowerCase())){
+            if(limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())){
 
             } else {
                 sendMessage("leave_message", player, null, lastServer);

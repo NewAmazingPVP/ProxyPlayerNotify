@@ -107,7 +107,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 saveDefaultConfig();
                 loadConfig();
                 String server = player.getServer().getInfo().getName();
-                if (limboServers != null && limboServers.contains(server.toLowerCase())) {
+                if (limboServers != null && server != null && limboServers.contains(server.toLowerCase())) {
                 } else {
                     sendMessage("join_message", player, server, null);
                 }
@@ -125,9 +125,9 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             String currentServer = player.getServer().getInfo().getName();
             saveDefaultConfig();
             loadConfig();
-            if (limboServers != null && limboServers.contains(currentServer.toLowerCase())) {
+            if (limboServers != null && currentServer != null && limboServers.contains(currentServer.toLowerCase())) {
                 sendMessage("leave_message", player, null, lastServer);
-            } else if (limboServers != null && limboServers.contains(lastServer.toLowerCase())) {
+            } else if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
                 sendMessage("join_message", player, currentServer, null);
             } else {
                 sendMessage("switch_message", player, currentServer, lastServer);
@@ -143,7 +143,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             String lastServer = playerLastServer.remove(player.getUniqueId());
             saveDefaultConfig();
             loadConfig();
-            if (limboServers != null && limboServers.contains(lastServer.toLowerCase())) {
+            if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
             } else {
                 sendMessage("leave_message", player, null, lastServer);
             }
