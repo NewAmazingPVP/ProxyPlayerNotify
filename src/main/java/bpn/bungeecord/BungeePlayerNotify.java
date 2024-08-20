@@ -1,8 +1,6 @@
 package bpn.bungeecord;
 
 import de.myzelyam.api.vanish.BungeeVanishAPI;
-import de.myzelyam.api.vanish.VanishAPI;
-import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
@@ -171,7 +169,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 if (targetPlayer.hasPermission("ppn.notify")) {
                     sendFormattedMessage(type, targetPlayer, server, lastServer);
                 }
-            } else if (config.getBoolean("permission.hide_message")) {
+            } else {
                 sendFormattedMessage(type, targetPlayer, server, lastServer);
             }
         } else {
@@ -216,10 +214,30 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && disabledServers != null) {
                     if (!disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())) {
-                        pl.sendMessage(finalMessage);
+                        if (config.getBoolean("permission.permissions")) {
+                            if(config.getBoolean("permission.hide_message")) {
+                                if(pl.hasPermission("ppn.view"))
+                                    pl.sendMessage(finalMessage);
+                            }
+                            else {
+                                pl.sendMessage(finalMessage);
+                            }
+                        } else {
+                            pl.sendMessage(finalMessage);
+                        }
                     }
                 } else {
-                    pl.sendMessage(finalMessage);
+                    if (config.getBoolean("permission.permissions")) {
+                        if(config.getBoolean("permission.hide_message")) {
+                            if(pl.hasPermission("ppn.view"))
+                                pl.sendMessage(finalMessage);
+                            }
+                        else {
+                            pl.sendMessage(finalMessage);
+                        }
+                    } else {
+                        pl.sendMessage(finalMessage);
+                    }
                 }
             }
         }

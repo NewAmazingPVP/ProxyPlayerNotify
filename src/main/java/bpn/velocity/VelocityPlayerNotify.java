@@ -176,12 +176,13 @@ public class VelocityPlayerNotify {
             return;
         }
 
+        //remove permission.permissions in config.yml
         if (config.getBoolean("permission.permissions")) {
             if (config.getBoolean("permission.notify_message")) {
                 if (targetPlayer.hasPermission("ppn.notify")) {
                     sendFormattedMessage(type, targetPlayer, connectedServer, disconnectedServer);
                 }
-            } else if (config.getBoolean("permission.hide_message")) {
+            } else {
                 sendFormattedMessage(type, targetPlayer, connectedServer, disconnectedServer);
             }
         } else {
@@ -232,10 +233,30 @@ public class VelocityPlayerNotify {
             if (!messageToggles.contains(pl.getUniqueId())) {
                 if (pl.getCurrentServer().isPresent() && disabledServers != null) {
                     if (!disabledServers.contains(pl.getCurrentServer().get().getServerInfo().getName().toLowerCase())) {
-                        pl.sendMessage(translatedComponent);
+                        if (config.getBoolean("permission.permissions")) {
+                            if(config.getBoolean("permission.hide_message")) {
+                                if(pl.hasPermission("ppn.view"))
+                                    pl.sendMessage(translatedComponent);
+                            }
+                            else {
+                                pl.sendMessage(translatedComponent);
+                            }
+                        } else {
+                            pl.sendMessage(translatedComponent);
+                        }
                     }
                 } else {
-                    pl.sendMessage(translatedComponent);
+                    if (config.getBoolean("permission.permissions")) {
+                        if(config.getBoolean("permission.hide_message")) {
+                            if(pl.hasPermission("ppn.view"))
+                                pl.sendMessage(translatedComponent);
+                        }
+                        else {
+                            pl.sendMessage(translatedComponent);
+                        }
+                    } else {
+                        pl.sendMessage(translatedComponent);
+                    }
                 }
             }
         }
