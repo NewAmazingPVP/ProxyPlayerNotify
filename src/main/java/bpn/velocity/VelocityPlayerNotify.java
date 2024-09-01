@@ -110,11 +110,13 @@ public class VelocityPlayerNotify {
                 if (server != null) {
                     config = loadConfig(dataDirectory);
                     loadServerNames();
-                    if(limboServers != null && limboServers.contains(server.toLowerCase())){
-
-                    } else {
-                        sendMessage("join_message", player, server, null);
+                    if (limboServers != null && limboServers.contains(server.toLowerCase())) {
+                        return;
                     }
+                    if (config.getString("join_private_message") != null && !config.getString("join_private_message").isEmpty()) {
+                        sendPrivateMessage("join_private_message", player, server);
+                    }
+                    sendMessage("join_message", player, server, null);
                     playerLastServer.put(player.getUniqueId(), server);
                 }
             }
@@ -129,16 +131,14 @@ public class VelocityPlayerNotify {
             Player player = event.getPlayer();
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
             String currentServer = event.getServer().getServerInfo().getName();
-            if(limboServers != null && currentServer != null && limboServers.contains(currentServer.toLowerCase())){
+            if (limboServers != null && currentServer != null && limboServers.contains(currentServer.toLowerCase())) {
                 sendMessage("leave_message", player, null, lastServer);
-            } else if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())){
+            } else if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
                 sendMessage("join_message", player, currentServer, null);
             } else {
                 sendMessage("switch_message", player, currentServer, lastServer);
             }
             playerLastServer.put(player.getUniqueId(), currentServer);
-        } else {
-            //sendMessage("switch_message", event.getPlayer(), event.getServer().getServerInfo().getName(), "");
         }
     }
 
@@ -152,11 +152,10 @@ public class VelocityPlayerNotify {
             loadServerNames();
             Player player = event.getPlayer();
             String lastServer = playerLastServer.remove(player.getUniqueId());
-            if(limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())){
-
-            } else {
-                sendMessage("leave_message", player, null, lastServer);
+            if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
+                return;
             }
+            sendMessage("leave_message", player, null, lastServer);
         }
     }
 
@@ -172,7 +171,7 @@ public class VelocityPlayerNotify {
             return;
         }
 
-        if(noVanishNotifications && VelocityVanishAPI.isInvisible(targetPlayer)){
+        if (noVanishNotifications && VelocityVanishAPI.isInvisible(targetPlayer)) {
             return;
         }
 
@@ -190,6 +189,21 @@ public class VelocityPlayerNotify {
         }
     }
 
+    public void sendPrivateMessage(String type, Player targetPlayer, String connectedServer) {
+        config = loadConfig(dataDirectory);
+        loadServerNames();
+
+        String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
+        if (finalMessage.isEmpty()) {
+            return;
+        }
+        if (connectedServer != null) {
+            finalMessage = finalMessage.replace("%server%", getFriendlyServerName(connectedServer));
+        }
+        finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        sendMessageToPlayer(targetPlayer, finalMessage);
+    }
+
     private void sendFormattedMessage(String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         String finalMessage = config.getString(type).replace("%player%", targetPlayer.getUsername());
         if (finalMessage.isEmpty()) {
@@ -203,8 +217,8 @@ public class VelocityPlayerNotify {
                 finalMessage = finalMessage.replace("%last_server%", getFriendlyServerName(disconnectedServer));
             }
         }
-        try {
-            if (this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
+        if (this.proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
+            try {
                 if (finalMessage.contains("%lp_prefix%")) {
                     String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
                     if (prefix != null) {
@@ -217,48 +231,73 @@ public class VelocityPlayerNotify {
                         finalMessage = finalMessage.replace("%lp_suffix%", suffix);
                     }
                 }
+            } catch (Exception ignored) {
             }
-        } catch (Exception ignored) {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
+        sendMessageToAll(finalMessage);
+    }
 
+    private void sendMessageToAll(String message) {
         LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
                 .character('&')
                 .hexColors()
                 .build();
-
-        Component translatedComponent = serializer.deserialize(finalMessage);
-        for (Player pl : proxy.getAllPlayers()) {
-            if (!messageToggles.contains(pl.getUniqueId())) {
-                if (pl.getCurrentServer().isPresent() && disabledServers != null) {
-                    if (!disabledServers.contains(pl.getCurrentServer().get().getServerInfo().getName().toLowerCase())) {
+        String[] lines = message.split("\n");
+        for (Player player : proxy.getAllPlayers()) {
+            if (!messageToggles.contains(player.getUniqueId())) {
+                if (player.getCurrentServer().isPresent() && disabledServers != null) {
+                    if (!disabledServers.contains(player.getCurrentServer().get().getServerInfo().getName().toLowerCase())) {
                         if (config.getBoolean("permission.permissions")) {
-                            if(config.getBoolean("permission.hide_message")) {
-                                if(pl.hasPermission("ppn.view"))
-                                    pl.sendMessage(translatedComponent);
-                            }
-                            else {
-                                pl.sendMessage(translatedComponent);
+                            if (config.getBoolean("permission.hide_message")) {
+                                if (player.hasPermission("ppn.view")) {
+                                    for (String line : lines) {
+                                        player.sendMessage(serializer.deserialize(line));
+                                    }
+                                }
+                            } else {
+                                for (String line : lines) {
+                                    player.sendMessage(serializer.deserialize(line));
+                                }
                             }
                         } else {
-                            pl.sendMessage(translatedComponent);
+                            for (String line : lines) {
+                                player.sendMessage(serializer.deserialize(line));
+                            }
                         }
                     }
                 } else {
                     if (config.getBoolean("permission.permissions")) {
-                        if(config.getBoolean("permission.hide_message")) {
-                            if(pl.hasPermission("ppn.view"))
-                                pl.sendMessage(translatedComponent);
-                        }
-                        else {
-                            pl.sendMessage(translatedComponent);
+                        if (config.getBoolean("permission.hide_message")) {
+                            if (player.hasPermission("ppn.view")) {
+                                for (String line : lines) {
+                                    player.sendMessage(serializer.deserialize(line));
+                                }
+                            }
+                        } else {
+                            for (String line : lines) {
+                                player.sendMessage(serializer.deserialize(line));
+                            }
                         }
                     } else {
-                        pl.sendMessage(translatedComponent);
+                        for (String line : lines) {
+                            player.sendMessage(serializer.deserialize(line));
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private void sendMessageToPlayer(Player player, String message) {
+        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
+                .character('&')
+                .hexColors()
+                .build();
+        String[] lines = message.split("\n");
+        for (String line : lines) {
+            player.sendMessage(serializer.deserialize(line));
         }
     }
 

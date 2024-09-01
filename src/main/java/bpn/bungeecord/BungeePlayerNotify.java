@@ -106,9 +106,12 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                 loadConfig();
                 String server = player.getServer().getInfo().getName();
                 if (limboServers != null && server != null && limboServers.contains(server.toLowerCase())) {
-                } else {
-                    sendMessage("join_message", player, server, null);
+                    return;
                 }
+                if (config.getString("join_private_message") != null && !config.getString("join_private_message").isEmpty()) {
+                    sendPrivateMessage("join_private_message", player, server);
+                }
+                sendMessage("join_message", player, server, null);
                 playerLastServer.put(player.getUniqueId(), server);
             }
         }, 1, TimeUnit.SECONDS);
@@ -142,9 +145,9 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             saveDefaultConfig();
             loadConfig();
             if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
-            } else {
-                sendMessage("leave_message", player, null, lastServer);
+                return;
             }
+            sendMessage("leave_message", player, null, lastServer);
         }
     }
 
@@ -160,7 +163,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             return;
         }
 
-        if(noVanishNotifications && BungeeVanishAPI.isInvisible(targetPlayer)){
+        if (noVanishNotifications && BungeeVanishAPI.isInvisible(targetPlayer)) {
             return;
         }
 
@@ -175,6 +178,21 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         } else {
             sendFormattedMessage(type, targetPlayer, server, lastServer);
         }
+    }
+
+    public void sendPrivateMessage(String type, ProxiedPlayer targetPlayer, String server) {
+        saveDefaultConfig();
+        loadConfig();
+
+        String finalMessage = config.getString(type).replace("%player%", targetPlayer.getName());
+        if (finalMessage.isEmpty()) {
+            return;
+        }
+        if (server != null) {
+            finalMessage = finalMessage.replace("%server%", server);
+        }
+        finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        sendMessageToPlayer(targetPlayer, finalMessage);
     }
 
     private void sendFormattedMessage(String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
@@ -210,36 +228,56 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         finalMessage = finalMessage.replace("&", "§");
         finalMessage = ChatColor.translateAlternateColorCodes('§', finalMessage);
 
+        String[] lines = finalMessage.split("\n");
         for (ProxiedPlayer pl : getProxy().getPlayers()) {
             if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && disabledServers != null) {
                     if (!disabledServers.contains(pl.getServer().getInfo().getName().toLowerCase())) {
                         if (config.getBoolean("permission.permissions")) {
-                            if(config.getBoolean("permission.hide_message")) {
-                                if(pl.hasPermission("ppn.view"))
-                                    pl.sendMessage(finalMessage);
-                            }
-                            else {
-                                pl.sendMessage(finalMessage);
+                            if (config.getBoolean("permission.hide_message")) {
+                                if (pl.hasPermission("ppn.view")) {
+                                    for (String line : lines) {
+                                        pl.sendMessage(line);
+                                    }
+                                }
+                            } else {
+                                for (String line : lines) {
+                                    pl.sendMessage(line);
+                                }
                             }
                         } else {
-                            pl.sendMessage(finalMessage);
+                            for (String line : lines) {
+                                pl.sendMessage(line);
+                            }
                         }
                     }
                 } else {
                     if (config.getBoolean("permission.permissions")) {
-                        if(config.getBoolean("permission.hide_message")) {
-                            if(pl.hasPermission("ppn.view"))
-                                pl.sendMessage(finalMessage);
+                        if (config.getBoolean("permission.hide_message")) {
+                            if (pl.hasPermission("ppn.view")) {
+                                for (String line : lines) {
+                                    pl.sendMessage(line);
+                                }
                             }
-                        else {
-                            pl.sendMessage(finalMessage);
+                        } else {
+                            for (String line : lines) {
+                                pl.sendMessage(line);
+                            }
                         }
                     } else {
-                        pl.sendMessage(finalMessage);
+                        for (String line : lines) {
+                            pl.sendMessage(line);
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private void sendMessageToPlayer(ProxiedPlayer player, String message) {
+        String[] lines = message.split("\n");
+        for (String line : lines) {
+            player.sendMessage(line);
         }
     }
 
