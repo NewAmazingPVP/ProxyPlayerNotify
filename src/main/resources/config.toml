@@ -1,6 +1,8 @@
 # ProxyPlayerNotify Config
 # This config file contains settings for the ProxyPlayerNotify plugin.
 # Use this file to customize the join/leave messages and permissions.
+# Use \n to create multiple lines/messages to players.
+# Set message to "" to not send any message/empty.
 
 # Network Join Message
 # This message is displayed when a player joins the network.
@@ -11,7 +13,6 @@ join_message = "%player% has joined the network (Logged in server: %server%) at 
 # This message is displayed only to the player who joins the network.
 # It has a higher priority than the public join message.
 # Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
-# Use \n to create multiple lines.
 join_private_message = "&aWelcome, %player%!\n&bYou have joined the server %server% at %time%.\nEnjoy your stay!"
 
 # Servers Switch Message

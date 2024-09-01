@@ -129,6 +129,9 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             if (limboServers != null && currentServer != null && limboServers.contains(currentServer.toLowerCase())) {
                 sendMessage("leave_message", player, null, lastServer);
             } else if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
+                if (config.getString("join_private_message") != null && !config.getString("join_private_message").isEmpty()) {
+                    sendPrivateMessage("join_private_message", player, currentServer);
+                }
                 sendMessage("join_message", player, currentServer, null);
             } else {
                 sendMessage("switch_message", player, currentServer, lastServer);
@@ -191,6 +194,20 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         if (server != null) {
             finalMessage = finalMessage.replace("%server%", server);
         }
+        if (finalMessage.contains("%lp_prefix%")) {
+            User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+            String prefix = user.getCachedData().getMetaData().getPrefix();
+            if (prefix != null) {
+                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+            }
+        }
+        if (finalMessage.contains("%lp_suffix%")) {
+            User user = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+            String suffix = user.getCachedData().getMetaData().getSuffix();
+            if (suffix != null) {
+                finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+            }
+        }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         sendMessageToPlayer(targetPlayer, finalMessage);
     }
@@ -224,11 +241,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        finalMessage = replace(finalMessage);
-        finalMessage = finalMessage.replace("&", "§");
-        finalMessage = ChatColor.translateAlternateColorCodes('§', finalMessage);
 
-        String[] lines = finalMessage.split("\n");
         for (ProxiedPlayer pl : getProxy().getPlayers()) {
             if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && disabledServers != null) {
@@ -236,38 +249,26 @@ public class BungeePlayerNotify extends Plugin implements Listener {
                         if (config.getBoolean("permission.permissions")) {
                             if (config.getBoolean("permission.hide_message")) {
                                 if (pl.hasPermission("ppn.view")) {
-                                    for (String line : lines) {
-                                        pl.sendMessage(line);
-                                    }
+                                    sendMessageToPlayer(pl, finalMessage);
                                 }
                             } else {
-                                for (String line : lines) {
-                                    pl.sendMessage(line);
-                                }
+                                sendMessageToPlayer(pl, finalMessage);
                             }
                         } else {
-                            for (String line : lines) {
-                                pl.sendMessage(line);
-                            }
+                            sendMessageToPlayer(pl, finalMessage);
                         }
                     }
                 } else {
                     if (config.getBoolean("permission.permissions")) {
                         if (config.getBoolean("permission.hide_message")) {
                             if (pl.hasPermission("ppn.view")) {
-                                for (String line : lines) {
-                                    pl.sendMessage(line);
-                                }
+                                sendMessageToPlayer(pl, finalMessage);
                             }
                         } else {
-                            for (String line : lines) {
-                                pl.sendMessage(line);
-                            }
+                            sendMessageToPlayer(pl, finalMessage);
                         }
                     } else {
-                        for (String line : lines) {
-                            pl.sendMessage(line);
-                        }
+                        sendMessageToPlayer(pl, finalMessage);
                     }
                 }
             }
@@ -275,6 +276,9 @@ public class BungeePlayerNotify extends Plugin implements Listener {
     }
 
     private void sendMessageToPlayer(ProxiedPlayer player, String message) {
+        message = replace(message);
+        message = message.replace("&", "§");
+        message = ChatColor.translateAlternateColorCodes('§', message);
         String[] lines = message.split("\n");
         for (String line : lines) {
             player.sendMessage(line);

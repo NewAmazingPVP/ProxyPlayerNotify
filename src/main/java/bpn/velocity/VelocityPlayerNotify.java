@@ -134,6 +134,9 @@ public class VelocityPlayerNotify {
             if (limboServers != null && currentServer != null && limboServers.contains(currentServer.toLowerCase())) {
                 sendMessage("leave_message", player, null, lastServer);
             } else if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
+                if (config.getString("join_private_message") != null && !config.getString("join_private_message").isEmpty()) {
+                    sendPrivateMessage("join_private_message", player, currentServer);
+                }
                 sendMessage("join_message", player, currentServer, null);
             } else {
                 sendMessage("switch_message", player, currentServer, lastServer);
@@ -200,6 +203,21 @@ public class VelocityPlayerNotify {
         if (connectedServer != null) {
             finalMessage = finalMessage.replace("%server%", getFriendlyServerName(connectedServer));
         }
+        try {
+            if (finalMessage.contains("%lp_prefix%")) {
+                String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
+                if (prefix != null) {
+                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                }
+            }
+            if (finalMessage.contains("%lp_suffix%")) {
+                String suffix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getSuffix();
+                if (suffix != null) {
+                    finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+                }
+            }
+        } catch (Exception ignored) {
+        }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         sendMessageToPlayer(targetPlayer, finalMessage);
     }
@@ -240,11 +258,6 @@ public class VelocityPlayerNotify {
     }
 
     private void sendMessageToAll(String message) {
-        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
-                .character('&')
-                .hexColors()
-                .build();
-        String[] lines = message.split("\n");
         for (Player player : proxy.getAllPlayers()) {
             if (!messageToggles.contains(player.getUniqueId())) {
                 if (player.getCurrentServer().isPresent() && disabledServers != null) {
@@ -252,38 +265,26 @@ public class VelocityPlayerNotify {
                         if (config.getBoolean("permission.permissions")) {
                             if (config.getBoolean("permission.hide_message")) {
                                 if (player.hasPermission("ppn.view")) {
-                                    for (String line : lines) {
-                                        player.sendMessage(serializer.deserialize(line));
-                                    }
+                                    sendMessageToPlayer(player, message);
                                 }
                             } else {
-                                for (String line : lines) {
-                                    player.sendMessage(serializer.deserialize(line));
-                                }
+                                sendMessageToPlayer(player, message);
                             }
                         } else {
-                            for (String line : lines) {
-                                player.sendMessage(serializer.deserialize(line));
-                            }
+                            sendMessageToPlayer(player, message);
                         }
                     }
                 } else {
                     if (config.getBoolean("permission.permissions")) {
                         if (config.getBoolean("permission.hide_message")) {
                             if (player.hasPermission("ppn.view")) {
-                                for (String line : lines) {
-                                    player.sendMessage(serializer.deserialize(line));
-                                }
+                                sendMessageToPlayer(player, message);
                             }
                         } else {
-                            for (String line : lines) {
-                                player.sendMessage(serializer.deserialize(line));
-                            }
+                            sendMessageToPlayer(player, message);
                         }
                     } else {
-                        for (String line : lines) {
-                            player.sendMessage(serializer.deserialize(line));
-                        }
+                        sendMessageToPlayer(player, message);
                     }
                 }
             }
