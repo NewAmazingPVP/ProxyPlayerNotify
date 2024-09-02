@@ -150,6 +150,7 @@ public class BungeePlayerNotify extends Plugin implements Listener {
             if (limboServers != null && lastServer != null && limboServers.contains(lastServer.toLowerCase())) {
                 return;
             }
+            if(lastServer == null) return;
             sendMessage("leave_message", player, null, lastServer);
         }
     }
