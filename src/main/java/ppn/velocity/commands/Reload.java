@@ -1,7 +1,7 @@
-package bpn.velocity.commands;
+package ppn.velocity.commands;
 
-import bpn.velocity.ConfigLoader;
-import bpn.velocity.VelocityPlayerNotify;
+import ppn.velocity.ConfigLoader;
+import ppn.velocity.VelocityPlayerNotify;
 import com.velocitypowered.api.command.SimpleCommand;
 import net.kyori.adventure.text.Component;
 

@@ -1,6 +1,6 @@
-package bpn.bungeecord.utils;
+package ppn.bungeecord.utils;
 
-import bpn.bungeecord.BungeePlayerNotify;
+import ppn.bungeecord.BungeePlayerNotify;
 import de.myzelyam.api.vanish.BungeeVanishAPI;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
@@ -10,7 +10,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
-import static bpn.bungeecord.commands.ToggleMessages.playerToggle;
+import static ppn.bungeecord.commands.ToggleMessages.playerToggle;
 
 public class MessageSender {
 

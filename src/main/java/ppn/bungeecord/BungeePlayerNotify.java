@@ -1,8 +1,8 @@
-package bpn.bungeecord;
+package ppn.bungeecord;
 
-import bpn.bungeecord.commands.Reload;
-import bpn.bungeecord.commands.ToggleMessages;
-import bpn.bungeecord.utils.Metrics;
+import ppn.bungeecord.commands.Reload;
+import ppn.bungeecord.commands.ToggleMessages;
+import ppn.bungeecord.utils.Metrics;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.plugin.Plugin;

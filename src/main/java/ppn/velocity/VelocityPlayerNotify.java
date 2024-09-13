@@ -1,8 +1,8 @@
-package bpn.velocity;
+package ppn.velocity;
 
-import bpn.velocity.commands.Reload;
-import bpn.velocity.commands.ToggleMessages;
-import bpn.velocity.utils.Metrics;
+import ppn.velocity.commands.Reload;
+import ppn.velocity.commands.ToggleMessages;
+import ppn.velocity.utils.Metrics;
 import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.event.Subscribe;

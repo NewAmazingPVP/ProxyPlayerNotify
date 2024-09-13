@@ -1,6 +1,6 @@
-package bpn.velocity;
+package ppn.velocity;
 
-import bpn.velocity.utils.MessageSender;
+import ppn.velocity.utils.MessageSender;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
