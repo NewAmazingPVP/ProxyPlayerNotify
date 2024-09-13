@@ -1,5 +1,6 @@
 package ppn.bungeecord.commands;
 
+import ppn.ConfigManager;
 import ppn.bungeecord.BungeePlayerNotify;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -8,6 +9,8 @@ import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.config.Configuration;
 
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 
 public class Reload extends Command {
 
@@ -28,10 +31,7 @@ public class Reload extends Command {
                     plugin.loadConfig();
 
                     plugin.getServerNames().clear();
-                    Configuration section = plugin.getConfig().getSection("ServerNames");
-                    for (String server : section.getKeys()) {
-                        plugin.getServerNames().put(server.toLowerCase(), section.getString(server));
-                    }
+                    plugin.getConfig().getKeys("ServerNames").forEach(server -> plugin.getServerNames().put(server.toLowerCase(), plugin.getConfig().getString("ServerNames." + server)));
 
                     plugin.setDisabledServers(new HashSet<>(plugin.getConfig().getStringList("DisabledServers")));
                     plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
@@ -45,10 +45,7 @@ public class Reload extends Command {
             plugin.loadConfig();
 
             plugin.getServerNames().clear();
-            Configuration section = plugin.getConfig().getSection("ServerNames");
-            for (String server : section.getKeys()) {
-                plugin.getServerNames().put(server.toLowerCase(), section.getString(server));
-            }
+            plugin.getConfig().getKeys("ServerNames").forEach(server -> plugin.getServerNames().put(server.toLowerCase(), plugin.getConfig().getString("ServerNames." + server)));
 
             plugin.setDisabledServers(new HashSet<>(plugin.getConfig().getStringList("DisabledServers")));
             plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
