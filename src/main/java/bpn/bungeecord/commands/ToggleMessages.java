@@ -1,5 +1,6 @@
-package bpn.bungeecord;
+package bpn.bungeecord.commands;
 
+import bpn.bungeecord.BungeePlayerNotify;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -8,12 +9,12 @@ import net.md_5.bungee.api.plugin.Command;
 import java.util.HashSet;
 import java.util.UUID;
 
-public class ToggleMessagesCommand extends Command {
+public class ToggleMessages extends Command {
 
     private final BungeePlayerNotify plugin;
     public static final HashSet<UUID> playerToggle = new HashSet<>();
 
-    public ToggleMessagesCommand(BungeePlayerNotify plugin) {
+    public ToggleMessages(BungeePlayerNotify plugin) {
         super("togglemessages");
         this.plugin = plugin;
     }

@@ -1,5 +1,8 @@
 package bpn.bungeecord;
 
+import bpn.bungeecord.commands.Reload;
+import bpn.bungeecord.commands.ToggleMessages;
+import bpn.bungeecord.utils.Metrics;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -54,8 +57,8 @@ public class BungeePlayerNotify extends Plugin {
             luckPerms = LuckPermsProvider.get();
         }
 
-        getProxy().getPluginManager().registerCommand(this, new ReloadCommand(this));
-        getProxy().getPluginManager().registerCommand(this, new ToggleMessagesCommand(this));
+        getProxy().getPluginManager().registerCommand(this, new Reload(this));
+        getProxy().getPluginManager().registerCommand(this, new ToggleMessages(this));
     }
 
     public void saveDefaultConfig() {

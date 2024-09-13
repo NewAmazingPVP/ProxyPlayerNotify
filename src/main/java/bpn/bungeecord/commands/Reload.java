@@ -1,5 +1,6 @@
-package bpn.bungeecord;
+package bpn.bungeecord.commands;
 
+import bpn.bungeecord.BungeePlayerNotify;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -8,11 +9,11 @@ import net.md_5.bungee.config.Configuration;
 
 import java.util.HashSet;
 
-public class ReloadCommand extends Command {
+public class Reload extends Command {
 
     private final BungeePlayerNotify plugin;
 
-    public ReloadCommand(BungeePlayerNotify plugin) {
+    public Reload(BungeePlayerNotify plugin) {
         super("reloadProxyNotifyConfig");
         this.plugin = plugin;
     }
