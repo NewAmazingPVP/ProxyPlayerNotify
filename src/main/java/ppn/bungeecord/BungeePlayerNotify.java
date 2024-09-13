@@ -1,14 +1,12 @@
 package ppn.bungeecord;
 
+import ppn.ConfigManager;
 import ppn.bungeecord.commands.Reload;
 import ppn.bungeecord.commands.ToggleMessages;
 import ppn.bungeecord.utils.Metrics;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +19,7 @@ import java.util.Set;
 
 public class BungeePlayerNotify extends Plugin {
 
-    private Configuration config;
+    private ConfigManager config;
     private LuckPerms luckPerms;
     private Map<String, String> serverNames;
     private Set<String> disabledServers;
@@ -40,10 +38,7 @@ public class BungeePlayerNotify extends Plugin {
         loadConfig();
 
         serverNames = new HashMap<>();
-        Configuration section = config.getSection("ServerNames");
-        for (String server : section.getKeys()) {
-            serverNames.put(server.toLowerCase(), section.getString(server));
-        }
+        config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
 
         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
         privateServers = new HashSet<>(config.getStringList("PrivateServers"));
@@ -75,14 +70,10 @@ public class BungeePlayerNotify extends Plugin {
 
     public void loadConfig() {
         File file = new File(getDataFolder(), "config.yml");
-        try {
-            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        config = new ConfigManager(getDataFolder(), "config.yml");
     }
 
-    public Configuration getConfig() {
+    public ConfigManager getConfig() {
         return config;
     }
 
@@ -101,7 +92,6 @@ public class BungeePlayerNotify extends Plugin {
     public Set<String> getPrivateServers() {
         return privateServers;
     }
-
 
     public void setDisabledServers(Set<String> disabledServers) {
         this.disabledServers = disabledServers;

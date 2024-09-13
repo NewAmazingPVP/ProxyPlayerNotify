@@ -151,6 +151,22 @@ public class ConfigManager {
         return result;
     }
 
+    public Set<String> getKeys(String path) {
+        Object section = getNestedOption(path);
+        if (section instanceof Map) {
+            return ((Map<String, Object>) section).keySet();
+        }
+        return Collections.emptySet();
+    }
+    
+    public Map<String, Object> getSection(String path) {
+        Object section = getNestedOption(path);
+        if (section instanceof Map) {
+            return (Map<String, Object>) section;
+        }
+        return Collections.emptyMap();
+    }
+
     public List<Integer> getIntList(String path) {
         List<?> list = getList(path);
         List<Integer> result = new ArrayList<>();
