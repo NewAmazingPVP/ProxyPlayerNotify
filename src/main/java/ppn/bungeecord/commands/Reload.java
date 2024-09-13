@@ -1,6 +1,6 @@
-package bpn.bungeecord.commands;
+package ppn.bungeecord.commands;
 
-import bpn.bungeecord.BungeePlayerNotify;
+import ppn.bungeecord.BungeePlayerNotify;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;

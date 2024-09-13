@@ -1,6 +1,6 @@
-package bpn.bungeecord;
+package ppn.bungeecord;
 
-import bpn.bungeecord.utils.MessageSender;
+import ppn.bungeecord.utils.MessageSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;

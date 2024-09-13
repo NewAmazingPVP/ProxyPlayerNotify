@@ -1,7 +1,7 @@
-package bpn.velocity.utils;
+package ppn.velocity.utils;
 
-import bpn.velocity.ConfigLoader;
-import bpn.velocity.VelocityPlayerNotify;
+import ppn.velocity.ConfigLoader;
+import ppn.velocity.VelocityPlayerNotify;
 import com.velocitypowered.api.proxy.Player;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
