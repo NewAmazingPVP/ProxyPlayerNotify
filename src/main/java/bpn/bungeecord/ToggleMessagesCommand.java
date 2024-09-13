@@ -11,7 +11,7 @@ import java.util.UUID;
 public class ToggleMessagesCommand extends Command {
 
     private final BungeePlayerNotify plugin;
-    private final HashSet<UUID> playerToggle = new HashSet<>();
+    public static final HashSet<UUID> playerToggle = new HashSet<>();
 
     public ToggleMessagesCommand(BungeePlayerNotify plugin) {
         super("togglemessages");

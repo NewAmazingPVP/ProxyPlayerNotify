@@ -9,6 +9,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
+import static bpn.bungeecord.ToggleMessagesCommand.playerToggle;
+
 public class MessageSender {
 
     private static final Pattern HEX_REGEX = Pattern.compile("&#([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])", Pattern.CASE_INSENSITIVE);
@@ -102,7 +104,7 @@ public class MessageSender {
         finalMessage = finalMessage.replace("%time%", time);
 
         for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
-            if (!plugin.getPlayerToggle().contains(pl.getUniqueId())) {
+            if (playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && plugin.getDisabledServers() != null) {
                     if (!plugin.getDisabledServers().contains(pl.getServer().getInfo().getName().toLowerCase())) {
                         if (plugin.getConfig().getBoolean("permission.permissions")) {

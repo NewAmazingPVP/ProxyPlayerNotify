@@ -99,6 +99,15 @@ public class BungeePlayerNotify extends Plugin {
         return privateServers;
     }
 
+
+    public void setDisabledServers(Set<String> disabledServers) {
+        this.disabledServers = disabledServers;
+    }
+
+    public void setPrivateServers(Set<String> privateServers) {
+        this.privateServers = privateServers;
+    }
+
     public Set<String> getLimboServers() {
         return limboServers;
     }
