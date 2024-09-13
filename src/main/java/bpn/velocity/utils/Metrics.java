@@ -1,4 +1,4 @@
-package bpn.velocity;
+package bpn.velocity.utils;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.plugin.PluginContainer;
