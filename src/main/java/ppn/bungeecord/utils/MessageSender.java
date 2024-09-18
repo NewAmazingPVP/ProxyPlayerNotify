@@ -54,7 +54,7 @@ public class MessageSender {
             return;
         }
         if (server != null) {
-            finalMessage = finalMessage.replace("%server%", server);
+            finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
         }
         if (finalMessage.contains("%lp_prefix%")) {
             User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
@@ -79,12 +79,14 @@ public class MessageSender {
         if (finalMessage.isEmpty()) {
             return;
         }
+
         if (type.equals("switch_message") || type.equals("join_message") || type.equals("leave_message")) {
             if (server != null) {
-                finalMessage = finalMessage.replace("%server%", server);
+                finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
             }
             if (lastServer != null) {
-                finalMessage = finalMessage.replace("%last_server%", lastServer);
+                //same here
+                finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
             }
         }
         if (finalMessage.contains("%lp_prefix%")) {

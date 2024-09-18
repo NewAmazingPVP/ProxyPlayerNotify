@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 public class EventListener implements Listener {
 
     private final BungeePlayerNotify plugin;
-    private final Set<UUID> playerToggle = new HashSet<>();
     private final Map<UUID, String> playerLastServer = new HashMap<>();
     private final ArrayList<ProxiedPlayer> validPlayers = new ArrayList<>();
 
@@ -26,11 +25,23 @@ public class EventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
+
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             if (player.isConnected()) {
-                validPlayers.add(event.getPlayer());
+                validPlayers.add(player);
                 plugin.saveDefaultConfig();
                 plugin.loadConfig();
+                String server = player.getServer().getInfo().getName();
+                if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
+                    return;
+                }
+                MessageSender.sendMessage(plugin, "join_message", player, server, null);
+                playerLastServer.put(player.getUniqueId(), server);
+            }
+        }, plugin.getConfig().getLong("join_message_delay") * 50, TimeUnit.MILLISECONDS);
+
+        plugin.getProxy().getScheduler().schedule(plugin, () -> {
+            if (player.isConnected()) {
                 String server = player.getServer().getInfo().getName();
                 if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
                     return;
@@ -38,10 +49,8 @@ public class EventListener implements Listener {
                 if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
                     MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
                 }
-                MessageSender.sendMessage(plugin, "join_message", player, server, null);
-                playerLastServer.put(player.getUniqueId(), server);
             }
-        }, 1, TimeUnit.SECONDS);
+        }, plugin.getConfig().getLong("join_private_message_delay") * 50, TimeUnit.MILLISECONDS);
     }
 
     @EventHandler
