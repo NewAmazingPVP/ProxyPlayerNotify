@@ -30,14 +30,31 @@ public class EventListener {
                     if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase())) {
                         return;
                     }
-                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
-                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
-                    }
+
                     MessageSender.sendMessage(plugin, "join_message", player, server, null);
+
                     plugin.getPlayerLastServer().put(player.getUniqueId(), server);
                 }
             }
-        }).delay(1, TimeUnit.SECONDS).schedule();
+        }).delay(plugin.getConfig().getLong("join_message_delay", 20L)*50, TimeUnit.MILLISECONDS).schedule();
+        plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+            if (player.isActive()) {
+                String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
+                if (server != null) {
+                    plugin.setConfig(ConfigLoader.loadConfig(plugin.getDataDirectory()));
+                    ConfigLoader.loadServerNames(plugin.getConfig(), plugin.getServerNames());
+                    if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase())) {
+                        return;
+                    }
+
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
+                            MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
+                    }
+
+                    plugin.getPlayerLastServer().put(player.getUniqueId(), server);
+                }
+            }
+        }).delay(plugin.getConfig().getLong("join_private_message_delay", 20L)*50, TimeUnit.MILLISECONDS).schedule();
     }
 
     @Subscribe
