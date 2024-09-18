@@ -27,15 +27,15 @@ leave_message = "%player% has left the network (Last server: %last_server%) at %
 
 # Delay for Join Messages
 # This option sets the delay before sending the join message after a player connects.
-# For example, join_message_delay = "20" will send the message after 20 ticks.
+# For example, join_message_delay = 20 will send the message after 20 ticks.
 # Warning: Setting this value too low may cause messages not to be sent if the server name is not yet available.
-join_message_delay = "20"
+join_message_delay = 25
 
 # Delay for Private Join Messages
 # This option sets the delay before sending the private join message to the joining player.
-# For example, join_private_message_delay = "20" will send the message after 20 ticks.
+# For example, join_private_message_delay = 20 will send the message after 20 ticks.
 # Warning: Setting this value too low may cause messages not to be sent if the server name is not yet available.
-join_private_message_delay = "20"
+join_private_message_delay = 25
 
 # Disabled Servers
 # Define the backend servers (lowercase) where the join/switch/leave messages should not be sent.

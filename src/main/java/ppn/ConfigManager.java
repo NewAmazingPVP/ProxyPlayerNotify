@@ -26,7 +26,8 @@ public class ConfigManager {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Representer representer = new Representer(options);
-        this.yaml = new Yaml(new Constructor(), representer, options);
+
+        this.yaml = new Yaml(representer, options);
 
         loadConfig();
     }
