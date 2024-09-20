@@ -47,6 +47,7 @@ public class VelocityPlayerNotify {
         this.metricsFactory.make(this, 18744);
         this.proxy.getCommandManager().register("reloadProxyNotifyConfig", new Reload(this));
         this.proxy.getCommandManager().register("togglemessages", new ToggleMessages(this));
+        this.proxy.getEventManager().register(this, new EventListener(this));
         this.disabledServers = new HashSet<>(config.getList("disabled_servers"));
         this.privateServers = new HashSet<>(config.getList("private_servers"));
         this.limboServers = new HashSet<>(config.getList("limbo_servers"));
