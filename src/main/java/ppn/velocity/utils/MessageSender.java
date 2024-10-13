@@ -1,11 +1,11 @@
 package ppn.velocity.utils;
 
-import ppn.velocity.ConfigLoader;
-import ppn.velocity.VelocityPlayerNotify;
 import com.velocitypowered.api.proxy.Player;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
+import ppn.velocity.ConfigLoader;
+import ppn.velocity.VelocityPlayerNotify;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;

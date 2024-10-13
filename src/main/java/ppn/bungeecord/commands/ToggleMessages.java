@@ -1,10 +1,10 @@
 package ppn.bungeecord.commands;
 
-import ppn.bungeecord.BungeePlayerNotify;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import ppn.bungeecord.BungeePlayerNotify;
 
 import java.util.HashSet;
 import java.util.UUID;

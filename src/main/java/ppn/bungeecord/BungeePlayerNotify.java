@@ -1,12 +1,12 @@
 package ppn.bungeecord;
 
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.md_5.bungee.api.plugin.Plugin;
 import ppn.ConfigManager;
 import ppn.bungeecord.commands.Reload;
 import ppn.bungeecord.commands.ToggleMessages;
 import ppn.bungeecord.utils.Metrics;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;

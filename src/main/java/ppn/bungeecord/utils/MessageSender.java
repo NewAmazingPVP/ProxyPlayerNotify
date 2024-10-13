@@ -1,10 +1,10 @@
 package ppn.bungeecord.utils;
 
-import ppn.bungeecord.BungeePlayerNotify;
 import de.myzelyam.api.vanish.BungeeVanishAPI;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import ppn.bungeecord.BungeePlayerNotify;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
