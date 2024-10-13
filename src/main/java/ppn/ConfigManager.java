@@ -2,7 +2,6 @@ package ppn;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
@@ -159,7 +158,7 @@ public class ConfigManager {
         }
         return Collections.emptySet();
     }
-    
+
     public Map<String, Object> getSection(String path) {
         Object section = getNestedOption(path);
         if (section instanceof Map) {

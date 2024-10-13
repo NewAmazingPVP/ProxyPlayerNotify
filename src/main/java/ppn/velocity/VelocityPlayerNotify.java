@@ -1,8 +1,5 @@
 package ppn.velocity;
 
-import ppn.velocity.commands.Reload;
-import ppn.velocity.commands.ToggleMessages;
-import ppn.velocity.utils.Metrics;
 import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.event.Subscribe;
@@ -11,6 +8,9 @@ import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import ppn.velocity.commands.Reload;
+import ppn.velocity.commands.ToggleMessages;
+import ppn.velocity.utils.Metrics;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -29,7 +29,7 @@ public class VelocityPlayerNotify {
     private Set<String> privateServers;
     private Set<String> limboServers;
     private boolean noVanishNotifications;
-    private final ConcurrentHashMap<UUID, String> playerLastServer = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerLastServer = new ConcurrentHashMap<>();
     private final Map<String, String> serverNames = new HashMap<>();
     private Toml config;
 
@@ -87,7 +87,7 @@ public class VelocityPlayerNotify {
         return noVanishNotifications;
     }
 
-    public ConcurrentHashMap<UUID, String> getPlayerLastServer() {
+    public Map<UUID, String> getPlayerLastServer() {
         return playerLastServer;
     }
 
