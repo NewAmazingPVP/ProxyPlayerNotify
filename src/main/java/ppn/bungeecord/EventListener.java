@@ -62,7 +62,7 @@ public class EventListener implements Listener {
             String currentServer = player.getServer().getInfo().getName();
             plugin.saveDefaultConfig();
             plugin.loadConfig();
-            if (plugin.getLimboServers() != null && currentServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
+            if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
                 MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
             } else if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {

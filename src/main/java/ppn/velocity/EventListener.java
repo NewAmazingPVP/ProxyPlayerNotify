@@ -65,7 +65,7 @@ public class EventListener {
             Player player = event.getPlayer();
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
             String currentServer = event.getServer().getServerInfo().getName();
-            if (plugin.getLimboServers() != null && currentServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
+            if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
                 MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
             } else if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
