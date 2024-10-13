@@ -34,6 +34,9 @@ public class EventListener {
                     MessageSender.sendMessage(plugin, "join_message", player, server, null);
 
                     plugin.getPlayerLastServer().put(player.getUniqueId(), server);
+                } else {
+                    plugin.setConfig(ConfigLoader.loadConfig(plugin.getDataDirectory()));
+                    MessageSender.sendMessage(plugin, "join_message", player, null, null);
                 }
             }
         }).delay(plugin.getConfig().getLong("join_message_delay", 20L)*50, TimeUnit.MILLISECONDS).schedule();
@@ -52,6 +55,12 @@ public class EventListener {
                     }
 
                     plugin.getPlayerLastServer().put(player.getUniqueId(), server);
+                } else {
+                    plugin.setConfig(ConfigLoader.loadConfig(plugin.getDataDirectory()));
+
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, null);
+                    }
                 }
             }
         }).delay(plugin.getConfig().getLong("join_private_message_delay", 20L)*50, TimeUnit.MILLISECONDS).schedule();
@@ -89,11 +98,14 @@ public class EventListener {
             ConfigLoader.loadServerNames(plugin.getConfig(), plugin.getServerNames());
             Player player = event.getPlayer();
             String lastServer = plugin.getPlayerLastServer().remove(player.getUniqueId());
-            if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
-                return;
+            if (lastServer != null) {
+                if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
+                    return;
+                }
+                MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
+            } else {
+                MessageSender.sendMessage(plugin, "leave_message", player, null, null);
             }
-            if (lastServer == null) return;
-            MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }
     }
 }

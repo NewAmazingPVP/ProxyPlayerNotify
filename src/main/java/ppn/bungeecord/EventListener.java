@@ -32,22 +32,32 @@ public class EventListener implements Listener {
                 plugin.saveDefaultConfig();
                 plugin.loadConfig();
                 String server = player.getServer().getInfo().getName();
-                if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
-                    return;
+                if (server != null) {
+                    if (plugin.getLimboServers() != null&& plugin.getLimboServers().contains(server.toLowerCase())) {
+                        return;
+                    }
+                    MessageSender.sendMessage(plugin, "join_message", player, server, null);
+                    playerLastServer.put(player.getUniqueId(), server);
+                } else {
+                    MessageSender.sendMessage(plugin, "join_message", player, null, null);
                 }
-                MessageSender.sendMessage(plugin, "join_message", player, server, null);
-                playerLastServer.put(player.getUniqueId(), server);
             }
         }, plugin.getConfig().getLong("join_message_delay") * 50, TimeUnit.MILLISECONDS);
 
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             if (player.isConnected()) {
                 String server = player.getServer().getInfo().getName();
-                if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
-                    return;
-                }
-                if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
-                    MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
+                if(server != null) {
+                    if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase())) {
+                        return;
+                    }
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
+                    }
+                } else {
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
+                    }
                 }
             }
         }, plugin.getConfig().getLong("join_private_message_delay") * 50, TimeUnit.MILLISECONDS);
@@ -81,13 +91,18 @@ public class EventListener implements Listener {
         if (validPlayers.remove(event.getPlayer())) {
             ProxiedPlayer player = event.getPlayer();
             String lastServer = playerLastServer.remove(player.getUniqueId());
-            plugin.saveDefaultConfig();
-            plugin.loadConfig();
-            if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
-                return;
+            if (lastServer != null) {
+                plugin.saveDefaultConfig();
+                plugin.loadConfig();
+                if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
+                    return;
+                }
+                MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
+            } else {
+                plugin.saveDefaultConfig();
+                plugin.loadConfig();
+                MessageSender.sendMessage(plugin, "leave_message", player, null, null);
             }
-            if (lastServer == null) return;
-            MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }
     }
 }
