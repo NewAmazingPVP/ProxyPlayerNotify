@@ -3,15 +3,22 @@ package ppn.velocity;
 import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import ppn.ConfigManager;
 import ppn.velocity.commands.Reload;
 import ppn.velocity.commands.ToggleMessages;
 import ppn.velocity.utils.Metrics;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,30 +36,54 @@ public class VelocityPlayerNotify {
     private Set<String> privateServers;
     private Set<String> limboServers;
     private boolean noVanishNotifications;
-    private final Map<UUID, String> playerLastServer = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerLastServer = new HashMap<>();
     private final Map<String, String> serverNames = new HashMap<>();
-    private Toml config;
+    private ConfigManager config;
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
         this.proxy = proxy;
         this.dataDirectory = dataDirectory;
         this.metricsFactory = metricsFactory;
-        this.config = ConfigLoader.loadConfig(dataDirectory);
+        saveDefaultConfig();
+        loadConfig();
     }
 
     @Subscribe
     public void onProxyInitialize(ProxyInitializeEvent event) {
-        this.config = ConfigLoader.loadConfig(dataDirectory);
+        saveDefaultConfig();
+        loadConfig();
         this.metricsFactory.make(this, 18744);
         this.proxy.getCommandManager().register("reloadProxyNotifyConfig", new Reload(this));
         this.proxy.getCommandManager().register("togglemessages", new ToggleMessages(this));
         this.proxy.getEventManager().register(this, new EventListener(this));
-        this.disabledServers = new HashSet<>(config.getList("disabled_servers"));
-        this.privateServers = new HashSet<>(config.getList("private_servers"));
-        this.limboServers = new HashSet<>(config.getList("limbo_servers"));
+        disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
+        privateServers = new HashSet<>(config.getStringList("PrivateServers"));
+        limboServers = new HashSet<>(config.getStringList("LimboServers"));
         this.noVanishNotifications = config.getBoolean("disable_vanish_notifications");
-        ConfigLoader.loadServerNames(config, serverNames);
+        config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
+    }
+
+
+    public void saveDefaultConfig() {
+        File file = new File(dataDirectory.toFile(), "config.yml");
+        if (!file.exists()) {
+            file.getParentFile().mkdirs();
+            try (InputStream in = getClass().getResourceAsStream("/config.yml")) {
+                if (in != null) {
+                    Files.copy(in, file.toPath());
+                } else {
+                    file.createNewFile();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void loadConfig() {
+        File file = new File(dataDirectory.toFile(), "config.yml");
+        config = new ConfigManager(dataDirectory.toFile(), "config.yml");
     }
 
     public ProxyServer getProxy() {
@@ -63,7 +94,7 @@ public class VelocityPlayerNotify {
         return dataDirectory;
     }
 
-    public Toml getConfig() {
+    public ConfigManager getConfig() {
         return config;
     }
 
@@ -93,10 +124,6 @@ public class VelocityPlayerNotify {
 
     public Map<String, String> getServerNames() {
         return serverNames;
-    }
-
-    public void setConfig(Toml config) {
-        this.config = config;
     }
 
     public void setDisabledServers(Set<String> disabledServers) {

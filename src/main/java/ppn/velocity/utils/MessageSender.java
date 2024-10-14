@@ -4,7 +4,6 @@ import com.velocitypowered.api.proxy.Player;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
-import ppn.velocity.ConfigLoader;
 import ppn.velocity.VelocityPlayerNotify;
 
 import java.time.LocalTime;
@@ -13,9 +12,6 @@ import java.time.format.DateTimeFormatter;
 public class MessageSender {
 
     public static void sendMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
-        plugin.setConfig(ConfigLoader.loadConfig(plugin.getDataDirectory()));
-        ConfigLoader.loadServerNames(plugin.getConfig(), plugin.getServerNames());
-
         if (connectedServer != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(connectedServer.toLowerCase())) {
             return;
         }
@@ -42,9 +38,6 @@ public class MessageSender {
     }
 
     public static void sendPrivateMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer) {
-        plugin.setConfig(ConfigLoader.loadConfig(plugin.getDataDirectory()));
-        ConfigLoader.loadServerNames(plugin.getConfig(), plugin.getServerNames());
-
         String finalMessage = plugin.getConfig().getString(type).replace("%player%", targetPlayer.getUsername());
         if (finalMessage.isEmpty()) {
             return;
