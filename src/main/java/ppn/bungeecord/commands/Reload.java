@@ -31,6 +31,8 @@ public class Reload extends Command {
 
                     plugin.setDisabledServers(new HashSet<>(plugin.getConfig().getStringList("DisabledServers")));
                     plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
+                    plugin.setLimboServers(new HashSet<>(plugin.getConfig().getStringList("LimboServers")));
+                    plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
                 } else {
                     sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
                 }
@@ -45,6 +47,8 @@ public class Reload extends Command {
 
             plugin.setDisabledServers(new HashSet<>(plugin.getConfig().getStringList("DisabledServers")));
             plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
+            plugin.setLimboServers(new HashSet<>(plugin.getConfig().getStringList("LimboServers")));
+            plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
         }
     }
 }

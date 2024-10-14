@@ -1,5 +1,6 @@
 package ppn.bungeecord;
 
+import com.velocitypowered.api.proxy.Player;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -23,6 +24,17 @@ public class EventListener implements Listener {
 
     public EventListener(BungeePlayerNotify plugin) {
         this.plugin = plugin;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onRejoin(PostLoginEvent event) {
+        ProxiedPlayer player = event.getPlayer();
+        if(plugin.getConfig().getBoolean("join_last_server")){
+            String lastServer = (String) plugin.getConfig().getOption("players." + player.getUniqueId() + ".lastServer");
+            if (lastServer != null) {
+                player.connect(plugin.getProxy().getServerInfo(lastServer));
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -82,6 +94,9 @@ public class EventListener implements Listener {
             String lastServer = playerLastServer.remove(player.getUniqueId());
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 return;
+            }
+            if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
+                plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }

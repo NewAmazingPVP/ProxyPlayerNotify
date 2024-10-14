@@ -108,4 +108,12 @@ public class BungeePlayerNotify extends Plugin {
     public boolean isNoVanishNotifications() {
         return noVanishNotifications;
     }
+
+    public void setLimboServers(Set<String> limboServers) {
+        this.limboServers = limboServers;
+    }
+
+    public void setNoVanishNotifications(boolean noVanishNotifications) {
+        this.noVanishNotifications = noVanishNotifications;
+    }
 }

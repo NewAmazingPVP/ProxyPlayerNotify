@@ -41,6 +41,11 @@ join_private_message_delay: 25
 # Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
 disable_vanish_notifications: false
 
+# Option to let players rejoin the server they were on before they left the network.
+# If this is enabled, the player will be sent to the last server on join in which they were on before they left the network.
+# If enabled, the message delay options would need to be increased so that the messages can get the server
+join_last_server: false
+
 # Permissions
 # Use these settings to control who can see the join/leave messages.
 permission:
@@ -88,3 +93,5 @@ PrivateServers:
 # In short: Join and leave notifications are sent based on transitions to and from these servers to manage network-wide notifications effectively.
 LimboServers:
   - "limbo-afk"
+
+

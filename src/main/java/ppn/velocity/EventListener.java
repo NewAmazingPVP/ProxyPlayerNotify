@@ -18,6 +18,17 @@ public class EventListener {
         this.plugin = plugin;
     }
 
+    @Subscribe(order = PostOrder.FIRST)
+    public void onRejoin(PlayerChooseInitialServerEvent event) {
+        Player player = event.getPlayer();
+        if(plugin.getConfig().getBoolean("join_last_server")){
+            String lastServer = (String) plugin.getConfig().getOption("players." + player.getUniqueId() + ".lastServer");
+            if (lastServer != null) {
+                plugin.getProxy().getServer(lastServer).ifPresent(server -> player.createConnectionRequest(server).fireAndForget());
+            }
+        }
+    }
+
     @Subscribe(order = PostOrder.LAST)
     public void onJoin(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
@@ -31,7 +42,7 @@ public class EventListener {
                 MessageSender.sendMessage(plugin, "join_message", player, server, null);
                 plugin.getPlayerLastServer().put(player.getUniqueId(), server);
             }
-        }).delay(plugin.getConfig().getLong("join_message_delay", 20L) * 50, TimeUnit.MILLISECONDS).schedule();
+        }).delay(plugin.getConfig().getLong("join_message_delay") * 50, TimeUnit.MILLISECONDS).schedule();
         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
             if (player.isActive()) {
                 String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
@@ -44,7 +55,7 @@ public class EventListener {
                 }
                 plugin.getPlayerLastServer().put(player.getUniqueId(), server);
             }
-        }).delay(plugin.getConfig().getLong("join_private_message_delay", 20L) * 50, TimeUnit.MILLISECONDS).schedule();
+        }).delay(plugin.getConfig().getLong("join_private_message_delay") * 50, TimeUnit.MILLISECONDS).schedule();
     }
 
     @Subscribe
@@ -77,6 +88,9 @@ public class EventListener {
             String lastServer = plugin.getPlayerLastServer().remove(player.getUniqueId());
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 return;
+            }
+            if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
+                plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }
