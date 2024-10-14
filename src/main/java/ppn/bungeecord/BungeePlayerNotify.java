@@ -45,6 +45,8 @@ public class BungeePlayerNotify extends Plugin {
         limboServers = new HashSet<>(config.getStringList("LimboServers"));
 
         noVanishNotifications = config.getBoolean("disable_vanish_notifications");
+        config.addDefault("join_last_server", false);
+        config.saveConfig();
 
         getProxy().getPluginManager().registerListener(this, new EventListener(this));
         if (config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")

@@ -61,6 +61,8 @@ public class VelocityPlayerNotify {
         privateServers = new HashSet<>(config.getStringList("PrivateServers"));
         limboServers = new HashSet<>(config.getStringList("LimboServers"));
         this.noVanishNotifications = config.getBoolean("disable_vanish_notifications");
+        config.addDefault("join_last_server", false);
+        config.saveConfig();
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
     }
 
