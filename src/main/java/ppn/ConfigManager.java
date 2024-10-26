@@ -1,5 +1,14 @@
 package ppn;
 
+import org.snakeyaml.engine.v2.api.Dump;
+import org.snakeyaml.engine.v2.api.DumpSettings;
+import org.snakeyaml.engine.v2.api.Load;
+import org.snakeyaml.engine.v2.api.LoadSettings;
+import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.snakeyaml.engine.v2.common.ScalarStyle;
+import org.snakeyaml.engine.v2.nodes.Node;
+import org.snakeyaml.engine.v2.nodes.Tag;
+import org.snakeyaml.engine.v2.representer.StandardRepresenter;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
@@ -8,13 +17,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.regex.Pattern;
+
 
 public class ConfigManager {
-
     private final File configFile;
     private Map<String, Object> configMap;
-    private final Yaml yaml;
+    private final LoadSettings loadSettings;
+    private final DumpSettings dumpSettings;
+    private String originalContent;
+    private final StandardRepresenter representer;
 
     public ConfigManager(File dataFolder, String fileName) {
         if (!dataFolder.exists()) {
@@ -22,19 +37,40 @@ public class ConfigManager {
         }
         this.configFile = new File(dataFolder, fileName);
 
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        Representer representer = new Representer(options);
+        this.representer = new StandardRepresenter(DumpSettings.builder().build()) {
+            @Override
+            protected Node representScalar(Tag tag, String value, ScalarStyle style) {
+                if (value.contains("\n")) {
+                    return super.representScalar(tag, value, ScalarStyle.LITERAL);
+                }
+                if (Pattern.compile("[^a-zA-Z0-9._-]").matcher(value).find()) {
+                    return super.representScalar(tag, value, ScalarStyle.SINGLE_QUOTED);
+                }
+                return super.representScalar(tag, value, style);
+            }
+        };
 
-        this.yaml = new Yaml(representer, options);
+        this.loadSettings = LoadSettings.builder()
+                .setParseComments(true)
+                .build();
+
+        this.dumpSettings = DumpSettings.builder()
+                .setDefaultFlowStyle(FlowStyle.BLOCK)
+                .setDumpComments(true)
+                .setIndent(2)
+                .setIndicatorIndent(0)
+                .setWidth(4096)
+                .build();
 
         loadConfig();
     }
 
     private void loadConfig() {
         if (configFile.exists()) {
-            try (FileInputStream fis = new FileInputStream(configFile)) {
-                configMap = yaml.load(fis);
+            try {
+                originalContent = Files.readString(configFile.toPath(), StandardCharsets.UTF_8);
+                Load loader = new Load(loadSettings);
+                configMap = (Map<String, Object>) loader.loadFromString(originalContent);
                 if (configMap == null) {
                     configMap = new HashMap<>();
                 }
@@ -49,11 +85,86 @@ public class ConfigManager {
     }
 
     public void saveConfig() {
-        try (FileWriter writer = new FileWriter(configFile)) {
-            yaml.dump(configMap, writer);
+        try {
+            Dump dumper = new Dump(dumpSettings, representer);
+
+            String newContent = dumper.dumpToString(configMap);
+
+            if (originalContent != null && !originalContent.isEmpty()) {
+                newContent = preserveCommentFormat(originalContent, newContent);
+            }
+
+            Files.writeString(configFile.toPath(), newContent, StandardCharsets.UTF_8);
+
+            originalContent = newContent;
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private String preserveCommentFormat(String original, String updated) {
+        String[] originalLines = original.split("\n");
+        String[] updatedLines = updated.split("\n");
+
+        Map<String, String> keyComments = new LinkedHashMap<>();
+        StringBuilder currentComment = new StringBuilder();
+        String lastKey = null;
+
+        for (String line : originalLines) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("#")) {
+                if (currentComment.length() > 0) {
+                    currentComment.append("\n");
+                }
+                currentComment.append(line);
+            } else if (!trimmed.isEmpty()) {
+                if (trimmed.contains(":")) {
+                    lastKey = trimmed.split(":", 2)[0].trim();
+                    if (currentComment.length() > 0) {
+                        keyComments.put(lastKey, currentComment.toString());
+                        currentComment = new StringBuilder();
+                    }
+                } else if (trimmed.startsWith("-") && lastKey != null) {
+                    // Handle list items
+                    if (currentComment.length() > 0) {
+                        String commentKey = lastKey + "." + trimmed;
+                        keyComments.put(commentKey, currentComment.toString());
+                        currentComment = new StringBuilder();
+                    }
+                }
+            }
+        }
+        
+        StringBuilder result = new StringBuilder();
+        lastKey = null;
+        boolean firstLine = true;
+
+        for (String line : updatedLines) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty()) {
+                if (trimmed.contains(":")) {
+                    String key = trimmed.split(":", 2)[0].trim();
+                    String comments = keyComments.get(key);
+                    if (comments != null) {
+                        if (!firstLine) {
+                            result.append("\n");
+                        }
+                        result.append(comments).append("\n");
+                    }
+                    lastKey = key;
+                } else if (trimmed.startsWith("-") && lastKey != null) {
+                    String commentKey = lastKey + "." + trimmed;
+                    String comments = keyComments.get(commentKey);
+                    if (comments != null) {
+                        result.append(comments).append("\n");
+                    }
+                }
+            }
+            result.append(line).append("\n");
+            firstLine = false;
+        }
+
+        return result.toString().trim();
     }
 
     public Object getOption(String path) {
