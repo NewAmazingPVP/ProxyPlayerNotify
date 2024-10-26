@@ -134,7 +134,7 @@ public class ConfigManager {
                 }
             }
         }
-        
+
         StringBuilder result = new StringBuilder();
         lastKey = null;
         boolean firstLine = true;

@@ -48,6 +48,9 @@ join_last_server: false
 
 # Permissions
 # Use these settings to control who can see the join/leave messages.
+# Enable permissions if you want to use permissions and want to use next two options.
+# If permissions enabled Then if notify_message is true and the player doesn't have ppn.notify permission, then their join/leave/message will not be sent.
+# If permissions enabled Then if hide_message is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
 permission:
   # Enable this if you want to use permissions and want to use next two options.
   permissions: false
