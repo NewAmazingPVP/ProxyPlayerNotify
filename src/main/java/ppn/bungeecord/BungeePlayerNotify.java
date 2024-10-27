@@ -25,6 +25,7 @@ public class BungeePlayerNotify extends Plugin {
     private Set<String> disabledServers;
     private Set<String> privateServers;
     private Set<String> limboServers;
+    private Set<String> disabledPlayers;
     private boolean noVanishNotifications;
 
     @Override
@@ -43,6 +44,7 @@ public class BungeePlayerNotify extends Plugin {
         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
         privateServers = new HashSet<>(config.getStringList("PrivateServers"));
         limboServers = new HashSet<>(config.getStringList("LimboServers"));
+        disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
 
         noVanishNotifications = config.getBoolean("disable_vanish_notifications");
         config.addDefault("join_last_server", false);
@@ -105,6 +107,10 @@ public class BungeePlayerNotify extends Plugin {
 
     public Set<String> getLimboServers() {
         return limboServers;
+    }
+
+    public Set<String> getDisabledPlayers() {
+        return disabledPlayers;
     }
 
     public boolean isNoVanishNotifications() {

@@ -40,7 +40,9 @@ public class EventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
-
+        if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
+            return;
+        }
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             if (player.isConnected()) {
                 validPlayers.add(player);
@@ -69,6 +71,9 @@ public class EventListener implements Listener {
     @EventHandler
     public void onSwitch(ServerSwitchEvent event) {
         ProxiedPlayer player = event.getPlayer();
+        if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
+            return;
+        }
         if (event.getFrom() == null) return;
         String lastServer = event.getFrom().getName();
         if (player.isConnected()) {
@@ -91,6 +96,9 @@ public class EventListener implements Listener {
     public void onLeave(PlayerDisconnectEvent event) {
         if (validPlayers.remove(event.getPlayer())) {
             ProxiedPlayer player = event.getPlayer();
+            if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
+                return;
+            }
             String lastServer = playerLastServer.remove(player.getUniqueId());
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 return;
