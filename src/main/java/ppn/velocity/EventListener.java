@@ -18,7 +18,7 @@ public class EventListener {
         this.plugin = plugin;
     }
 
-    @Subscribe(order = PostOrder.FIRST)
+    @Subscribe()
     public void onRejoin(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
         if(plugin.getConfig().getBoolean("join_last_server")){
@@ -32,9 +32,6 @@ public class EventListener {
     @Subscribe(order = PostOrder.LAST)
     public void onJoin(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
-        if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
-            return;
-        }
         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
             if (player.isActive()) {
                 String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
@@ -65,9 +62,6 @@ public class EventListener {
     public void onSwitch(ServerConnectedEvent event) {
         if (event.getPreviousServer().isPresent()) {
             Player player = event.getPlayer();
-            if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
-                return;
-            }
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
             String currentServer = event.getServer().getServerInfo().getName();
             if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
@@ -97,9 +91,6 @@ public class EventListener {
             }
             if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
                 plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
-            }
-            if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
-                return;
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }

@@ -16,6 +16,10 @@ public class MessageSender {
             return;
         }
 
+        if (plugin.getDisabledPlayers().contains(targetPlayer.getUsername().toLowerCase())) {
+            return;
+        }
+
         if (disconnectedServer != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(disconnectedServer.toLowerCase())) {
             return;
         }
@@ -40,6 +44,9 @@ public class MessageSender {
     public static void sendPrivateMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer) {
         String finalMessage = plugin.getConfig().getString(type).replace("%player%", targetPlayer.getUsername());
         if (finalMessage.isEmpty()) {
+            return;
+        }
+        if (plugin.getDisabledPlayers().contains(targetPlayer.getUsername().toLowerCase())) {
             return;
         }
         if (connectedServer != null) {

@@ -24,6 +24,10 @@ public class MessageSender {
             return;
         }
 
+        if (plugin.getDisabledPlayers().contains(targetPlayer.getName().toLowerCase())) {
+            return;
+        }
+
         if (lastServer != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(lastServer.toLowerCase())) {
             return;
         }
@@ -55,6 +59,9 @@ public class MessageSender {
         }
         if (server != null) {
             finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
+        }
+        if (plugin.getDisabledPlayers().contains(targetPlayer.getName().toLowerCase())) {
+            return;
         }
         if (finalMessage.contains("%lp_prefix%")) {
             User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
