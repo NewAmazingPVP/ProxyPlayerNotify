@@ -96,15 +96,15 @@ public class EventListener implements Listener {
     public void onLeave(PlayerDisconnectEvent event) {
         if (validPlayers.remove(event.getPlayer())) {
             ProxiedPlayer player = event.getPlayer();
-            if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
-                return;
-            }
             String lastServer = playerLastServer.remove(player.getUniqueId());
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 return;
             }
             if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
                 plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
+            }
+            if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
+                return;
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }
