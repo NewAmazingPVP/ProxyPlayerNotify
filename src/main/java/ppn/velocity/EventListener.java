@@ -91,15 +91,15 @@ public class EventListener {
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
             Player player = event.getPlayer();
-            if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
-                return;
-            }
             String lastServer = plugin.getPlayerLastServer().remove(player.getUniqueId());
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 return;
             }
             if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
                 plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
+            }
+            if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
+                return;
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }
