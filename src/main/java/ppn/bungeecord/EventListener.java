@@ -26,7 +26,7 @@ public class EventListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler()
     public void onRejoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
         if(plugin.getConfig().getBoolean("join_last_server")){
@@ -40,9 +40,6 @@ public class EventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
-        if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
-            return;
-        }
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             if (player.isConnected()) {
                 validPlayers.add(player);
@@ -71,9 +68,6 @@ public class EventListener implements Listener {
     @EventHandler
     public void onSwitch(ServerSwitchEvent event) {
         ProxiedPlayer player = event.getPlayer();
-        if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
-            return;
-        }
         if (event.getFrom() == null) return;
         String lastServer = event.getFrom().getName();
         if (player.isConnected()) {
@@ -102,9 +96,6 @@ public class EventListener implements Listener {
             }
             if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
                 plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
-            }
-            if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
-                return;
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         }

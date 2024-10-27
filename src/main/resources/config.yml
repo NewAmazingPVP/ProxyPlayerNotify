@@ -30,13 +30,13 @@ leave_message: "%player% has left the network (Last server: %last_server%) at %t
 # This option sets the delay before sending the join message after a player connects.
 # For example, join_message_delay: 20 will send the message after 20 ticks.
 # Warning: Setting this value too low may cause messages not to be sent if the server name is not yet available.
-join_message_delay: 25
+join_message_delay: 50
 
 # Delay for Private Join Messages
 # This option sets the delay before sending the private join message to the joining player.
 # For example, join_private_message_delay: 20 will send the message after 20 ticks.
 # Warning: Setting this value too low may cause messages not to be sent if the server name is not yet available.
-join_private_message_delay: 25
+join_private_message_delay: 55
 
 # Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
 disable_vanish_notifications: false
