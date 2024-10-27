@@ -32,6 +32,9 @@ public class EventListener {
     @Subscribe(order = PostOrder.LAST)
     public void onJoin(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
+        if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
+            return;
+        }
         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
             if (player.isActive()) {
                 String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
@@ -62,6 +65,9 @@ public class EventListener {
     public void onSwitch(ServerConnectedEvent event) {
         if (event.getPreviousServer().isPresent()) {
             Player player = event.getPlayer();
+            if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
+                return;
+            }
             String lastServer = event.getPreviousServer().get().getServerInfo().getName();
             String currentServer = event.getServer().getServerInfo().getName();
             if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
@@ -85,6 +91,9 @@ public class EventListener {
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
             Player player = event.getPlayer();
+            if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
+                return;
+            }
             String lastServer = plugin.getPlayerLastServer().remove(player.getUniqueId());
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 return;

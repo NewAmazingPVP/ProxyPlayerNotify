@@ -97,4 +97,12 @@ PrivateServers:
 LimboServers:
   - "limbo-afk"
 
+# Disabled Players
+# Specify the players (lowercase) that should not send any notification messages.
+# They will also will not recieve join_private_message.
+# It is not recommended to use this feature and instead use permissions for each group/player
+DisabledPlayers:
+  - "player1"
+  - "player2"
+
 

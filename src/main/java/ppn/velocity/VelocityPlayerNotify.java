@@ -35,6 +35,7 @@ public class VelocityPlayerNotify {
     private Set<String> disabledServers;
     private Set<String> privateServers;
     private Set<String> limboServers;
+    private Set<String> disabledPlayers;
     private boolean noVanishNotifications;
     private final Map<UUID, String> playerLastServer = new HashMap<>();
     private final Map<String, String> serverNames = new HashMap<>();
@@ -60,6 +61,7 @@ public class VelocityPlayerNotify {
         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
         privateServers = new HashSet<>(config.getStringList("PrivateServers"));
         limboServers = new HashSet<>(config.getStringList("LimboServers"));
+        disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
         this.noVanishNotifications = config.getBoolean("disable_vanish_notifications");
         config.addDefault("join_last_server", false);
         config.saveConfig();
@@ -114,6 +116,10 @@ public class VelocityPlayerNotify {
 
     public Set<String> getLimboServers() {
         return limboServers;
+    }
+
+    public Set<String> getDisabledPlayers() {
+        return disabledPlayers;
     }
 
     public boolean isNoVanishNotifications() {
