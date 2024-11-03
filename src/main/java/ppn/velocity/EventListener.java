@@ -83,7 +83,8 @@ public class EventListener {
         if (event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_PROXY &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER &&
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.CONFLICTING_LOGIN &&
-                event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE) {
+                event.getLoginStatus() != DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE &&
+                event.getLoginStatus() != DisconnectEvent.LoginStatus.PRE_SERVER_JOIN) {
             Player player = event.getPlayer();
             String lastServer = plugin.getPlayerLastServer().remove(player.getUniqueId());
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {

@@ -24,6 +24,8 @@ public class Reload implements SimpleCommand {
         plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
         plugin.getServerNames().clear();
         plugin.getConfig().getKeys("ServerNames").forEach(server -> plugin.getServerNames().put(server.toLowerCase(), plugin.getConfig().getString("ServerNames." + server)));
+        plugin.getConfig().addDefault("join_last_server", false);
+        plugin.getConfig().saveConfig();
         plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("Reload done"));
     }
 }
