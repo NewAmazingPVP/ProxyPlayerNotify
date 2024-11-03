@@ -23,11 +23,19 @@ Here’s a sample `config.yml`:
 
 # This config file contains settings for the ProxyPlayerNotify plugin.
 # Use this file to customize the join/leave messages and permissions.
+# Use \n to create multiple lines/messages to players.
+# Set message to "" to not send any message/empty.
 
 # Network Join Message
 # This message is displayed when a player joins the network.
 # Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
 join_message: "%player% has joined the network (Logged in server: %server%) at %time%"
+
+# Network Private Join Message
+# This message is displayed only to the player who joins the network.
+# It has a higher priority than the public join message.
+# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
+join_private_message: "&aWelcome, %player%!\n&bYou have joined the server %server% at %time%.\nEnjoy your stay!"
 
 # Servers Switch Message
 # This message is displayed when a player switches to a different server.
@@ -39,11 +47,31 @@ switch_message: "%player% has switched from %last_server% and joined to the %ser
 # Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %last_server%, %time%.
 leave_message: "%player% has left the network (Last server: %last_server%) at %time%"
 
+# Delay for Join Messages
+# This option sets the delay before sending the join message after a player connects.
+# For example, join_message_delay: 49 will send the message after 49 ticks.
+# Warning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.
+join_message_delay: 49
+
+# Delay for Private Join Messages
+# This option sets the delay before sending the private join message to the joining player.
+# For example, join_private_message_delay: 50 will send the message after 50 ticks.
+# Warning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.
+join_private_message_delay: 50
+
 # Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
 disable_vanish_notifications: false
 
+# Option to let players rejoin the server they were on before they left the network.
+# If this is enabled, the player will be sent to the last server on join in which they were on before they left the network.
+# If enabled, the message delay options would need to be increased so that the messages can get the server
+join_last_server: false
+
 # Permissions
 # Use these settings to control who can see the join/leave messages.
+# Enable permissions if you want to use permissions and want to use next two options.
+# If permissions enabled Then if notify_message is true and the player doesn't have ppn.notify permission, then their join/leave/message will not be sent.
+# If permissions enabled Then if hide_message is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
 permission:
   # Enable this if you want to use permissions and want to use next two options.
   permissions: false
@@ -89,6 +117,14 @@ PrivateServers:
 # In short: Join and leave notifications are sent based on transitions to and from these servers to manage network-wide notifications effectively.
 LimboServers:
   - "limbo-afk"
+
+# Disabled Players
+# Specify the players (lowercase) that should not send any notification messages.
+# They will also will not recieve join_private_message.
+# It is not recommended to use this feature and instead use permissions for each group/player
+DisabledPlayers:
+  - "player1"
+  - "player2"
 ```
 
 ### Contributing
