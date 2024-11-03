@@ -1,5 +1,8 @@
 package ppn.bungeecord;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -12,10 +15,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BungeePlayerNotify extends Plugin {
 
@@ -33,6 +37,20 @@ public class BungeePlayerNotify extends Plugin {
         new Metrics(this, 18703);
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
+        }
+        if (Files.exists(Paths.get(getDataFolder() + "/config.yml"))){
+            Path filePath = Paths.get(getDataFolder() + "/IMPORTANT.txt");
+            String message = "Please move over all settings to new config.yml format instead of the old config.yml to make the plugin work!";
+
+            try {
+                List<String> updatedLines = Files.lines(filePath)
+                        .map(line -> line + " " + message)
+                        .collect(Collectors.toList());
+
+                Files.write(filePath, updatedLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         saveDefaultConfig();
