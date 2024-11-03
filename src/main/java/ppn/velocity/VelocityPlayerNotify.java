@@ -10,6 +10,9 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import ppn.ConfigManager;
 import ppn.velocity.commands.Reload;
 import ppn.velocity.commands.ToggleMessages;
@@ -20,10 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.2.2", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
 })
 public class VelocityPlayerNotify {
@@ -46,6 +50,21 @@ public class VelocityPlayerNotify {
         this.proxy = proxy;
         this.dataDirectory = dataDirectory;
         this.metricsFactory = metricsFactory;
+        if (Files.exists(Paths.get(dataDirectory + "/config.toml"))){
+            proxy.getConsoleCommandSource().sendMessage(Component.text("Old config file has been detected! Move over all settings to new config.yml instead of the config.toml to make the plugin work!!!").color(NamedTextColor.DARK_RED).decorate(TextDecoration.BOLD));
+            Path filePath = Paths.get(dataDirectory + "/IMPORTANTpleaseREAD.txt");
+            String message = "Please move all settings to new config.yml instead of the config.toml to make the plugin work!";
+
+            try {
+                List<String> updatedLines = Files.lines(filePath)
+                        .map(line -> line + " " + message)
+                        .collect(Collectors.toList());
+
+                Files.write(filePath, updatedLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         saveDefaultConfig();
         loadConfig();
     }

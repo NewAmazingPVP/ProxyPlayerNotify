@@ -1,10 +1,12 @@
 package ppn.bungeecord.commands;
 
+import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import ppn.bungeecord.BungeePlayerNotify;
+import ppn.bungeecord.EventListener;
 
 import java.util.HashSet;
 
@@ -33,6 +35,9 @@ public class Reload extends Command {
                     plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
                     plugin.setLimboServers(new HashSet<>(plugin.getConfig().getStringList("LimboServers")));
                     plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
+
+                    plugin.getConfig().addDefault("join_last_server", false);
+                    plugin.getConfig().saveConfig();
                 } else {
                     sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
                 }
@@ -49,6 +54,8 @@ public class Reload extends Command {
             plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
             plugin.setLimboServers(new HashSet<>(plugin.getConfig().getStringList("LimboServers")));
             plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
+            plugin.getConfig().addDefault("join_last_server", false);
+            plugin.getConfig().saveConfig();
         }
     }
 }
