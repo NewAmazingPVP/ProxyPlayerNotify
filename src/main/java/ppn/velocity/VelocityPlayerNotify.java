@@ -24,8 +24,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
@@ -52,7 +54,7 @@ public class VelocityPlayerNotify {
         this.metricsFactory = metricsFactory;
         if (Files.exists(Paths.get(dataDirectory + "/config.toml"))){
             proxy.getConsoleCommandSource().sendMessage(Component.text("Old config file has been detected! Move over all settings to new config.yml instead of the config.toml to make the plugin work!!!").color(NamedTextColor.DARK_RED).decorate(TextDecoration.BOLD));
-            Path filePath = Paths.get(dataDirectory + "/IMPORTANTpleaseREAD.txt");
+            Path filePath = Paths.get(dataDirectory + "/IMPORTANT.txt");
             String message = "Please move all settings to new config.yml instead of the config.toml to make the plugin work!";
 
             try {
