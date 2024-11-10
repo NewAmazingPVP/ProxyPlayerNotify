@@ -9,19 +9,13 @@ import org.snakeyaml.engine.v2.common.ScalarStyle;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.Tag;
 import org.snakeyaml.engine.v2.representer.StandardRepresenter;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
-
 
 public class ConfigManager {
     private final File configFile;
@@ -30,12 +24,16 @@ public class ConfigManager {
     private final DumpSettings dumpSettings;
     private String originalContent;
     private final StandardRepresenter representer;
+    private final Map<String, String> commentMap;
+    private final Set<String> processedPaths;
 
     public ConfigManager(File dataFolder, String fileName) {
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
         this.configFile = new File(dataFolder, fileName);
+        this.commentMap = new LinkedHashMap<>();
+        this.processedPaths = new HashSet<>();
 
         this.representer = new StandardRepresenter(DumpSettings.builder().build()) {
             @Override
@@ -74,6 +72,7 @@ public class ConfigManager {
                 if (configMap == null) {
                     configMap = new HashMap<>();
                 }
+                extractExistingComments();
             } catch (IOException e) {
                 e.printStackTrace();
                 configMap = new HashMap<>();
@@ -84,34 +83,25 @@ public class ConfigManager {
         }
     }
 
-    public void saveConfig() {
-        try {
-            Dump dumper = new Dump(dumpSettings, representer);
+    private void extractExistingComments() {
+        if (originalContent == null || originalContent.isEmpty()) {
+            return;
+        }
 
-            String newContent = dumper.dumpToString(configMap);
+        String[] lines = originalContent.split("\n");
+        StringBuilder currentComment = new StringBuilder();
+        Stack<String> pathStack = new Stack<>();
+        int indentLevel = 0;
 
-            if (originalContent != null && !originalContent.isEmpty()) {
-                newContent = preserveCommentFormat(originalContent, newContent);
+        for (String line : lines) {
+            String trimmed = line.trim();
+            int currentIndent = getIndentLevel(line);
+
+            while (!pathStack.isEmpty() && currentIndent <= indentLevel) {
+                pathStack.pop();
+                indentLevel -= 2;
             }
 
-            Files.writeString(configFile.toPath(), newContent, StandardCharsets.UTF_8);
-
-            originalContent = newContent;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String preserveCommentFormat(String original, String updated) {
-        String[] originalLines = original.split("\n");
-        String[] updatedLines = updated.split("\n");
-
-        Map<String, String> keyComments = new LinkedHashMap<>();
-        StringBuilder currentComment = new StringBuilder();
-        String lastKey = null;
-
-        for (String line : originalLines) {
-            String trimmed = line.trim();
             if (trimmed.startsWith("#")) {
                 if (currentComment.length() > 0) {
                     currentComment.append("\n");
@@ -119,52 +109,90 @@ public class ConfigManager {
                 currentComment.append(line);
             } else if (!trimmed.isEmpty()) {
                 if (trimmed.contains(":")) {
-                    lastKey = trimmed.split(":", 2)[0].trim();
-                    if (currentComment.length() > 0) {
-                        keyComments.put(lastKey, currentComment.toString());
-                        currentComment = new StringBuilder();
+                    String key = trimmed.split(":", 2)[0].trim();
+
+                    if (currentIndent > indentLevel) {
+                        pathStack.push(key);
+                        indentLevel = currentIndent;
+                    } else {
+                        if (!pathStack.isEmpty()) {
+                            pathStack.pop();
+                        }
+                        pathStack.push(key);
                     }
-                } else if (trimmed.startsWith("-") && lastKey != null) {
-                    // Handle list items
+
+                    String currentPath = String.join(".", pathStack);
+
                     if (currentComment.length() > 0) {
-                        String commentKey = lastKey + "." + trimmed;
-                        keyComments.put(commentKey, currentComment.toString());
+                        commentMap.put(currentPath, currentComment.toString());
+                        processedPaths.add(currentPath);
                         currentComment = new StringBuilder();
                     }
                 }
             }
         }
+    }
 
-        StringBuilder result = new StringBuilder();
-        lastKey = null;
-        boolean firstLine = true;
+    private int getIndentLevel(String line) {
+        int indent = 0;
+        while (indent < line.length() && line.charAt(indent) == ' ') {
+            indent++;
+        }
+        return indent;
+    }
 
-        for (String line : updatedLines) {
-            String trimmed = line.trim();
-            if (!trimmed.isEmpty()) {
+    public void saveConfig() {
+        try {
+            Dump dumper = new Dump(dumpSettings, representer);
+            String newContent = dumper.dumpToString(configMap);
+
+            String[] lines = newContent.split("\n");
+            StringBuilder result = new StringBuilder();
+            Stack<String> pathStack = new Stack<>();
+            int currentIndent = 0;
+
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
+                String trimmed = line.trim();
+                int lineIndent = getIndentLevel(line);
+
+                while (!pathStack.isEmpty() && lineIndent <= currentIndent) {
+                    pathStack.pop();
+                    currentIndent -= 2;
+                }
+
                 if (trimmed.contains(":")) {
                     String key = trimmed.split(":", 2)[0].trim();
-                    String comments = keyComments.get(key);
-                    if (comments != null) {
-                        if (!firstLine) {
-                            result.append("\n");
+
+                    if (lineIndent > currentIndent) {
+                        pathStack.push(key);
+                        currentIndent = lineIndent;
+                    } else {
+                        if (!pathStack.isEmpty()) {
+                            pathStack.pop();
                         }
-                        result.append(comments).append("\n");
+                        pathStack.push(key);
                     }
-                    lastKey = key;
-                } else if (trimmed.startsWith("-") && lastKey != null) {
-                    String commentKey = lastKey + "." + trimmed;
-                    String comments = keyComments.get(commentKey);
-                    if (comments != null) {
-                        result.append(comments).append("\n");
+
+                    String fullPath = String.join(".", pathStack);
+                    String comment = commentMap.get(fullPath);
+
+                    if (comment != null) {
+                        result.append(comment).append("\n");
                     }
                 }
-            }
-            result.append(line).append("\n");
-            firstLine = false;
-        }
 
-        return result.toString().trim();
+                result.append(line);
+                if (i < lines.length - 1) {
+                    result.append("\n");
+                }
+            }
+
+            Files.writeString(configFile.toPath(), result.toString(), StandardCharsets.UTF_8);
+            originalContent = result.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Object getOption(String path) {
@@ -189,6 +217,40 @@ public class ConfigManager {
         if (getNestedOption(path) == null) {
             setOption(path, value);
         }
+    }
+
+    public void addDefault(String path, Object value, String comment) {
+        if (!processedPaths.contains(path)) {
+            if (getNestedOption(path) == null) {
+                setOption(path, value);
+            }
+            setComment(path, comment);
+            processedPaths.add(path);
+        }
+    }
+
+    public void setComment(String path, String comment) {
+        String formattedComment = formatComment(comment);
+        commentMap.put(path, formattedComment);
+    }
+
+    public String getComment(String path) {
+        return commentMap.get(path);
+    }
+
+    private String formatComment(String comment) {
+        if (comment == null || comment.trim().isEmpty()) {
+            return "";
+        }
+
+        StringBuilder formatted = new StringBuilder();
+        for (String line : comment.split("\n")) {
+            if (!line.trim().startsWith("#")) {
+                formatted.append("# ");
+            }
+            formatted.append(line).append("\n");
+        }
+        return formatted.toString().trim();
     }
 
     public boolean contains(String path) {
