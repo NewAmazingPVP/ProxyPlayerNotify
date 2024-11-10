@@ -3,6 +3,7 @@ package ppn.bungeecord.utils;
 import de.myzelyam.api.vanish.BungeeVanishAPI;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import ppn.bungeecord.BungeePlayerNotify;
 
@@ -114,7 +115,7 @@ public class MessageSender {
         finalMessage = finalMessage.replace("%time%", time);
 
         for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
-            if (playerToggle.contains(pl.getUniqueId())) {
+            if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && plugin.getDisabledServers() != null) {
                     if (!plugin.getDisabledServers().contains(pl.getServer().getInfo().getName().toLowerCase())) {
                         if (plugin.getConfig().getBoolean("permission.permissions")) {
