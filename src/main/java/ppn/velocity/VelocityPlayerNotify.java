@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3.1", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
 })
 public class VelocityPlayerNotify {
@@ -145,7 +145,6 @@ public class VelocityPlayerNotify {
         limboServers = new HashSet<>(config.getStringList("LimboServers"));
         disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
         this.noVanishNotifications = config.getBoolean("disable_vanish_notifications");
-        config.addDefault("join_last_server", false);
         config.saveConfig();
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
     }
@@ -218,6 +217,10 @@ public class VelocityPlayerNotify {
 
     public void setDisabledServers(Set<String> disabledServers) {
         this.disabledServers = disabledServers;
+    }
+
+    public void setDisabledPlayers(Set<String> disabledPlayers) {
+        this.disabledPlayers = disabledPlayers;
     }
 
     public void setPrivateServers(Set<String> privateServers) {

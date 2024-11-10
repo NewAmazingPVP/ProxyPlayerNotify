@@ -22,9 +22,9 @@ public class Reload implements SimpleCommand {
         plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
         plugin.setLimboServers(new HashSet<>(plugin.getConfig().getStringList("LimboServers")));
         plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
+        plugin.setDisabledPlayers(new HashSet<>(plugin.getConfig().getStringList("DisabledPlayers")));
         plugin.getServerNames().clear();
         plugin.getConfig().getKeys("ServerNames").forEach(server -> plugin.getServerNames().put(server.toLowerCase(), plugin.getConfig().getString("ServerNames." + server)));
-        plugin.getConfig().addDefault("join_last_server", false);
         plugin.getConfig().saveConfig();
         plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("Reload done"));
     }
