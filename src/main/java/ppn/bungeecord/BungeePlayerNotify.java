@@ -199,4 +199,8 @@ public class BungeePlayerNotify extends Plugin {
     public void setNoVanishNotifications(boolean noVanishNotifications) {
         this.noVanishNotifications = noVanishNotifications;
     }
+
+    public void setDisabledPlayers(Set<String> disabledPlayers) {
+        this.disabledPlayers = disabledPlayers;
+    }
 }

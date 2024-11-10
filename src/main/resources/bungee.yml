@@ -1,5 +1,5 @@
 name: ProxyPlayerNotify
-version: '2.3'
+version: '2.3.1'
 author: 'NewAmazingPVP'
 main: ppn.bungeecord.BungeePlayerNotify
 description: This plugin notifies the whole network when a player joins or switches the server in the network!
