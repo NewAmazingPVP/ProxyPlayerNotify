@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3.1", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3.2", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true)
 })
 public class VelocityPlayerNotify {
@@ -66,6 +66,7 @@ public class VelocityPlayerNotify {
             }
         }
         saveDefaultConfig();
+        loadConfig();
         config.addDefault("join_message", "%player% has joined the network (Logged in server: %server%) at %time%",
                 "Network Join Message\nThis message is displayed when a player joins the network.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
 
