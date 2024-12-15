@@ -50,6 +50,7 @@ public class BungeePlayerNotify extends Plugin {
         }
 
         saveDefaultConfig();
+        loadConfig();
         config.addDefault("join_message", "%player% has joined the network (Logged in server: %server%) at %time%",
                 "Network Join Message\nThis message is displayed when a player joins the network.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
 
