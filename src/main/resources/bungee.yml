@@ -3,5 +3,5 @@ version: '2.3.3'
 author: 'NewAmazingPVP'
 main: ppn.bungeecord.BungeePlayerNotify
 description: This plugin notifies the whole network when a player joins or switches the server in the network!
-softdepend: [ LuckPerms ]
+softdepend: [ LuckPerms, PAPIProxyBridge ]
 

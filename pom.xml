@@ -65,7 +65,7 @@
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
         <repository>
-            <id>sonatype</id>
+            <id>placeholderapi</id>
             <url>https://repo.william278.net/releases/</url>
         </repository>
         <repository>

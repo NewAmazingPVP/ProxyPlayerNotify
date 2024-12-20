@@ -30,7 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3.3", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
-        @Dependency(id = "luckperms", optional = true)
+        @Dependency(id = "luckperms", optional = true),
+        @Dependency(id = "papiproxybridge", optional = true)
 })
 public class VelocityPlayerNotify {
 
