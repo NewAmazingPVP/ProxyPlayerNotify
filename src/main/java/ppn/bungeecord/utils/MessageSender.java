@@ -5,10 +5,12 @@ import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.william278.papiproxybridge.api.PlaceholderAPI;
 import ppn.bungeecord.BungeePlayerNotify;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static ppn.bungeecord.commands.ToggleMessages.playerToggle;
@@ -148,13 +150,18 @@ public class MessageSender {
     }
 
     private static void sendMessageToPlayer(ProxiedPlayer player, String message) {
-        message = replace(message);
-        message = message.replace("&", "§");
-        message = ChatColor.translateAlternateColorCodes('§', message);
-        String[] lines = message.split("\n");
-        for (String line : lines) {
-            player.sendMessage(line);
-        }
+        final PlaceholderAPI api = PlaceholderAPI.createInstance();
+        final UUID playerUUID = player.getUniqueId();
+        api.formatPlaceholders(message, playerUUID).thenAccept(formatted -> {
+            String newMessage = replace(formatted);
+            newMessage = newMessage.replace("&", "§");
+            newMessage = ChatColor.translateAlternateColorCodes('§', newMessage);
+            String[] lines = newMessage.split("\n");
+            for (String line : lines) {
+                player.sendMessage(line);
+            }
+        });
+
     }
 
     private static String replace(String s) {
