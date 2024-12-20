@@ -4,10 +4,12 @@ import com.velocitypowered.api.proxy.Player;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
+import net.william278.papiproxybridge.api.PlaceholderAPI;
 import ppn.velocity.VelocityPlayerNotify;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 public class MessageSender {
 
@@ -141,13 +143,17 @@ public class MessageSender {
     }
 
     private static void sendMessageToPlayer(Player player, String message) {
-        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
-                .character('&')
-                .hexColors()
-                .build();
-        String[] lines = message.split("\n");
-        for (String line : lines) {
-            player.sendMessage(serializer.deserialize(line));
-        }
+        final PlaceholderAPI api = PlaceholderAPI.createInstance();
+        final UUID playerUUID = player.getUniqueId();
+        api.formatPlaceholders(message, playerUUID).thenAccept(formatted -> {
+            LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
+                    .character('&')
+                    .hexColors()
+                    .build();
+            String[] lines = message.split("\n");
+            for (String line : lines) {
+                player.sendMessage(serializer.deserialize(line));
+            }
+        });
     }
 }
