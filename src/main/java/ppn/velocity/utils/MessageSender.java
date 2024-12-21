@@ -150,7 +150,7 @@ public class MessageSender {
                     .character('&')
                     .hexColors()
                     .build();
-            String[] lines = message.split("\n");
+            String[] lines = formatted.split("\n");
             for (String line : lines) {
                 player.sendMessage(serializer.deserialize(line));
             }
