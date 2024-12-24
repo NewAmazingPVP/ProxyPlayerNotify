@@ -70,6 +70,7 @@ public class EventListener implements Listener {
     @EventHandler
     public void onSwitch(ServerSwitchEvent event) {
         ProxiedPlayer player = event.getPlayer();
+        plugin.getProxy().getScheduler().schedule(plugin, () -> {
         if (event.getFrom() == null) return;
         String lastServer = event.getFrom().getName();
         if (player.isConnected()) {
@@ -86,6 +87,7 @@ public class EventListener implements Listener {
             }
             playerLastServer.put(player.getUniqueId(), currentServer);
         }
+        }, plugin.getConfig().getLong("switch_message_delay") * 50, TimeUnit.MILLISECONDS);
     }
 
     @EventHandler
