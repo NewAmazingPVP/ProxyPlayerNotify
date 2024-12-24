@@ -60,22 +60,24 @@ public class EventListener {
 
     @Subscribe
     public void onSwitch(ServerConnectedEvent event) {
-        if (event.getPreviousServer().isPresent()) {
-            Player player = event.getPlayer();
-            String lastServer = event.getPreviousServer().get().getServerInfo().getName();
-            String currentServer = event.getServer().getServerInfo().getName();
-            if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
-                MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
-            } else if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
-                if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
-                    MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
+        plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+            if (event.getPreviousServer().isPresent()) {
+                Player player = event.getPlayer();
+                String lastServer = event.getPreviousServer().get().getServerInfo().getName();
+                String currentServer = event.getServer().getServerInfo().getName();
+                if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
+                    MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
+                } else if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
+                    }
+                    MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
+                } else {
+                    MessageSender.sendMessage(plugin, "switch_message", player, currentServer, lastServer);
                 }
-                MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
-            } else {
-                MessageSender.sendMessage(plugin, "switch_message", player, currentServer, lastServer);
+                plugin.getPlayerLastServer().put(player.getUniqueId(), currentServer);
             }
-            plugin.getPlayerLastServer().put(player.getUniqueId(), currentServer);
-        }
+        }).delay(plugin.getConfig().getLong("switch_message_delay") * 50, TimeUnit.MILLISECONDS).schedule();
     }
 
     @Subscribe(order = PostOrder.LAST)

@@ -69,6 +69,9 @@ public class BungeePlayerNotify extends Plugin {
         config.addDefault("join_private_message_delay", 50,
                 "Delay for Private Join Messages\nThis option sets the delay before sending the private join message to the joining player.\nFor example, join_private_message_delay: 50 will send the message after 50 ticks.\nWarning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.");
 
+        config.addDefault("switch_message_delay", 0,
+                "Delay for Switch Messages\nThis option sets the delay before sending the switch message after a player switches servers.\nFor example, switch_message_delay: 0 will send the message after 0 ticks.");
+
         config.addDefault("disable_vanish_notifications", false,
                 "Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)");
 
