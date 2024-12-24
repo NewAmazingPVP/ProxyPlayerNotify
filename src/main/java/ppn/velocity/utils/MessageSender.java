@@ -70,7 +70,11 @@ public class MessageSender {
         } catch (Exception ignored) {
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        sendMessageToPlayer(targetPlayer, finalMessage);
+        final PlaceholderAPI api = PlaceholderAPI.createInstance();
+        final UUID playerUUID = targetPlayer.getUniqueId();
+        api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
+            sendMessageToPlayer(targetPlayer, formatted);
+        });
     }
 
     private static void sendFormattedMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
@@ -105,7 +109,11 @@ public class MessageSender {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        sendMessageToAll(plugin, finalMessage);
+        final PlaceholderAPI api = PlaceholderAPI.createInstance();
+        final UUID playerUUID = targetPlayer.getUniqueId();
+        api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
+            sendMessageToAll(plugin, formatted);
+        });
     }
 
     private static void sendMessageToAll(VelocityPlayerNotify plugin, String message) {

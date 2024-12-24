@@ -81,7 +81,11 @@ public class MessageSender {
             }
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        sendMessageToPlayer(targetPlayer, finalMessage);
+        final PlaceholderAPI api = PlaceholderAPI.createInstance();
+        final UUID playerUUID = targetPlayer.getUniqueId();
+            api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
+            sendMessageToPlayer(targetPlayer, formatted);
+        });
     }
 
     private static void sendFormattedMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
@@ -115,7 +119,9 @@ public class MessageSender {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-
+        final PlaceholderAPI api = PlaceholderAPI.createInstance();
+        final UUID playerUUID = targetPlayer.getUniqueId();
+        api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
         for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
             if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && plugin.getDisabledServers() != null) {
@@ -123,44 +129,41 @@ public class MessageSender {
                         if (plugin.getConfig().getBoolean("permission.permissions")) {
                             if (plugin.getConfig().getBoolean("permission.hide_message")) {
                                 if (pl.hasPermission("ppn.view")) {
-                                    sendMessageToPlayer(pl, finalMessage);
+                                    sendMessageToPlayer(pl, formatted);
                                 }
                             } else {
-                                sendMessageToPlayer(pl, finalMessage);
+                                sendMessageToPlayer(pl, formatted);
                             }
                         } else {
-                            sendMessageToPlayer(pl, finalMessage);
+                            sendMessageToPlayer(pl, formatted);
                         }
                     }
                 } else {
                     if (plugin.getConfig().getBoolean("permission.permissions")) {
                         if (plugin.getConfig().getBoolean("permission.hide_message")) {
                             if (pl.hasPermission("ppn.view")) {
-                                sendMessageToPlayer(pl, finalMessage);
+                                sendMessageToPlayer(pl, formatted);
                             }
                         } else {
-                            sendMessageToPlayer(pl, finalMessage);
+                            sendMessageToPlayer(pl, formatted);
                         }
                     } else {
-                        sendMessageToPlayer(pl, finalMessage);
+                        sendMessageToPlayer(pl, formatted);
                     }
                 }
             }
         }
+    });
     }
 
     private static void sendMessageToPlayer(ProxiedPlayer player, String message) {
-        final PlaceholderAPI api = PlaceholderAPI.createInstance();
-        final UUID playerUUID = player.getUniqueId();
-        api.formatPlaceholders(message, playerUUID).thenAccept(formatted -> {
-            String newMessage = replace(formatted);
-            newMessage = newMessage.replace("&", "§");
-            newMessage = ChatColor.translateAlternateColorCodes('§', newMessage);
-            String[] lines = newMessage.split("\n");
-            for (String line : lines) {
-                player.sendMessage(line);
-            }
-        });
+        message = replace(message);
+        message = message.replace("&", "§");
+        message = ChatColor.translateAlternateColorCodes('§', message);
+        String[] lines = message.split("\n");
+        for (String line : lines) {
+            player.sendMessage(line);
+        }
 
     }
 
