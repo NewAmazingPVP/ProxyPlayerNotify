@@ -151,17 +151,13 @@ public class MessageSender {
     }
 
     private static void sendMessageToPlayer(Player player, String message) {
-        final PlaceholderAPI api = PlaceholderAPI.createInstance();
-        final UUID playerUUID = player.getUniqueId();
-        api.formatPlaceholders(message, playerUUID).thenAccept(formatted -> {
-            LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
-                    .character('&')
-                    .hexColors()
-                    .build();
-            String[] lines = formatted.split("\n");
-            for (String line : lines) {
-                player.sendMessage(serializer.deserialize(line));
-            }
-        });
+        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
+                .character('&')
+                .hexColors()
+                .build();
+        String[] lines = message.split("\n");
+        for (String line : lines) {
+            player.sendMessage(serializer.deserialize(line));
+        }
     }
 }
