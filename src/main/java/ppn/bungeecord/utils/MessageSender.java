@@ -81,15 +81,19 @@ public class MessageSender {
             }
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        final PlaceholderAPI api = PlaceholderAPI.createInstance();
-        final UUID playerUUID = targetPlayer.getUniqueId();
-            api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
+            plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
             sendMessageToPlayer(targetPlayer, formatted);
         });
     }
 
     private static void sendFormattedMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
-        String finalMessage = plugin.getConfig().getString(type).replace("%player%", targetPlayer.getName());
+        String finalMessage;
+        if (type.equals("leave_message")) {
+            finalMessage = plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) != null ? plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) : plugin.getConfig().getString(type);
+        } else {
+            finalMessage = plugin.getConfig().getString(type);
+        }
+        finalMessage = finalMessage.replace("%player%", targetPlayer.getName());
         if (finalMessage.isEmpty()) {
             return;
         }
@@ -119,9 +123,7 @@ public class MessageSender {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        final PlaceholderAPI api = PlaceholderAPI.createInstance();
-        final UUID playerUUID = targetPlayer.getUniqueId();
-        api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
+        plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
         for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
             if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && plugin.getDisabledServers() != null) {

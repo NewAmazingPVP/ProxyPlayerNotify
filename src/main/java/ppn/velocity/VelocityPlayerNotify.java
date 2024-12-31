@@ -1,9 +1,7 @@
 package ppn.velocity;
 
 import com.google.inject.Inject;
-import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
@@ -13,6 +11,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.william278.papiproxybridge.api.PlaceholderAPI;
 import ppn.ConfigManager;
 import ppn.velocity.commands.Reload;
 import ppn.velocity.commands.ToggleMessages;
@@ -25,9 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.3.3", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true),
@@ -46,7 +44,9 @@ public class VelocityPlayerNotify {
     private boolean noVanishNotifications;
     private final Map<UUID, String> playerLastServer = new HashMap<>();
     private final Map<String, String> serverNames = new HashMap<>();
+    private final HashMap<UUID, String> recentLeaveMessage = new HashMap<>();
     private ConfigManager config;
+    private final PlaceholderAPI api = PlaceholderAPI.createInstance();
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -152,6 +152,13 @@ public class VelocityPlayerNotify {
         this.noVanishNotifications = config.getBoolean("disable_vanish_notifications");
         config.saveConfig();
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
+        getProxy().getScheduler().buildTask (this, () -> {
+            for (Player player : getProxy().getAllPlayers()) {
+                getApi().formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
+                    addRecentLeaveMessage(player.getUniqueId(), formatted);
+                });
+            }
+        }).repeat(Duration.ofSeconds(1)).schedule();
     }
 
 
@@ -238,5 +245,17 @@ public class VelocityPlayerNotify {
 
     public void setNoVanishNotifications(boolean noVanishNotifications) {
         this.noVanishNotifications = noVanishNotifications;
+    }
+
+    public void addRecentLeaveMessage(UUID uuid, String message) {
+        recentLeaveMessage.put(uuid, message);
+    }
+
+    public String getRecentLeaveMessage(UUID uuid) {
+        return recentLeaveMessage.get(uuid);
+    }
+
+    public PlaceholderAPI getApi() {
+        return api;
     }
 }

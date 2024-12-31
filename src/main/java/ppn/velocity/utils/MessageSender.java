@@ -70,15 +70,23 @@ public class MessageSender {
         } catch (Exception ignored) {
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        final PlaceholderAPI api = PlaceholderAPI.createInstance();
-        final UUID playerUUID = targetPlayer.getUniqueId();
-        api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
-            sendMessageToPlayer(targetPlayer, formatted);
-        });
+        if (plugin.getApi() != null) {
+            plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
+                sendMessageToAll(plugin, formatted);
+            });
+        } else {
+            sendMessageToAll(plugin, finalMessage);
+        }
     }
 
     private static void sendFormattedMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
-        String finalMessage = plugin.getConfig().getString(type).replace("%player%", targetPlayer.getUsername());
+        String finalMessage;
+        if (type.equals("leave_message")) {
+            finalMessage = plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) != null ? plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) : plugin.getConfig().getString(type);
+        } else {
+            finalMessage = plugin.getConfig().getString(type);
+        }
+        finalMessage = finalMessage.replace("%player%", targetPlayer.getUsername());
         if (finalMessage.isEmpty()) {
             return;
         }
@@ -109,11 +117,13 @@ public class MessageSender {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        final PlaceholderAPI api = PlaceholderAPI.createInstance();
-        final UUID playerUUID = targetPlayer.getUniqueId();
-        api.formatPlaceholders(finalMessage, playerUUID).thenAccept(formatted -> {
-            sendMessageToAll(plugin, formatted);
-        });
+        if (plugin.getApi() != null) {
+            plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
+                sendMessageToAll(plugin, formatted);
+            });
+        } else {
+            sendMessageToAll(plugin, finalMessage);
+        }
     }
 
     private static void sendMessageToAll(VelocityPlayerNotify plugin, String message) {
