@@ -46,14 +46,14 @@ public class VelocityPlayerNotify {
     private final Map<String, String> serverNames = new HashMap<>();
     private final HashMap<UUID, String> recentLeaveMessage = new HashMap<>();
     private ConfigManager config;
-    private final PlaceholderAPI api = PlaceholderAPI.createInstance();
+    private PlaceholderAPI api;
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
         this.proxy = proxy;
         this.dataDirectory = dataDirectory;
         this.metricsFactory = metricsFactory;
-        if (Files.exists(Paths.get(dataDirectory + "/config.toml"))){
+        if (Files.exists(Paths.get(dataDirectory + "/config.toml"))) {
             proxy.getConsoleCommandSource().sendMessage(Component.text("Old config file has been detected! Move over all settings to new config.yml instead of the config.toml to make the plugin work!!!").color(NamedTextColor.DARK_RED).decorate(TextDecoration.BOLD));
             if (!Files.exists(Paths.get(dataDirectory + "/IMPORTANT.txt"))) {
                 try {
@@ -150,13 +150,27 @@ public class VelocityPlayerNotify {
         limboServers = new HashSet<>(config.getStringList("LimboServers"));
         disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
         this.noVanishNotifications = config.getBoolean("disable_vanish_notifications");
+        if (getProxy().getPluginManager().getPlugin("papiproxybridge").isPresent()) {
+            System.out.println("PLUGIN IS PRESENT");
+            api = PlaceholderAPI.createInstance();
+        } else {
+            api = null;
+            System.out.println("PLUGIN IS NOT PRESENT");
+            System.out.println(getProxy().getPluginManager().getPlugins().toString());
+        }
         config.saveConfig();
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
-        getProxy().getScheduler().buildTask (this, () -> {
+        getProxy().getScheduler().buildTask(this, () -> {
             for (Player player : getProxy().getAllPlayers()) {
-                getApi().formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
-                    addRecentLeaveMessage(player.getUniqueId(), formatted);
-                });
+                if (getApi() != null) {
+                    api = ;
+                    System.out.println("API is NOT NULL");
+                    getApi().formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
+                        addRecentLeaveMessage(player.getUniqueId(), formatted);
+                    });
+                } else {
+                    System.out.println("API is null");
+                }
             }
         }).repeat(Duration.ofSeconds(1)).schedule();
     }

@@ -21,7 +21,7 @@ public class EventListener {
     @Subscribe()
     public void onRejoin(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
-        if(plugin.getConfig().getBoolean("join_last_server")){
+        if (plugin.getConfig().getBoolean("join_last_server")) {
             String lastServer = (String) plugin.getConfig().getOption("players." + player.getUniqueId() + ".lastServer");
             if (lastServer != null) {
                 plugin.getProxy().getServer(lastServer).ifPresent(server -> player.createConnectionRequest(server).fireAndForget());

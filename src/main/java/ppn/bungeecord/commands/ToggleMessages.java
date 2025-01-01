@@ -21,8 +21,7 @@ public class ToggleMessages extends Command {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (sender instanceof ProxiedPlayer) {
-            ProxiedPlayer player = (ProxiedPlayer) sender;
+        if (sender instanceof ProxiedPlayer player) {
             if (playerToggle.contains(player.getUniqueId())) {
                 playerToggle.remove(player.getUniqueId());
                 sender.sendMessage(ChatColor.GREEN + "Message notifications toggled on");

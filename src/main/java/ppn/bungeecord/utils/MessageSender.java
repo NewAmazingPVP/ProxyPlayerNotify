@@ -3,14 +3,11 @@ package ppn.bungeecord.utils;
 import de.myzelyam.api.vanish.BungeeVanishAPI;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.william278.papiproxybridge.api.PlaceholderAPI;
 import ppn.bungeecord.BungeePlayerNotify;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static ppn.bungeecord.commands.ToggleMessages.playerToggle;
@@ -81,9 +78,13 @@ public class MessageSender {
             }
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        if (plugin.getApi() != null) {
             plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
-            sendMessageToPlayer(targetPlayer, formatted);
-        });
+                sendMessageToPlayer(targetPlayer, formatted);
+            });
+        } else {
+            sendMessageToPlayer(targetPlayer, finalMessage);
+        }
     }
 
     private static void sendFormattedMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
@@ -123,7 +124,16 @@ public class MessageSender {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
+        if (plugin.getApi() != null) {
+            plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
+                sendMessageToPlayers(plugin, formatted);
+            });
+        } else {
+            sendMessageToPlayers(plugin, finalMessage);
+        }
+    }
+
+    private static void sendMessageToPlayers(BungeePlayerNotify plugin, String formatted) {
         for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
             if (!playerToggle.contains(pl.getUniqueId())) {
                 if (pl.getServer() != null && plugin.getDisabledServers() != null) {
@@ -155,7 +165,6 @@ public class MessageSender {
                 }
             }
         }
-    });
     }
 
     private static void sendMessageToPlayer(ProxiedPlayer player, String message) {

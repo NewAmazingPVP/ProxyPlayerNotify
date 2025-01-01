@@ -1,8 +1,5 @@
 package ppn.bungeecord;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -22,7 +19,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class BungeePlayerNotify extends Plugin {
 
@@ -34,7 +30,7 @@ public class BungeePlayerNotify extends Plugin {
     private Set<String> limboServers;
     private Set<String> disabledPlayers;
     private boolean noVanishNotifications;
-    private final PlaceholderAPI api = PlaceholderAPI.createInstance();
+    private PlaceholderAPI api;
     private final HashMap<UUID, String> recentLeaveMessage = new HashMap<>();
 
     @Override
@@ -142,11 +138,18 @@ public class BungeePlayerNotify extends Plugin {
 
         getProxy().getPluginManager().registerCommand(this, new Reload(this));
         getProxy().getPluginManager().registerCommand(this, new ToggleMessages(this));
+        if (getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null) {
+            api = PlaceholderAPI.createInstance();
+        } else {
+            api = null;
+        }
         getProxy().getScheduler().schedule(this, () -> {
             for (ProxiedPlayer player : getProxy().getPlayers()) {
-                getApi().formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
-                    addRecentLeaveMessage(player.getUniqueId(), formatted);
-                });
+                if (getApi() != null) {
+                    getApi().formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
+                        addRecentLeaveMessage(player.getUniqueId(), formatted);
+                    });
+                }
             }
         }, 1, TimeUnit.SECONDS);
     }

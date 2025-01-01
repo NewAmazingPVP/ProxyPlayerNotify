@@ -4,12 +4,10 @@ import com.velocitypowered.api.proxy.Player;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
-import net.william278.papiproxybridge.api.PlaceholderAPI;
 import ppn.velocity.VelocityPlayerNotify;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 public class MessageSender {
 

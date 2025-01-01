@@ -17,8 +17,7 @@ public class ToggleMessages implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
-        if (source instanceof Player) {
-            Player player = (Player) source;
+        if (source instanceof Player player) {
             if (plugin.getMessageToggles().contains(player.getUniqueId())) {
                 plugin.getMessageToggles().remove(player.getUniqueId());
                 player.sendMessage(Component.text("Message notifications toggled on"));

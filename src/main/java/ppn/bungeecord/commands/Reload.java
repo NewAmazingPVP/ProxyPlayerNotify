@@ -1,12 +1,10 @@
 package ppn.bungeecord.commands;
 
-import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import ppn.bungeecord.BungeePlayerNotify;
-import ppn.bungeecord.EventListener;
 
 import java.util.HashSet;
 
