@@ -137,7 +137,14 @@ public class VelocityPlayerNotify {
         defaultDisabledPlayers.add("player1");
         defaultDisabledPlayers.add("player2");
         config.addDefault("DisabledPlayers", defaultDisabledPlayers,
-                "Disabled Players\nSpecify the players (lowercase) that should not send any notification messages.\nThey will also will not recieve join_private_message.\nIt is not recommended to use this feature and instead use permissions for each group/player");
+                "Disabled Players\nSpecify the players (lowercase) that should not send any notification messages.\nThey will also will not recieve join_private_message.\nIt is not recommended to use permissions for each group/player");
+
+        config.addDefault("webhook.enabled", false,
+                "Enable webhook notification on player join");
+        config.addDefault("webhook.url", "",
+                "Webhook URL to post join notifications");
+        config.addDefault("webhook.message", "%player% joined %server% at %time%",
+                "Webhook message format\nPlaceholders available: %player%, %server%, %time%");
 
         config.saveConfig();
         loadConfig();

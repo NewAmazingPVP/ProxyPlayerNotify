@@ -1,5 +1,6 @@
 package ppn.bungeecord;
 
+import de.myzelyam.api.vanish.BungeeVanishAPI;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
@@ -7,8 +8,11 @@ import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
+import ppn.Webhook;
 import ppn.bungeecord.utils.MessageSender;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +55,7 @@ public class EventListener implements Listener {
                     return;
                 }
                 MessageSender.sendMessage(plugin, firstJoin ? "first_join_message" : "join_message", player, server, null);
+                sendJoinWebhook(player, server);
                 playerLastServer.put(player.getUniqueId(), server);
             }
         }, plugin.getConfig().getLong("join_message_delay") * 50, TimeUnit.MILLISECONDS);
@@ -109,6 +114,33 @@ public class EventListener implements Listener {
                 plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
+        }
+    }
+
+    private void sendJoinWebhook(ProxiedPlayer player, String server) {
+        if (!plugin.getConfig().getBoolean("webhook.enabled")) {
+            return;
+        }
+        if (server != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(server.toLowerCase())) {
+            return;
+        }
+        if (plugin.getDisabledPlayers().contains(player.getName().toLowerCase())) {
+            return;
+        }
+        if (plugin.isNoVanishNotifications() && BungeeVanishAPI.isInvisible(player)) {
+            return;
+        }
+        String message = plugin.getConfig().getString("webhook.message").replace("%player%", player.getName());
+        if (server != null) {
+            message = message.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
+        }
+        message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        if (plugin.getApi() != null) {
+            plugin.getApi().formatPlaceholders(message, player.getUniqueId()).thenAccept(formatted -> {
+                Webhook.send(plugin.getConfig().getString("webhook.url"), formatted);
+            });
+        } else {
+            Webhook.send(plugin.getConfig().getString("webhook.url"), message);
         }
     }
 }

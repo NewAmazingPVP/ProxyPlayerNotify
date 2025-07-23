@@ -6,8 +6,12 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.Player;
+import de.myzelyam.api.vanish.VelocityVanishAPI;
+import ppn.Webhook;
 import ppn.velocity.utils.MessageSender;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 public class EventListener {
@@ -44,6 +48,7 @@ public class EventListener {
                 }
 
                 MessageSender.sendMessage(plugin, firstJoin ? "first_join_message" : "join_message", player, server, null);
+                sendJoinWebhook(player, server);
                 plugin.getPlayerLastServer().put(player.getUniqueId(), server);
             }
         }).delay(plugin.getConfig().getLong("join_message_delay") * 50, TimeUnit.MILLISECONDS).schedule();
@@ -106,6 +111,33 @@ public class EventListener {
                 plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
+        }
+    }
+
+    private void sendJoinWebhook(Player player, String server) {
+        if (!plugin.getConfig().getBoolean("webhook.enabled")) {
+            return;
+        }
+        if (server != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(server.toLowerCase())) {
+            return;
+        }
+        if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
+            return;
+        }
+        if (plugin.isNoVanishNotifications() && VelocityVanishAPI.isInvisible(player)) {
+            return;
+        }
+        String message = plugin.getConfig().getString("webhook.message").replace("%player%", player.getUsername());
+        if (server != null) {
+            message = message.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
+        }
+        message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        if (plugin.getApi() != null) {
+            plugin.getApi().formatPlaceholders(message, player.getUniqueId()).thenAccept(formatted -> {
+                Webhook.send(plugin.getConfig().getString("webhook.url"), formatted);
+            });
+        } else {
+            Webhook.send(plugin.getConfig().getString("webhook.url"), message);
         }
     }
 }

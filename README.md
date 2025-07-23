@@ -9,6 +9,7 @@
 - Ability to disable notifications on specific servers.
 - Option to keep certain servers private from notifications.
 - Unique first join messages for new players.
+- - Discord webhook notifications on player join with vanish support.
 
 ### Installation
 1. Download the latest release from the [Spigot Plugin Page](https://www.spigotmc.org/resources/bungeeplayernotify.108035/).
@@ -136,6 +137,14 @@ LimboServers:
 DisabledPlayers:
   - "player1"
   - "player2"
+
+# Webhook
+# Configure a webhook notification sent when a player joins the network.
+# Placeholders available: %player%, %server%, %time%.
+webhook:
+  enabled: false
+  url: ""
+  message: "%player% joined %server% at %time%"
 ```
 
 ### Contributing
