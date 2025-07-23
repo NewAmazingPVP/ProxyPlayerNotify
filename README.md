@@ -8,6 +8,7 @@
 - Permission-based message visibility.
 - Ability to disable notifications on specific servers.
 - Option to keep certain servers private from notifications.
+- Unique first join messages for new players.
 
 ### Installation
 1. Download the latest release from the [Spigot Plugin Page](https://www.spigotmc.org/resources/bungeeplayernotify.108035/).
@@ -36,6 +37,16 @@ join_message: "%player% has joined the network (Logged in server: %server%) at %
 # It has a higher priority than the public join message.
 # Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
 join_private_message: "&aWelcome, %player%!\n&bYou have joined the server %server% at %time%.\nEnjoy your stay!"
+
+# First Join Message
+# This message is displayed when a player joins the network for the first time.
+# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
+first_join_message: "%player% has joined the network for the first time on %server% at %time%"
+
+# First Join Private Message
+# This message is displayed only to the player joining for the first time.
+# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
+first_join_private_message: "&aWelcome for the first time, %player%!"
 
 # Servers Switch Message
 # This message is displayed when a player switches to a different server.
