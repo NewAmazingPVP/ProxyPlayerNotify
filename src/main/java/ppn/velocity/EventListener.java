@@ -132,12 +132,7 @@ public class EventListener {
             message = message.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        if (plugin.getApi() != null) {
-            plugin.getApi().formatPlaceholders(message, player.getUniqueId()).thenAccept(formatted -> {
-                Webhook.send(plugin.getConfig().getString("webhook.url"), formatted);
-            });
-        } else {
-            Webhook.send(plugin.getConfig().getString("webhook.url"), message);
-        }
+        plugin.getPlaceholderHandler().format(message, player.getUniqueId())
+                .thenAccept(formatted -> Webhook.send(plugin.getConfig().getString("webhook.url"), formatted));
     }
 }

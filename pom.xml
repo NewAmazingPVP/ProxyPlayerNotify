@@ -109,11 +109,5 @@
             <artifactId>snakeyaml</artifactId>
             <version>2.2</version>
         </dependency>
-        <dependency>
-            <groupId>net.william278</groupId>
-            <artifactId>papiproxybridge</artifactId>
-            <version>1.7.2</version>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
 </project>
