@@ -4,8 +4,9 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.william278.papiproxybridge.api.PlaceholderAPI;
 import ppn.ConfigManager;
+import ppn.PAPIPlaceholderHandler;
+import ppn.PlaceholderHandler;
 import ppn.bungeecord.commands.Reload;
 import ppn.bungeecord.commands.ToggleMessages;
 import ppn.bungeecord.utils.Metrics;
@@ -30,7 +31,7 @@ public class BungeePlayerNotify extends Plugin {
     private Set<String> limboServers;
     private Set<String> disabledPlayers;
     private boolean noVanishNotifications;
-    private PlaceholderAPI api;
+    private PlaceholderHandler placeholderHandler;
     private final HashMap<UUID, String> recentLeaveMessage = new HashMap<>();
 
     @Override
@@ -151,18 +152,21 @@ public class BungeePlayerNotify extends Plugin {
 
         getProxy().getPluginManager().registerCommand(this, new Reload(this));
         getProxy().getPluginManager().registerCommand(this, new ToggleMessages(this));
+
         if (getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null) {
-            api = PlaceholderAPI.createInstance();
+            try {
+                placeholderHandler = new PAPIPlaceholderHandler();
+            } catch (Exception e) {
+                getLogger().warning("Failed to load PAPIProxyBridge, placeholders disabled.");
+                placeholderHandler = PlaceholderHandler.noop();
+            }
         } else {
-            api = null;
+            placeholderHandler = PlaceholderHandler.noop();
         }
         getProxy().getScheduler().schedule(this, () -> {
             for (ProxiedPlayer player : getProxy().getPlayers()) {
-                if (getApi() != null) {
-                    getApi().formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
-                        addRecentLeaveMessage(player.getUniqueId(), formatted);
-                    });
-                }
+                placeholderHandler.format(getConfig().getString("leave_message"), player.getUniqueId())
+                        .thenAccept(formatted -> addRecentLeaveMessage(player.getUniqueId(), formatted));
             }
         }, 1, TimeUnit.SECONDS);
     }
@@ -236,8 +240,8 @@ public class BungeePlayerNotify extends Plugin {
         this.disabledPlayers = disabledPlayers;
     }
 
-    public PlaceholderAPI getApi() {
-        return api;
+    public PlaceholderHandler getPlaceholderHandler() {
+        return placeholderHandler;
     }
 
     public void addRecentLeaveMessage(UUID uuid, String message) {

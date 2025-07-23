@@ -78,13 +78,8 @@ public class MessageSender {
             }
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        if (plugin.getApi() != null) {
-            plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
-                sendMessageToPlayer(targetPlayer, formatted);
-            });
-        } else {
-            sendMessageToPlayer(targetPlayer, finalMessage);
-        }
+        plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
+                .thenAccept(formatted -> sendMessageToPlayer(targetPlayer, formatted));
     }
 
     private static void sendFormattedMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
@@ -124,13 +119,8 @@ public class MessageSender {
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
-        if (plugin.getApi() != null) {
-            plugin.getApi().formatPlaceholders(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
-                sendMessageToPlayers(plugin, formatted);
-            });
-        } else {
-            sendMessageToPlayers(plugin, finalMessage);
-        }
+        plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
+                .thenAccept(formatted -> sendMessageToPlayers(plugin, formatted));
     }
 
     private static void sendMessageToPlayers(BungeePlayerNotify plugin, String formatted) {
