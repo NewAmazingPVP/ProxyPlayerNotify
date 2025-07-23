@@ -11,8 +11,9 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.william278.papiproxybridge.api.PlaceholderAPI;
 import ppn.ConfigManager;
+import ppn.PAPIPlaceholderHandler;
+import ppn.PlaceholderHandler;
 import ppn.velocity.commands.Reload;
 import ppn.velocity.commands.ToggleMessages;
 import ppn.velocity.utils.Metrics;
@@ -46,7 +47,7 @@ public class VelocityPlayerNotify {
     private final Map<String, String> serverNames = new HashMap<>();
     private final HashMap<UUID, String> recentLeaveMessage = new HashMap<>();
     private ConfigManager config;
-    private PlaceholderAPI api;
+    private PlaceholderHandler placeholderHandler;
 
     @Inject
     public VelocityPlayerNotify(ProxyServer proxy, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -164,21 +165,21 @@ public class VelocityPlayerNotify {
         disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
         this.noVanishNotifications = config.getBoolean("disable_vanish_notifications");
         if (getProxy().getPluginManager().getPlugin("papiproxybridge").isPresent()) {
-            System.out.println("PLUGIN IS PRESENT");
-            api = PlaceholderAPI.createInstance();
+            try {
+                placeholderHandler = new PAPIPlaceholderHandler();
+            } catch (Exception e) {
+                getProxy().getConsoleCommandSource().sendMessage(Component.text("Failed to load PAPIProxyBridge, placeholders disabled.").color(NamedTextColor.RED));
+                placeholderHandler = PlaceholderHandler.noop();
+            }
         } else {
-            api = null;
-            System.out.println("PLUGIN IS NOT PRESENT");
-            System.out.println(getProxy().getPluginManager().getPlugins().toString());
+            placeholderHandler = PlaceholderHandler.noop();
         }
         config.saveConfig();
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
         getProxy().getScheduler().buildTask(this, () -> {
             for (Player player : getProxy().getAllPlayers()) {
-                final PlaceholderAPI api = PlaceholderAPI.createInstance();
-                api.formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
-                    addRecentLeaveMessage(player.getUniqueId(), formatted);
-                });
+                placeholderHandler.format(getConfig().getString("leave_message"), player.getUniqueId())
+                        .thenAccept(formatted -> addRecentLeaveMessage(player.getUniqueId(), formatted));
             }
         }).repeat(Duration.ofSeconds(1)).schedule();
     }
@@ -277,7 +278,7 @@ public class VelocityPlayerNotify {
         return recentLeaveMessage.get(uuid);
     }
 
-    public PlaceholderAPI getApi() {
-        return api;
+    public PlaceholderHandler getPlaceholderHandler() {
+        return placeholderHandler;
     }
 }
