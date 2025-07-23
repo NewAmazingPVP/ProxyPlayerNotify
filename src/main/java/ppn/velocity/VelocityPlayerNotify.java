@@ -162,15 +162,10 @@ public class VelocityPlayerNotify {
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
         getProxy().getScheduler().buildTask(this, () -> {
             for (Player player : getProxy().getAllPlayers()) {
-                if (getApi() != null) {
-                    api = ;
-                    System.out.println("API is NOT NULL");
-                    getApi().formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
-                        addRecentLeaveMessage(player.getUniqueId(), formatted);
-                    });
-                } else {
-                    System.out.println("API is null");
-                }
+                final PlaceholderAPI api = PlaceholderAPI.createInstance();
+                api.formatPlaceholders(getConfig().getString("leave_message"), player.getUniqueId()).thenAccept(formatted -> {
+                    addRecentLeaveMessage(player.getUniqueId(), formatted);
+                });
             }
         }).repeat(Duration.ofSeconds(1)).schedule();
     }
