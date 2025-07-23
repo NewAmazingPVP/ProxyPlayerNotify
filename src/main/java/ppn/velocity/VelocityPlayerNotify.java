@@ -74,6 +74,12 @@ public class VelocityPlayerNotify {
         config.addDefault("join_private_message", "&aWelcome, %player%!\n&bYou have joined the server %server% at %time%.\nEnjoy your stay!",
                 "Network Private Join Message\nThis message is displayed only to the player who joins the network.\nIt has a higher priority than the public join message.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
 
+        config.addDefault("first_join_message", "%player% has joined the network for the first time on %server% at %time%",
+                "First Join Message\nThis message is displayed when a player joins the network for the first time.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
+
+        config.addDefault("first_join_private_message", "&aWelcome for the first time, %player%!",
+                "First Join Private Message\nThis message is displayed only to the player joining for the first time.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
+
         config.addDefault("switch_message", "%player% has switched from %last_server% and joined to the %server% server at %time%",
                 "Servers Switch Message\nThis message is displayed when a player switches to a different server.\nPlaceholders available: %player%, %last_server%, %server%, %time%, %lp_prefix%, %lp_suffix%.");
 

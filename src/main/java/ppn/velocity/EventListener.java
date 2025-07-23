@@ -32,6 +32,10 @@ public class EventListener {
     @Subscribe(order = PostOrder.LAST)
     public void onJoin(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
+        boolean firstJoin = !plugin.getConfig().getBoolean("players." + player.getUniqueId() + ".joined");
+        if (firstJoin) {
+            plugin.getConfig().setOption("players." + player.getUniqueId() + ".joined", true);
+        }
         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
             if (player.isActive()) {
                 String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
@@ -39,7 +43,7 @@ public class EventListener {
                     return;
                 }
 
-                MessageSender.sendMessage(plugin, "join_message", player, server, null);
+                MessageSender.sendMessage(plugin, firstJoin ? "first_join_message" : "join_message", player, server, null);
                 plugin.getPlayerLastServer().put(player.getUniqueId(), server);
             }
         }).delay(plugin.getConfig().getLong("join_message_delay") * 50, TimeUnit.MILLISECONDS).schedule();
@@ -50,8 +54,14 @@ public class EventListener {
                     return;
                 }
 
-                if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
-                    MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
+                if (firstJoin) {
+                    if (plugin.getConfig().getString("first_join_private_message") != null && !plugin.getConfig().getString("first_join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "first_join_private_message", player, server);
+                    }
+                } else {
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
+                    }
                 }
                 plugin.getPlayerLastServer().put(player.getUniqueId(), server);
             }
