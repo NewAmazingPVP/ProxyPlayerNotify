@@ -115,4 +115,12 @@ DisabledPlayers:
   - "player1"
   - "player2"
 
+# Webhook
+# Configure a webhook notification sent when a player joins the network.
+# Placeholders available: %player%, %server%, %time%.
+webhook:
+  enabled: false
+  url: ""
+  message: "%player% joined %server% at %time%"
+
 
