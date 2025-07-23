@@ -72,7 +72,11 @@ public class VelocityPlayerNotify {
         config.addDefault("join_message", "%player% has joined the network (Logged in server: %server%) at %time%",
                 "Network Join Message\nThis message is displayed when a player joins the network.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
 
-        config.addDefault("join_private_message", "&aWelcome, %player%!\n&bYou have joined the server %server% at %time%.\nEnjoy your stay!",
+        List<String> defaultJoinPM = new ArrayList<>();
+        defaultJoinPM.add("&aWelcome, %player%!");
+        defaultJoinPM.add("&bYou have joined the server %server% at %time%.");
+        defaultJoinPM.add("Enjoy your stay!");
+        config.addDefault("join_private_message", defaultJoinPM,
                 "Network Private Join Message\nThis message is displayed only to the player who joins the network.\nIt has a higher priority than the public join message.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
 
         config.addDefault("first_join_message", "%player% has joined the network for the first time on %server% at %time%",
@@ -90,8 +94,14 @@ public class VelocityPlayerNotify {
         config.addDefault("join_message_delay", 45,
                 "Delay for Join Messages\nThis option sets the delay before sending the join message after a player connects.\nFor example, join_message_delay: 49 will send the message after 49 ticks.\nWarning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.");
 
+        config.addDefault("first_join_message_delay", 10,
+                "Delay for First Join Messages\nThis option sets the delay before sending the first join message after a player connects.");
+
         config.addDefault("join_private_message_delay", 50,
                 "Delay for Private Join Messages\nThis option sets the delay before sending the private join message to the joining player.\nFor example, join_private_message_delay: 50 will send the message after 50 ticks.\nWarning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.");
+
+        config.addDefault("first_join_private_message_delay", 10,
+                "Delay for First Join Private Messages\nThis option sets the delay before sending the first join private message to the joining player.");
 
         config.addDefault("switch_message_delay", 0,
                 "Delay for Switch Messages\nThis option sets the delay before sending the switch message after a player switches servers.\nFor example, switch_message_delay: 0 will send the message after 0 ticks.");
@@ -101,6 +111,9 @@ public class VelocityPlayerNotify {
 
         config.addDefault("join_last_server", false,
                 "Option to let players rejoin the server they were on before they left the network.\nIf this is enabled, the player will be sent to the last server on join in which they were on before they left the network.\nIf enabled, the message delay options would need to be increased so that the messages can get the server");
+
+        config.addDefault("use_minimessage", false,
+                "Enable MiniMessage format parsing for all messages");
 
         config.addDefault("permission.permissions", false,
                 "Enable this if you want to use permissions and want to use next two options.");
