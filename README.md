@@ -37,10 +37,7 @@ join_message: "%player% has joined the network (Logged in server: %server%) at %
 # This message is displayed only to the player who joins the network.
 # It has a higher priority than the public join message.
 # Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
-join_private_message:
-  - "&aWelcome, %player%!"
-  - "&bYou have joined the server %server% at %time%."
-  - "Enjoy your stay!"
+join_private_message: "&aWelcome, %player%!\n&bYou have joined the server %server% at %time%.\nEnjoy your stay!"
 
 # First Join Message
 # This message is displayed when a player joins the network for the first time.
@@ -68,17 +65,11 @@ leave_message: "%player% has left the network (Last server: %last_server%) at %t
 # Warning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.
 join_message_delay: 49
 
-# Delay for First Join Messages
-first_join_message_delay: 10
-
 # Delay for Private Join Messages
 # This option sets the delay before sending the private join message to the joining player.
 # For example, join_private_message_delay: 50 will send the message after 50 ticks.
 # Warning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.
 join_private_message_delay: 50
-
-# Delay for First Join Private Messages
-first_join_private_message_delay: 10
 
 # Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
 disable_vanish_notifications: false
@@ -87,9 +78,6 @@ disable_vanish_notifications: false
 # If this is enabled, the player will be sent to the last server on join in which they were on before they left the network.
 # If enabled, the message delay options would need to be increased so that the messages can get the server
 join_last_server: false
-
-# Enable MiniMessage format parsing for all messages
-use_minimessage: false
 
 # Permissions
 # Use these settings to control who can see the join/leave messages.

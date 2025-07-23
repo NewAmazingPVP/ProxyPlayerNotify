@@ -40,7 +40,6 @@ public class EventListener {
         if (firstJoin) {
             plugin.getConfig().setOption("players." + player.getUniqueId() + ".joined", true);
         }
-        long joinDelay = firstJoin ? plugin.getConfig().getLong("first_join_message_delay") : plugin.getConfig().getLong("join_message_delay");
         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
             if (player.isActive()) {
                 String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
@@ -52,8 +51,7 @@ public class EventListener {
                 sendJoinWebhook(player, server);
                 plugin.getPlayerLastServer().put(player.getUniqueId(), server);
             }
-        }).delay(joinDelay * 50, TimeUnit.MILLISECONDS).schedule();
-        long privateDelay = firstJoin ? plugin.getConfig().getLong("first_join_private_message_delay") : plugin.getConfig().getLong("join_private_message_delay");
+        }).delay(plugin.getConfig().getLong("join_message_delay") * 50, TimeUnit.MILLISECONDS).schedule();
         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
             if (player.isActive()) {
                 String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
@@ -61,10 +59,18 @@ public class EventListener {
                     return;
                 }
 
-                MessageSender.sendPrivateMessage(plugin, firstJoin ? "first_join_private_message" : "join_private_message", player, server);
+                if (firstJoin) {
+                    if (plugin.getConfig().getString("first_join_private_message") != null && !plugin.getConfig().getString("first_join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "first_join_private_message", player, server);
+                    }
+                } else {
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
+                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, server);
+                    }
+                }
                 plugin.getPlayerLastServer().put(player.getUniqueId(), server);
             }
-        }).delay(privateDelay * 50, TimeUnit.MILLISECONDS).schedule();
+        }).delay(plugin.getConfig().getLong("join_private_message_delay") * 50, TimeUnit.MILLISECONDS).schedule();
     }
 
     @Subscribe
@@ -77,7 +83,7 @@ public class EventListener {
                 if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
                     MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
                 } else if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
-                    if (!plugin.getConfig().getStringList("join_private_message").isEmpty()) {
+                    if (plugin.getConfig().getString("join_private_message") != null && !plugin.getConfig().getString("join_private_message").isEmpty()) {
                         MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
                     }
                     MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
