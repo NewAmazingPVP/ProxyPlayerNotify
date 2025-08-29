@@ -1,6 +1,8 @@
 package ppn.bungeecord.utils;
 
 import de.myzelyam.api.vanish.BungeeVanishAPI;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -15,10 +17,23 @@ import static ppn.bungeecord.commands.ToggleMessages.playerToggle;
 public class MessageSender {
 
     private static final Pattern HEX_REGEX = Pattern.compile("&#([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])([0-9A-F])", Pattern.CASE_INSENSITIVE);
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.legacySection();
+
+    private static String getMessage(BungeePlayerNotify plugin, String path) {
+        Object val = plugin.getConfig().getOption(path);
+        if (val instanceof Iterable<?>) {
+            StringBuilder sb = new StringBuilder();
+            for (Object o : (Iterable<?>) val) {
+                if (sb.length() > 0) sb.append("\n");
+                sb.append(o.toString());
+            }
+            return sb.toString();
+        }
+        return val != null ? val.toString() : "";
+    }
 
     public static void sendMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
-        plugin.saveDefaultConfig();
-        plugin.loadConfig();
 
         if (server != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(server.toLowerCase())) {
             return;
@@ -32,8 +47,14 @@ public class MessageSender {
             return;
         }
 
-        if (plugin.isNoVanishNotifications() && BungeeVanishAPI.isInvisible(targetPlayer)) {
-            return;
+        if (plugin.isNoVanishNotifications() && isVanishAvailable(plugin)) {
+            try {
+                if (BungeeVanishAPI.isInvisible(targetPlayer)) {
+                    return;
+                }
+            } catch (NoClassDefFoundError ignored) {
+                // Vanish API not present; ignore
+            }
         }
 
         if (plugin.getConfig().getBoolean("permission.permissions")) {
@@ -50,10 +71,8 @@ public class MessageSender {
     }
 
     public static void sendPrivateMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server) {
-        plugin.saveDefaultConfig();
-        plugin.loadConfig();
 
-        String finalMessage = plugin.getConfig().getString(type).replace("%player%", targetPlayer.getName());
+        String finalMessage = getMessage(plugin, type).replace("%player%", targetPlayer.getName());
         if (finalMessage.isEmpty()) {
             return;
         }
@@ -63,23 +82,25 @@ public class MessageSender {
         if (plugin.getDisabledPlayers().contains(targetPlayer.getName().toLowerCase())) {
             return;
         }
-        if (finalMessage.contains("%lp_prefix%")) {
-            User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-            String prefix = user.getCachedData().getMetaData().getPrefix();
-            if (prefix != null) {
-                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+        if (plugin.getLuckPerms() != null) {
+            if (finalMessage.contains("%lp_prefix%")) {
+                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+                String prefix = user.getCachedData().getMetaData().getPrefix();
+                if (prefix != null) {
+                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                }
             }
-        }
-        if (finalMessage.contains("%lp_suffix%")) {
-            User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-            String suffix = user.getCachedData().getMetaData().getSuffix();
-            if (suffix != null) {
-                finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+            if (finalMessage.contains("%lp_suffix%")) {
+                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+                String suffix = user.getCachedData().getMetaData().getSuffix();
+                if (suffix != null) {
+                    finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+                }
             }
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
-                .thenAccept(formatted -> sendMessageToPlayer(targetPlayer, formatted));
+                .thenAccept(formatted -> sendMessageToPlayer(plugin, targetPlayer, formatted));
     }
 
     private static void sendFormattedMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
@@ -99,22 +120,23 @@ public class MessageSender {
                 finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
             }
             if (lastServer != null) {
-                //same here
                 finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
             }
         }
-        if (finalMessage.contains("%lp_prefix%")) {
-            User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-            String prefix = user.getCachedData().getMetaData().getPrefix();
-            if (prefix != null) {
-                finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+        if (plugin.getLuckPerms() != null) {
+            if (finalMessage.contains("%lp_prefix%")) {
+                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+                String prefix = user.getCachedData().getMetaData().getPrefix();
+                if (prefix != null) {
+                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                }
             }
-        }
-        if (finalMessage.contains("%lp_suffix%")) {
-            User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-            String suffix = user.getCachedData().getMetaData().getSuffix();
-            if (suffix != null) {
-                finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+            if (finalMessage.contains("%lp_suffix%")) {
+                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
+                String suffix = user.getCachedData().getMetaData().getSuffix();
+                if (suffix != null) {
+                    finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+                }
             }
         }
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
@@ -131,44 +153,55 @@ public class MessageSender {
                         if (plugin.getConfig().getBoolean("permission.permissions")) {
                             if (plugin.getConfig().getBoolean("permission.hide_message")) {
                                 if (pl.hasPermission("ppn.view")) {
-                                    sendMessageToPlayer(pl, formatted);
+                                    sendMessageToPlayer(plugin, pl, formatted);
                                 }
                             } else {
-                                sendMessageToPlayer(pl, formatted);
+                                sendMessageToPlayer(plugin, pl, formatted);
                             }
                         } else {
-                            sendMessageToPlayer(pl, formatted);
+                            sendMessageToPlayer(plugin, pl, formatted);
                         }
                     }
                 } else {
                     if (plugin.getConfig().getBoolean("permission.permissions")) {
                         if (plugin.getConfig().getBoolean("permission.hide_message")) {
                             if (pl.hasPermission("ppn.view")) {
-                                sendMessageToPlayer(pl, formatted);
+                                sendMessageToPlayer(plugin, pl, formatted);
                             }
                         } else {
-                            sendMessageToPlayer(pl, formatted);
+                            sendMessageToPlayer(plugin, pl, formatted);
                         }
                     } else {
-                        sendMessageToPlayer(pl, formatted);
+                        sendMessageToPlayer(plugin, pl, formatted);
                     }
                 }
             }
         }
     }
 
-    private static void sendMessageToPlayer(ProxiedPlayer player, String message) {
-        message = replace(message);
-        message = message.replace("&", "§");
-        message = ChatColor.translateAlternateColorCodes('§', message);
+    private static void sendMessageToPlayer(BungeePlayerNotify plugin, ProxiedPlayer player, String message) {
         String[] lines = message.split("\n");
-        for (String line : lines) {
-            player.sendMessage(line);
+        if (plugin.getConfig().getBoolean("use_minimessage")) {
+            for (String line : lines) {
+                String legacy = LEGACY_SERIALIZER.serialize(MINI_MESSAGE.deserialize(line));
+                player.sendMessage(legacy);
+            }
+        } else {
+            for (String line : lines) {
+                line = replace(line);
+                line = line.replace("&", "§");
+                line = ChatColor.translateAlternateColorCodes('§', line);
+                player.sendMessage(line);
+            }
         }
-
     }
 
     private static String replace(String s) {
         return HEX_REGEX.matcher(s).replaceAll("&x&$1&$2&$3&$4&$5&$6");
+    }
+
+    private static boolean isVanishAvailable(BungeePlayerNotify plugin) {
+        return plugin.getProxy().getPluginManager().getPlugin("PremiumVanish") != null
+                || plugin.getProxy().getPluginManager().getPlugin("SuperVanish") != null;
     }
 }

@@ -2,6 +2,7 @@ package ppn.velocity.utils;
 
 import com.velocitypowered.api.proxy.Player;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.luckperms.api.LuckPermsProvider;
 import ppn.velocity.VelocityPlayerNotify;
@@ -10,6 +11,25 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class MessageSender {
+
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder()
+            .character('&')
+            .hexColors()
+            .build();
+
+    private static String getMessage(VelocityPlayerNotify plugin, String path) {
+        Object val = plugin.getConfig().getOption(path);
+        if (val instanceof Iterable<?>) {
+            StringBuilder sb = new StringBuilder();
+            for (Object o : (Iterable<?>) val) {
+                if (sb.length() > 0) sb.append("\n");
+                sb.append(o.toString());
+            }
+            return sb.toString();
+        }
+        return val != null ? val.toString() : "";
+    }
 
     public static void sendMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         if (connectedServer != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(connectedServer.toLowerCase())) {
@@ -24,8 +44,14 @@ public class MessageSender {
             return;
         }
 
-        if (plugin.isNoVanishNotifications() && VelocityVanishAPI.isInvisible(targetPlayer)) {
-            return;
+        if (plugin.isNoVanishNotifications() && isVanishAvailable(plugin)) {
+            try {
+                if (VelocityVanishAPI.isInvisible(targetPlayer)) {
+                    return;
+                }
+            } catch (NoClassDefFoundError ignored) {
+                // Vanish API not present; ignore
+            }
         }
 
         if (plugin.getConfig().getBoolean("permission.permissions")) {
@@ -42,7 +68,7 @@ public class MessageSender {
     }
 
     public static void sendPrivateMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer) {
-        String finalMessage = plugin.getConfig().getString(type).replace("%player%", targetPlayer.getUsername());
+        String finalMessage = getMessage(plugin, type).replace("%player%", targetPlayer.getUsername());
         if (finalMessage.isEmpty()) {
             return;
         }
@@ -69,7 +95,7 @@ public class MessageSender {
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
-                .thenAccept(formatted -> sendMessageToAll(plugin, formatted));
+                .thenAccept(formatted -> sendMessageToPlayer(plugin, targetPlayer, formatted));
     }
 
     private static void sendFormattedMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
@@ -122,40 +148,47 @@ public class MessageSender {
                         if (plugin.getConfig().getBoolean("permission.permissions")) {
                             if (plugin.getConfig().getBoolean("permission.hide_message")) {
                                 if (player.hasPermission("ppn.view")) {
-                                    sendMessageToPlayer(player, message);
+                                    sendMessageToPlayer(plugin, player, message);
                                 }
                             } else {
-                                sendMessageToPlayer(player, message);
+                                sendMessageToPlayer(plugin, player, message);
                             }
                         } else {
-                            sendMessageToPlayer(player, message);
+                            sendMessageToPlayer(plugin, player, message);
                         }
                     }
                 } else {
                     if (plugin.getConfig().getBoolean("permission.permissions")) {
                         if (plugin.getConfig().getBoolean("permission.hide_message")) {
                             if (player.hasPermission("ppn.view")) {
-                                sendMessageToPlayer(player, message);
+                                sendMessageToPlayer(plugin, player, message);
                             }
                         } else {
-                            sendMessageToPlayer(player, message);
+                            sendMessageToPlayer(plugin, player, message);
                         }
                     } else {
-                        sendMessageToPlayer(player, message);
+                        sendMessageToPlayer(plugin, player, message);
                     }
                 }
             }
         }
     }
 
-    private static void sendMessageToPlayer(Player player, String message) {
-        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
-                .character('&')
-                .hexColors()
-                .build();
+    private static void sendMessageToPlayer(VelocityPlayerNotify plugin, Player player, String message) {
         String[] lines = message.split("\n");
-        for (String line : lines) {
-            player.sendMessage(serializer.deserialize(line));
+        if (plugin.getConfig().getBoolean("use_minimessage")) {
+            for (String line : lines) {
+                player.sendMessage(MINI_MESSAGE.deserialize(line));
+            }
+        } else {
+            for (String line : lines) {
+                player.sendMessage(LEGACY_SERIALIZER.deserialize(line));
+            }
         }
+    }
+
+    private static boolean isVanishAvailable(VelocityPlayerNotify plugin) {
+        return plugin.getProxy().getPluginManager().getPlugin("premiumvanish").isPresent()
+                || plugin.getProxy().getPluginManager().getPlugin("supervanish").isPresent();
     }
 }
