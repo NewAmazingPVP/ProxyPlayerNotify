@@ -1,157 +1,80 @@
 # ProxyPlayerNotify
 
-**ProxyPlayerNotify** is a plugin that notifies players when someone joins, leaves, or switches servers on your network. It is compatible with both Bungeecord and Velocity.
+Proxy-wide player activity notifications for BungeeCord and Velocity. Clean, configurable, and fast — now with
+MiniMessage support, webhook integration, and CI-built jars on every push.
 
-### Features
-- Join, leave, and switch notifications.
-- Customizable messages with placeholders.
-- Permission-based message visibility.
-- Ability to disable notifications on specific servers.
-- Option to keep certain servers private from notifications.
-- Unique first join messages for new players.
-- - Discord webhook notifications on player join with vanish support.
+## Features
 
-### Installation
-1. Download the latest release from the [Spigot Plugin Page](https://www.spigotmc.org/resources/bungeeplayernotify.108035/).
-2. Place the plugin `.jar` file into your server’s `plugins` directory.
-3. Restart your server to generate the `config.yml` file.
-4. Customize the `config.yml` file to suit your needs.
+- Join, leave, and server switch broadcasts
+- First-join public and private messages
+- MiniMessage or legacy color support (`use_minimessage`)
+- LuckPerms placeholders: `%lp_prefix%`, `%lp_suffix%`
+- PAPIProxyBridge placeholders (optional)
+- Private, disabled, and limbo server handling
+- Per-player toggle command; permission-based visibility
+- Discord-compatible webhook on network join
+- GitHub Actions builds jars automatically on every push
 
-### Configuration
-Here’s a sample `config.yml`:
+## Supported Platforms
 
-```yaml
-# ProxyPlayerNotify Config
+- BungeeCord/Waterfall (bungeecord-api 1.18+)
+- Velocity 3.x
 
-# This config file contains settings for the ProxyPlayerNotify plugin.
-# Use this file to customize the join/leave messages and permissions.
-# Use \n to create multiple lines/messages to players.
-# Set message to "" to not send any message/empty.
+## Install
 
-# Network Join Message
-# This message is displayed when a player joins the network.
-# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
-join_message: "%player% has joined the network (Logged in server: %server%) at %time%"
+- Download the latest jar from GitHub Actions artifacts or Releases.
+- Drop into your proxy `plugins/` folder.
+- Restart to generate `config.yml`.
+- Adjust settings, then `/reloadProxyNotifyConfig` (Bungee) or `reloadProxyNotifyConfig` (Velocity).
 
-# Network Private Join Message
-# This message is displayed only to the player who joins the network.
-# It has a higher priority than the public join message.
-# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
-join_private_message: "&aWelcome, %player%!\n&bYou have joined the server %server% at %time%.\nEnjoy your stay!"
+## Quick Config Reference
 
-# First Join Message
-# This message is displayed when a player joins the network for the first time.
-# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
-first_join_message: "%player% has joined the network for the first time on %server% at %time%"
+- `join_message`: Public message when a player joins
+- `join_private_message`: List of lines sent to the joining player only
+- `first_join_message` / `first_join_private_message`: First-time variants
+- `switch_message` / `leave_message`: Server switch and leave
+- `join_message_delay`, `switch_message_delay`, etc.: Millisecond-based delays (ticks × 50)
+- `ServerNames`: Map backend names to pretty names
+- `DisabledServers` / `PrivateServers` / `LimboServers`: Fine-grained routing
+- `permission.permissions`: Enables permission checks
+    - `permission.notify_message`: Require `ppn.notify` to broadcast your own join/leave
+    - `permission.hide_message`: Require `ppn.view` to see network notifications
+- `disable_vanish_notifications`: Suppress vanished player activity (PremiumVanish/SuperVanish)
+- `join_last_server`: Reconnect players to their last server
+- `use_minimessage`: Enable MiniMessage parsing for all outputs
+- `webhook.enabled`, `webhook.url`, `webhook.message`: Send join messages to a webhook
 
-# First Join Private Message
-# This message is displayed only to the player joining for the first time.
-# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.
-first_join_private_message: "&aWelcome for the first time, %player%!"
+Tip: For multi-line messages, use YAML lists. The plugin joins lists with newlines.
 
-# Servers Switch Message
-# This message is displayed when a player switches to a different server.
-# Placeholders available: %player%, %last_server%, %server%, %time%, %lp_prefix%, %lp_suffix%.
-switch_message: "%player% has switched from %last_server% and joined to the %server% server at %time%"
+## Placeholders
 
-# Network Leave Message
-# This message is displayed when a player leaves the network.
-# Placeholders available: %player%, %lp_prefix%, %lp_suffix%, %last_server%, %time%.
-leave_message: "%player% has left the network (Last server: %last_server%) at %time%"
+- Built-in: `%player%`, `%server%`, `%last_server%`, `%time%`
+- LuckPerms: `%lp_prefix%`, `%lp_suffix%`
+- PAPIProxyBridge: All configured PAPI placeholders (if installed)
 
-# Delay for Join Messages
-# This option sets the delay before sending the join message after a player connects.
-# For example, join_message_delay: 49 will send the message after 49 ticks.
-# Warning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.
-join_message_delay: 49
+## Commands
 
-# Delay for Private Join Messages
-# This option sets the delay before sending the private join message to the joining player.
-# For example, join_private_message_delay: 50 will send the message after 50 ticks.
-# Warning: Setting this value too low may cause messages not to be sent or be blank placeholder if the server name is not yet available.
-join_private_message_delay: 50
+- BungeeCord
+    - `/reloadProxyNotifyConfig` — reloads config (perm: `ppn.reloadProxyNotifyConfig`)
+    - `/togglemessages` — toggles receiving notifications per-player
+- Velocity
+    - `reloadProxyNotifyConfig` — reloads config (console or permissioned source)
+    - `togglemessages` — toggles receiving notifications per-player
 
-# Disable messages for vanished players (Currently supports PremiumVanish and SuperVanish)
-disable_vanish_notifications: false
+## CI & Releases
 
-# Option to let players rejoin the server they were on before they left the network.
-# If this is enabled, the player will be sent to the last server on join in which they were on before they left the network.
-# If enabled, the message delay options would need to be increased so that the messages can get the server
-join_last_server: false
+- Every push builds with GitHub Actions and uploads the jar as an artifact.
+- Pushing a tag like `v2.4.0` also creates a GitHub Release with the jar attached.
 
-# Permissions
-# Use these settings to control who can see the join/leave messages.
-# Enable permissions if you want to use permissions and want to use next two options.
-# If permissions enabled Then if notify_message is true and the player doesn't have ppn.notify permission, then their join/leave/message will not be sent.
-# If permissions enabled Then if hide_message is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
-permission:
-  # Enable this if you want to use permissions and want to use next two options.
-  permissions: false
+## Example Config
 
-  # Notify Messages
-  # If this is true and the player doesn't have ppn.notify permission, then their join/leave/message will not be sent.
-  notify_message: false
+See `src/main/resources/config.yml` for a fully-commented example you can copy.
 
-  # Hide Messages
-  # If this is true and the player doesn't have ppn.view permission, then they won't see the others' join/switch/leave messages.
-  hide_message: false
+## Support
 
-# Server Names
-# Define custom server names here. Players can join/leave/switch to the server using the custom names specified below.
-ServerNames:
-  example: "example-1"
-  lobby: "Hub"
+- Spigot: https://www.spigotmc.org/resources/bungeeplayernotify.108035/
+- Discord: https://discord.gg/tuVvmawsRX
 
-# Disabled Servers
-# Define the backend servers (lowercase) where the join/switch/leave messages should not be sent.
-# In simple words, no messages of this plugin will be sent to players on that server
-# In short: No activity notifications are sent to players on these servers.
-DisabledServers:
-  - "example-1"
-  - "other-backend-server"
+## License
 
-# Private Servers
-# Specify the private servers (lowercase) where if player joins, leaves, and switches from and to, notifications should not be sent.
-# Think about them like admin servers
-# When someone joins it, the whole proxy should not be notified about that because you kind of want to keep that server private/secret and not let the players know.
-# In short: Activity notifications related to these servers are not broadcasted across the entire network.
-PrivateServers:
-  - "example"
-  - "private-server"
-
-# Limbo Servers
-# Specify the limbo servers (lowercase) where player join, leave, and switch notifications should be managed differently.
-# These servers act as pass-throughs most of the time and can be configured to adjust notification behavior accordingly.
-# When a player joins a limbo server, no network-wide join notification is sent.
-# When a player switches from a limbo server to a game server, it should send a join notification as if the player is joining the network for the first time.
-# Conversely, when a player switches from a game server to a limbo server, it should send a leave notification as if the player is leaving the network.
-# This configuration helps avoid unnecessary notifications and prevents stealthy movements between public and private parts of the network.
-# In short: Join and leave notifications are sent based on transitions to and from these servers to manage network-wide notifications effectively.
-LimboServers:
-  - "limbo-afk"
-
-# Disabled Players
-# Specify the players (lowercase) that should not send any notification messages.
-# They will also will not recieve join_private_message.
-# It is not recommended to use this feature and instead use permissions for each group/player
-DisabledPlayers:
-  - "player1"
-  - "player2"
-
-# Webhook
-# Configure a webhook notification sent when a player joins the network.
-# Placeholders available: %player%, %server%, %time%.
-webhook:
-  enabled: false
-  url: ""
-  message: "%player% joined %server% at %time%"
-```
-
-### Contributing
-Please feel free to submit issues and pull requests on [GitHub](https://github.com/your-repo).
-
-### Support
-Join our community on [Discord](https://discord.gg/tuVvmawsRX) for help and discussions.
-
-### License
-This project is licensed under the MIT License.
+MIT
