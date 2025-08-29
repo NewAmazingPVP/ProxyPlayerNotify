@@ -1,79 +1,166 @@
-# ProxyPlayerNotify
+<div align="center">
 
-Proxy-wide player activity notifications for BungeeCord and Velocity. Clean, configurable, and fast — now with
-MiniMessage support, webhook integration, and CI-built jars on every push.
+# **ProxyPlayerNotify v2.4.0**
 
-## Features
+*Network‑wide join/leave/switch notifications for proxy servers.*
 
-- Join, leave, and server switch broadcasts
-- First-join public and private messages
-- MiniMessage or legacy color support (`use_minimessage`)
-- LuckPerms placeholders: `%lp_prefix%`, `%lp_suffix%`
+[![SpigotMC](https://img.shields.io/badge/SpigotMC-Resource-orange)](https://www.spigotmc.org/resources/bungeeplayernotify.108035/)
+![Platforms](https://img.shields.io/badge/Platforms-BungeeCord%20%7C%20Velocity-5A67D8)
+![MC](https://img.shields.io/badge/Minecraft-1.8%E2%86%92Latest-2EA043)
+![Java](https://img.shields.io/badge/Java-17+-1F6FEB)
+![License](https://img.shields.io/badge/License-MIT-0E8A16)
+
+</div>
+
+> TL;DR
+> Drop the jar on your proxy (BungeeCord/Velocity). It broadcasts join/leave/switch messages (with placeholders, MiniMessage or legacy colors), supports per‑player toggles, obeys vanish, and can ping a Discord‑style webhook.
+
+---
+
+## Table of Contents
+
+* [Highlights](#highlights)
+* [Platforms & Requirements](#platforms--requirements)
+* [Installation](#installation)
+* [Quick Start](#quick-start)
+* [Configuration](#configuration)
+  * [Messages & Delays](#messages--delays)
+  * [Servers & Routing](#servers--routing)
+  * [Placeholders](#placeholders)
+  * [Permissions](#permissions)
+  * [Webhook](#webhook)
+* [Commands](#commands)
+* [Troubleshooting](#troubleshooting)
+* [Building from Source](#building-from-source)
+* [Contributing & Support](#contributing--support)
+* [License](#license)
+
+---
+
+## Highlights
+
+- Join, leave, and server‑switch broadcasts
+- First‑join public/private messages
+- MiniMessage or legacy color codes (`use_minimessage`)
+- LuckPerms placeholders: `%lp_prefix%`, `%lp_suffix%` (optional)
 - PAPIProxyBridge placeholders (optional)
-- Private, disabled, and limbo server handling
-- Per-player toggle command; permission-based visibility
-- Discord-compatible webhook on network join
-- GitHub Actions builds jars automatically on every push
+- Private/Disabled/Limbo servers for smart routing
+- Per‑player toggle command; permission‑gated visibility
+- Webhook on join (Discord‑compatible)
 
-## Supported Platforms
+> Note: This is a proxy plugin. It runs on BungeeCord/Velocity, not on Spigot/Paper/Folia.
 
-- BungeeCord/Waterfall (bungeecord-api 1.18+)
-- Velocity 3.x
+---
 
-## Install
+## Platforms & Requirements
 
-- Download the latest jar from GitHub Actions artifacts or Releases.
-- Drop into your proxy `plugins/` folder.
-- Restart to generate `config.yml`.
-- Adjust settings, then `/reloadProxyNotifyConfig` (Bungee) or `reloadProxyNotifyConfig` (Velocity).
+- Platforms: BungeeCord/Waterfall, Velocity 3.x
+- Minecraft: 1.8 → Latest
+- Java: 17+
+- Optional integrations (soft‑depends): LuckPerms, PAPIProxyBridge, PremiumVanish/SuperVanish
 
-## Quick Config Reference
+---
 
-- `join_message`: Public message when a player joins
-- `join_private_message`: List of lines sent to the joining player only
-- `first_join_message` / `first_join_private_message`: First-time variants
-- `switch_message` / `leave_message`: Server switch and leave
-- `join_message_delay`, `switch_message_delay`, etc.: Millisecond-based delays (ticks × 50)
-- `ServerNames`: Map backend names to pretty names
-- `DisabledServers` / `PrivateServers` / `LimboServers`: Fine-grained routing
-- `permission.permissions`: Enables permission checks
-    - `permission.notify_message`: Require `ppn.notify` to broadcast your own join/leave
-    - `permission.hide_message`: Require `ppn.view` to see network notifications
-- `disable_vanish_notifications`: Suppress vanished player activity (PremiumVanish/SuperVanish)
-- `join_last_server`: Reconnect players to their last server
-- `use_minimessage`: Enable MiniMessage parsing for all outputs
-- `webhook.enabled`, `webhook.url`, `webhook.message`: Send join messages to a webhook
+## Installation
 
-Tip: For multi-line messages, use YAML lists. The plugin joins lists with newlines.
+1. Download the latest jar from Releases (or Actions artifacts).
+2. Place it in your proxy `plugins/` folder.
+3. Start the proxy to generate `config.yml`.
+4. Adjust config, then reload:
+   - Bungee: `/reloadProxyNotifyConfig`
+   - Velocity: `reloadProxyNotifyConfig`
 
-## Placeholders
+---
 
-- Built-in: `%player%`, `%server%`, `%last_server%`, `%time%`
-- LuckPerms: `%lp_prefix%`, `%lp_suffix%`
-- PAPIProxyBridge: All configured PAPI placeholders (if installed)
+## Quick Start
+
+Key options in `config.yml`:
+
+- Messages: `join_message`, `leave_message`, `switch_message`
+- First‑join: `first_join_message`, `first_join_private_message`
+- Private message to the joining player: `join_private_message` (YAML list → multi‑line)
+- Delays (ticks): `join_message_delay`, `switch_message_delay`, etc.
+- Formatting: `use_minimessage: true|false`
+- Routing: `ServerNames`, `DisabledServers`, `PrivateServers`, `LimboServers`
+- Vanish: `disable_vanish_notifications: true|false`
+- Permissions: `permission.permissions`, `permission.notify_message`, `permission.hide_message`
+- Webhook: `webhook.enabled`, `webhook.url`, `webhook.message`
+
+Tip: For multi‑line messages, use YAML lists — the plugin joins them with newlines.
+
+---
+
+## Configuration
+
+### Messages & Delays
+
+- Public: `join_message`, `leave_message`, `switch_message`
+- Private (to the joining player): `join_private_message` (list)
+- First‑join variants: `first_join_*`
+- Delays are in ticks (`x 50ms`): `join_message_delay`, `switch_message_delay`, etc.
+
+### Servers & Routing
+
+- `ServerNames`: map backend → display name
+- `DisabledServers`: players on these servers won’t receive broadcasts
+- `PrivateServers`: activity from/to these servers isn’t broadcast network‑wide
+- `LimboServers`: moving into a limbo server acts like leaving; moving out acts like joining
+
+### Placeholders
+
+- Built‑in: `%player%`, `%server%`, `%last_server%`, `%time%`
+- LuckPerms (optional): `%lp_prefix%`, `%lp_suffix%`
+- PAPIProxyBridge (optional): all PAPI placeholders available on your proxy
+
+### Permissions
+
+- Enable checks: `permission.permissions: true`
+- Hide unless viewer has `ppn.view`: `permission.hide_message: true`
+- Only broadcast for players with `ppn.notify`: `permission.notify_message: true`
+
+### Webhook
+
+- `webhook.enabled: true|false`
+- `webhook.url: "https://..."`
+- `webhook.message`: supports placeholders and formatting
+
+---
 
 ## Commands
 
 - BungeeCord
-    - `/reloadProxyNotifyConfig` — reloads config (perm: `ppn.reloadProxyNotifyConfig`)
-    - `/togglemessages` — toggles receiving notifications per-player
+  - `/reloadProxyNotifyConfig` — reloads config (perm: `ppn.reloadProxyNotifyConfig`)
+  - `/togglemessages` — per‑player toggle
 - Velocity
-    - `reloadProxyNotifyConfig` — reloads config (console or permissioned source)
-    - `togglemessages` — toggles receiving notifications per-player
+  - `reloadProxyNotifyConfig` — reloads config (console or permissioned source)
+  - `togglemessages` — per‑player toggle
 
-## CI & Releases
+---
 
-- Every push builds with GitHub Actions and uploads the jar as an artifact.
-- Pushing a tag like `v2.4.0` also creates a GitHub Release with the jar attached.
+## Troubleshooting
 
-## Example Config
+- No placeholders? Ensure LuckPerms/PAPIProxyBridge is installed on the proxy (optional). The plugin runs fine without them.
+- Vanish not detected? PremiumVanish/SuperVanish is optional; if absent, notifications aren’t blocked.
+- Messages not visible? Check `permission.*` settings and viewer permissions.
+- Switch/first‑join timing odd? Increase delays to ensure server names are available.
 
-See `src/main/resources/config.yml` for a fully-commented example you can copy.
+---
 
-## Support
+## Building from Source
+
+```bash
+mvn -DskipTests package
+```
+
+
+
+## Contributing & Support
 
 - Spigot: https://www.spigotmc.org/resources/bungeeplayernotify.108035/
 - Discord: https://discord.gg/tuVvmawsRX
+- Issues/PRs welcome.
+
+---
 
 ## License
 
