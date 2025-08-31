@@ -142,7 +142,13 @@ public class BungeePlayerNotify extends Plugin {
         config.addDefault("webhook.url", "",
                 "Webhook URL to post join notifications");
         config.addDefault("webhook.message", "%player% joined %server% at %time%",
-                "Webhook message format\nPlaceholders available: %player%, %server%, %time%");
+                "Webhook message format (join, kept for compatibility)\nPlaceholders available: %player%, %server%, %time%");
+        config.addDefault("webhook.join_message", "%player% joined %server% at %time%",
+                "Webhook join message format\nPlaceholders available: %player%, %server%, %time%");
+        config.addDefault("webhook.switch_message", "%player% switched from %last_server% to %server% at %time%",
+                "Webhook switch message format\nPlaceholders available: %player%, %server%, %last_server%, %time%");
+        config.addDefault("webhook.leave_message", "%player% left %last_server% at %time%",
+                "Webhook leave message format\nPlaceholders available: %player%, %last_server%, %time%");
 
         config.saveConfig();
         loadConfig();
