@@ -171,7 +171,11 @@ public class VelocityPlayerNotify {
         saveDefaultConfig();
         loadConfig();
         this.metricsFactory.make(this, 18744);
-        this.proxy.getCommandManager().register("reloadProxyNotifyConfig", new Reload(this));
+        var cm = this.proxy.getCommandManager();
+        var reloadMeta = cm.metaBuilder("reloadProxyNotifyConfig")
+                .aliases("ppnreload", "ppnr", "ppnrl", "ppn-reload")
+                .build();
+        cm.register(reloadMeta, new Reload(this));
         this.proxy.getCommandManager().register("togglemessages", new ToggleMessages(this));
         this.proxy.getEventManager().register(this, new EventListener(this));
         disabledServers = new HashSet<>(config.getStringList("DisabledServers"));

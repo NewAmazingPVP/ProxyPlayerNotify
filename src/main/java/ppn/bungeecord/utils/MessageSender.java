@@ -73,7 +73,7 @@ public class MessageSender {
     public static void sendPrivateMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server) {
 
         String finalMessage = getMessage(plugin, type).replace("%player%", targetPlayer.getName());
-        if (finalMessage.isEmpty()) {
+        if (finalMessage.trim().isEmpty()) {
             return;
         }
         if (server != null) {
@@ -82,7 +82,10 @@ public class MessageSender {
         if (plugin.getDisabledPlayers().contains(targetPlayer.getName().toLowerCase())) {
             return;
         }
-        if (plugin.getLuckPerms() != null) {
+        boolean papiBridge = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
+        if (papiBridge) {
+            finalMessage = finalMessage.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        } else if (plugin.getLuckPerms() != null) {
             if (finalMessage.contains("%lp_prefix%")) {
                 User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                 String prefix = user.getCachedData().getMetaData().getPrefix();
@@ -111,7 +114,7 @@ public class MessageSender {
             finalMessage = plugin.getConfig().getString(type);
         }
         finalMessage = finalMessage.replace("%player%", targetPlayer.getName());
-        if (finalMessage.isEmpty()) {
+        if (finalMessage.trim().isEmpty()) {
             return;
         }
 
@@ -123,7 +126,10 @@ public class MessageSender {
                 finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
             }
         }
-        if (plugin.getLuckPerms() != null) {
+        boolean papiBridge = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
+        if (papiBridge) {
+            finalMessage = finalMessage.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        } else if (plugin.getLuckPerms() != null) {
             if (finalMessage.contains("%lp_prefix%")) {
                 User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
                 String prefix = user.getCachedData().getMetaData().getPrefix();
