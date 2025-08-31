@@ -69,7 +69,7 @@ public class MessageSender {
 
     public static void sendPrivateMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer) {
         String finalMessage = getMessage(plugin, type).replace("%player%", targetPlayer.getUsername());
-        if (finalMessage.isEmpty()) {
+        if (finalMessage.trim().isEmpty()) {
             return;
         }
         if (plugin.getDisabledPlayers().contains(targetPlayer.getUsername().toLowerCase())) {
@@ -78,20 +78,25 @@ public class MessageSender {
         if (connectedServer != null) {
             finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(connectedServer.toLowerCase(), connectedServer));
         }
-        try {
-            if (finalMessage.contains("%lp_prefix%")) {
-                String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
-                if (prefix != null) {
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+        boolean papiBridge = plugin.getProxy().getPluginManager().getPlugin("papiproxybridge").isPresent();
+        if (papiBridge) {
+            finalMessage = finalMessage.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        } else {
+            try {
+                if (finalMessage.contains("%lp_prefix%")) {
+                    String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();
+                    if (prefix != null) {
+                        finalMessage = finalMessage.replace("%lp_prefix%", prefix);
+                    }
                 }
-            }
-            if (finalMessage.contains("%lp_suffix%")) {
-                String suffix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getSuffix();
-                if (suffix != null) {
-                    finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+                if (finalMessage.contains("%lp_suffix%")) {
+                    String suffix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getSuffix();
+                    if (suffix != null) {
+                        finalMessage = finalMessage.replace("%lp_suffix%", suffix);
+                    }
                 }
+            } catch (Exception ignored) {
             }
-        } catch (Exception ignored) {
         }
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
@@ -106,7 +111,7 @@ public class MessageSender {
             finalMessage = plugin.getConfig().getString(type);
         }
         finalMessage = finalMessage.replace("%player%", targetPlayer.getUsername());
-        if (finalMessage.isEmpty()) {
+        if (finalMessage.trim().isEmpty()) {
             return;
         }
         if (type.equals("switch_message") || type.equals("join_message") || type.equals("leave_message")) {
@@ -117,7 +122,10 @@ public class MessageSender {
                 finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(disconnectedServer.toLowerCase(), disconnectedServer));
             }
         }
-        if (plugin.getProxy().getPluginManager().getPlugin("luckperms").isPresent()) {
+        boolean papiBridge2 = plugin.getProxy().getPluginManager().getPlugin("papiproxybridge").isPresent();
+        if (papiBridge2) {
+            finalMessage = finalMessage.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        } else if (plugin.getProxy().getPluginManager().getPlugin("luckperms").isPresent()) {
             try {
                 if (finalMessage.contains("%lp_prefix%")) {
                     String prefix = LuckPermsProvider.get().getUserManager().getUser(targetPlayer.getUniqueId()).getCachedData().getMetaData().getPrefix();

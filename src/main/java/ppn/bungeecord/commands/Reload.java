@@ -13,7 +13,7 @@ public class Reload extends Command {
     private final BungeePlayerNotify plugin;
 
     public Reload(BungeePlayerNotify plugin) {
-        super("reloadProxyNotifyConfig");
+        super("reloadProxyNotifyConfig", null, "ppnreload", "ppnr", "ppnrl", "ppn-reload");
         this.plugin = plugin;
     }
 

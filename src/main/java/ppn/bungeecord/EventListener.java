@@ -50,6 +50,9 @@ public class EventListener implements Listener {
         long joinDelay = firstJoin ? plugin.getConfig().getLong("first_join_message_delay") : plugin.getConfig().getLong("join_message_delay");
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             if (player.isConnected()) {
+                if (player.getServer() == null || player.getServer().getInfo() == null) {
+                    return;
+                }
                 validPlayers.add(player);
                 String server = player.getServer().getInfo().getName();
                 if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
@@ -64,6 +67,9 @@ public class EventListener implements Listener {
         long privateDelay = firstJoin ? plugin.getConfig().getLong("first_join_private_message_delay") : plugin.getConfig().getLong("join_private_message_delay");
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
             if (player.isConnected()) {
+                if (player.getServer() == null || player.getServer().getInfo() == null) {
+                    return;
+                }
                 String server = player.getServer().getInfo().getName();
                 if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
                     return;
@@ -80,6 +86,9 @@ public class EventListener implements Listener {
             if (event.getFrom() == null) return;
             String lastServer = event.getFrom().getName();
             if (player.isConnected()) {
+                if (player.getServer() == null || player.getServer().getInfo() == null) {
+                    return;
+                }
                 String currentServer = player.getServer().getInfo().getName();
                 if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
                     MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
