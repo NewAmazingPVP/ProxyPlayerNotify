@@ -76,13 +76,16 @@ public class EventListener {
                 String currentServer = event.getServer().getServerInfo().getName();
                 if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
                     MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
+                    sendLeaveWebhook(player, lastServer);
                 } else if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                     if (!plugin.getConfig().getStringList("join_private_message").isEmpty()) {
                         MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
                     }
                     MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
+                    sendJoinWebhook(player, currentServer);
                 } else {
                     MessageSender.sendMessage(plugin, "switch_message", player, currentServer, lastServer);
+                    sendSwitchWebhook(player, currentServer, lastServer);
                 }
                 plugin.getPlayerLastServer().put(player.getUniqueId(), currentServer);
             }
@@ -105,6 +108,7 @@ public class EventListener {
                 plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
+            sendLeaveWebhook(player, lastServer);
         }
     }
 
@@ -127,9 +131,84 @@ public class EventListener {
                 // Vanish API not present; ignore
             }
         }
-        String message = plugin.getConfig().getString("webhook.message").replace("%player%", player.getUsername());
+        String message = plugin.getConfig().getString("webhook.join_message");
+        if (message == null || message.trim().isEmpty()) {
+            message = plugin.getConfig().getString("webhook.message");
+        }
+        if (message == null || message.trim().isEmpty()) {
+            return;
+        }
+        message = message.replace("%player%", player.getUsername());
         if (server != null) {
             message = message.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
+        }
+        message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        plugin.getPlaceholderHandler().format(message, player.getUniqueId())
+                .thenAccept(formatted -> Webhook.send(plugin.getConfig().getString("webhook.url"), formatted));
+    }
+
+    private void sendSwitchWebhook(Player player, String server, String lastServer) {
+        if (!plugin.getConfig().getBoolean("webhook.enabled")) {
+            return;
+        }
+        if (server != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(server.toLowerCase())) {
+            return;
+        }
+        if (lastServer != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(lastServer.toLowerCase())) {
+            return;
+        }
+        if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
+            return;
+        }
+        if (plugin.isNoVanishNotifications()) {
+            try {
+                if (VelocityVanishAPI.isInvisible(player)) {
+                    return;
+                }
+            } catch (NoClassDefFoundError ignored) {
+            }
+        }
+        String message = plugin.getConfig().getString("webhook.switch_message");
+        if (message == null || message.trim().isEmpty()) {
+            return;
+        }
+        message = message.replace("%player%", player.getUsername());
+        if (server != null) {
+            message = message.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
+        }
+        if (lastServer != null) {
+            message = message.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
+        }
+        message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        plugin.getPlaceholderHandler().format(message, player.getUniqueId())
+                .thenAccept(formatted -> Webhook.send(plugin.getConfig().getString("webhook.url"), formatted));
+    }
+
+    private void sendLeaveWebhook(Player player, String lastServer) {
+        if (!plugin.getConfig().getBoolean("webhook.enabled")) {
+            return;
+        }
+        if (lastServer != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(lastServer.toLowerCase())) {
+            return;
+        }
+        if (plugin.getDisabledPlayers().contains(player.getUsername().toLowerCase())) {
+            return;
+        }
+        if (plugin.isNoVanishNotifications()) {
+            try {
+                if (VelocityVanishAPI.isInvisible(player)) {
+                    return;
+                }
+            } catch (NoClassDefFoundError ignored) {
+            }
+        }
+        String message = plugin.getConfig().getString("webhook.leave_message");
+        if (message == null || message.trim().isEmpty()) {
+            return;
+        }
+        message = message.replace("%player%", player.getUsername());
+        if (lastServer != null) {
+            message = message.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         plugin.getPlaceholderHandler().format(message, player.getUniqueId())
