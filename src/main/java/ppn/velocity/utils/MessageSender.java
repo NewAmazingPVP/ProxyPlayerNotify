@@ -106,9 +106,12 @@ public class MessageSender {
     private static void sendFormattedMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
         String finalMessage;
         if (type.equals("leave_message")) {
-            finalMessage = plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) != null ? plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) : plugin.getConfig().getString(type);
+            finalMessage = plugin.getRecentLeaveMessage(targetPlayer.getUniqueId());
+            if (finalMessage == null || finalMessage.trim().isEmpty()) {
+                finalMessage = getMessage(plugin, type);
+            }
         } else {
-            finalMessage = plugin.getConfig().getString(type);
+            finalMessage = getMessage(plugin, type);
         }
         finalMessage = finalMessage.replace("%player%", targetPlayer.getUsername());
         if (finalMessage.trim().isEmpty()) {

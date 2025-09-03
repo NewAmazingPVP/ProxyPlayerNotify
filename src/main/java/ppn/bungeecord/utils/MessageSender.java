@@ -109,9 +109,12 @@ public class MessageSender {
     private static void sendFormattedMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
         String finalMessage;
         if (type.equals("leave_message")) {
-            finalMessage = plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) != null ? plugin.getRecentLeaveMessage(targetPlayer.getUniqueId()) : plugin.getConfig().getString(type);
+            finalMessage = plugin.getRecentLeaveMessage(targetPlayer.getUniqueId());
+            if (finalMessage == null || finalMessage.trim().isEmpty()) {
+                finalMessage = getMessage(plugin, type);
+            }
         } else {
-            finalMessage = plugin.getConfig().getString(type);
+            finalMessage = getMessage(plugin, type);
         }
         finalMessage = finalMessage.replace("%player%", targetPlayer.getName());
         if (finalMessage.trim().isEmpty()) {

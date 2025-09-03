@@ -33,7 +33,11 @@ public class EventListener implements Listener {
     public void onRejoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
         if (plugin.getConfig().getBoolean("join_last_server")) {
-            String lastServer = (String) plugin.getConfig().getOption("players." + player.getUniqueId() + ".lastServer");
+            Object last = plugin.getPlayerData().getOption("players." + player.getUniqueId() + ".lastServer");
+            if (last == null) {
+                last = plugin.getConfig().getOption("players." + player.getUniqueId() + ".lastServer");
+            }
+            String lastServer = last != null ? last.toString() : null;
             if (lastServer != null) {
                 player.connect(plugin.getProxy().getServerInfo(lastServer));
             }
@@ -43,9 +47,9 @@ public class EventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
-        boolean firstJoin = !plugin.getConfig().getBoolean("players." + player.getUniqueId() + ".joined");
+        boolean firstJoin = !plugin.getPlayerData().getBoolean("players." + player.getUniqueId() + ".joined");
         if (firstJoin) {
-            plugin.getConfig().setOption("players." + player.getUniqueId() + ".joined", true);
+            plugin.getPlayerData().setOption("players." + player.getUniqueId() + ".joined", true);
         }
         long joinDelay = firstJoin ? plugin.getConfig().getLong("first_join_message_delay") : plugin.getConfig().getLong("join_message_delay");
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
@@ -117,7 +121,7 @@ public class EventListener implements Listener {
                 return;
             }
             if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
-                plugin.getConfig().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
+                plugin.getPlayerData().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
             }
             MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
             sendLeaveWebhook(player, lastServer);
@@ -155,8 +159,33 @@ public class EventListener implements Listener {
             message = message.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        plugin.getPlaceholderHandler().format(message, player.getUniqueId()).thenAccept(formatted ->
-                Webhook.send(plugin.getConfig().getString("webhook.url"), formatted));
+
+        boolean papiBridge = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
+        if (papiBridge) {
+            message = message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        } else if (plugin.getLuckPerms() != null) {
+            try {
+                if (message.contains("%lp_prefix%")) {
+                    String prefix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getPrefix();
+                    if (prefix != null) message = message.replace("%lp_prefix%", prefix);
+                }
+                if (message.contains("%lp_suffix%")) {
+                    String suffix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getSuffix();
+                    if (suffix != null) message = message.replace("%lp_suffix%", suffix);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        int color = plugin.getConfig().getInt("webhook.embed_color");
+        boolean useEmbed = plugin.getConfig().getBoolean("webhook.use_embed");
+        String url = plugin.getConfig().getString("webhook.url");
+        plugin.getPlaceholderHandler().format(message, player.getUniqueId()).thenAccept(formatted -> {
+            if (useEmbed) {
+                Webhook.sendEmbed(url, formatted, color);
+            } else {
+                Webhook.send(url, formatted);
+            }
+        });
     }
 
     private void sendSwitchWebhook(ProxiedPlayer player, String server, String lastServer) {
@@ -192,8 +221,31 @@ public class EventListener implements Listener {
             message = message.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        plugin.getPlaceholderHandler().format(message, player.getUniqueId()).thenAccept(formatted ->
-                Webhook.send(plugin.getConfig().getString("webhook.url"), formatted));
+        boolean papiBridge2 = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
+        if (papiBridge2) {
+            message = message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        } else if (plugin.getLuckPerms() != null) {
+            try {
+                if (message.contains("%lp_prefix%")) {
+                    String prefix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getPrefix();
+                    if (prefix != null) message = message.replace("%lp_prefix%", prefix);
+                }
+                if (message.contains("%lp_suffix%")) {
+                    String suffix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getSuffix();
+                    if (suffix != null) message = message.replace("%lp_suffix%", suffix);
+                }
+            } catch (Exception ignored) {}
+        }
+        int color2 = plugin.getConfig().getInt("webhook.embed_color");
+        boolean useEmbed2 = plugin.getConfig().getBoolean("webhook.use_embed");
+        String url2 = plugin.getConfig().getString("webhook.url");
+        plugin.getPlaceholderHandler().format(message, player.getUniqueId()).thenAccept(formatted -> {
+            if (useEmbed2) {
+                Webhook.sendEmbed(url2, formatted, color2);
+            } else {
+                Webhook.send(url2, formatted);
+            }
+        });
     }
 
     private void sendLeaveWebhook(ProxiedPlayer player, String lastServer) {
@@ -223,7 +275,30 @@ public class EventListener implements Listener {
             message = message.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        plugin.getPlaceholderHandler().format(message, player.getUniqueId()).thenAccept(formatted ->
-                Webhook.send(plugin.getConfig().getString("webhook.url"), formatted));
+        boolean papiBridge3 = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
+        if (papiBridge3) {
+            message = message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        } else if (plugin.getLuckPerms() != null) {
+            try {
+                if (message.contains("%lp_prefix%")) {
+                    String prefix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getPrefix();
+                    if (prefix != null) message = message.replace("%lp_prefix%", prefix);
+                }
+                if (message.contains("%lp_suffix%")) {
+                    String suffix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getSuffix();
+                    if (suffix != null) message = message.replace("%lp_suffix%", suffix);
+                }
+            } catch (Exception ignored) {}
+        }
+        int color3 = plugin.getConfig().getInt("webhook.embed_color");
+        boolean useEmbed3 = plugin.getConfig().getBoolean("webhook.use_embed");
+        String url3 = plugin.getConfig().getString("webhook.url");
+        plugin.getPlaceholderHandler().format(message, player.getUniqueId()).thenAccept(formatted -> {
+            if (useEmbed3) {
+                Webhook.sendEmbed(url3, formatted, color3);
+            } else {
+                Webhook.send(url3, formatted);
+            }
+        });
     }
 }
