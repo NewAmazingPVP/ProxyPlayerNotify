@@ -40,7 +40,7 @@ public class Reload extends Command {
                 }
             }
         } else {
-            plugin.getProxy().broadcast("Reload done");
+            sender.sendMessage("Reload done");
             plugin.saveDefaultConfig();
             plugin.loadConfig();
 

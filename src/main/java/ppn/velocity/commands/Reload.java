@@ -16,6 +16,14 @@ public class Reload implements SimpleCommand {
 
     @Override
     public void execute(Invocation invocation) {
+        var source = invocation.source();
+        boolean isConsole = !(source instanceof com.velocitypowered.api.proxy.Player);
+        boolean hasPerm = source.hasPermission("ppn.reloadProxyNotifyConfig");
+        if (!isConsole && !hasPerm) {
+            source.sendMessage(Component.text("You do not have permission to use this command."));
+            return;
+        }
+
         plugin.saveDefaultConfig();
         plugin.loadConfig();
         plugin.setDisabledServers(new HashSet<>(plugin.getConfig().getStringList("DisabledServers")));
@@ -26,6 +34,11 @@ public class Reload implements SimpleCommand {
         plugin.getServerNames().clear();
         plugin.getConfig().getKeys("ServerNames").forEach(server -> plugin.getServerNames().put(server.toLowerCase(), plugin.getConfig().getString("ServerNames." + server)));
         plugin.getConfig().saveConfig();
-        plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("Reload done"));
+
+        if (isConsole) {
+            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("Reload done"));
+        } else {
+            source.sendMessage(Component.text("Reload done"));
+        }
     }
 }

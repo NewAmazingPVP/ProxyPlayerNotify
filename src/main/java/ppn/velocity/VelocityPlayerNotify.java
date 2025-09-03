@@ -49,6 +49,7 @@ public class VelocityPlayerNotify {
     private final Map<String, String> serverNames = new HashMap<>();
     private final HashMap<UUID, String> recentLeaveMessage = new HashMap<>();
     private ConfigManager config;
+    private ConfigManager playerData;
     private PlaceholderHandler placeholderHandler;
 
     @Inject
@@ -71,6 +72,7 @@ public class VelocityPlayerNotify {
         }
         saveDefaultConfig();
         loadConfig();
+        loadPlayerData();
         config.addDefault("join_message", "%player% has joined the network (Logged in server: %server%) at %time%",
                 "Network Join Message\nThis message is displayed when a player joins the network.\nPlaceholders available: %player%, %lp_prefix%, %lp_suffix%, %server%, %time%.");
 
@@ -167,6 +169,10 @@ public class VelocityPlayerNotify {
                 "Webhook switch message format\nPlaceholders available: %player%, %server%, %last_server%, %time%");
         config.addDefault("webhook.leave_message", "%player% left %last_server% at %time%",
                 "Webhook leave message format\nPlaceholders available: %player%, %last_server%, %time%");
+        config.addDefault("webhook.use_embed", true,
+                "Send Discord webhook messages as an embed (recommended)");
+        config.addDefault("webhook.embed_color", 3447003,
+                "Embed color (decimal RGB), e.g. 3447003 is blurple");
 
         config.saveConfig();
         loadConfig();
@@ -203,7 +209,19 @@ public class VelocityPlayerNotify {
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
         getProxy().getScheduler().buildTask(this, () -> {
             for (Player player : getProxy().getAllPlayers()) {
-                placeholderHandler.format(getConfig().getString("leave_message"), player.getUniqueId())
+                Object raw = getConfig().getOption("leave_message");
+                String msg;
+                if (raw instanceof Iterable<?>) {
+                    StringBuilder sb = new StringBuilder();
+                    for (Object o : (Iterable<?>) raw) {
+                        if (sb.length() > 0) sb.append("\n");
+                        sb.append(o.toString());
+                    }
+                    msg = sb.toString();
+                } else {
+                    msg = getConfig().getString("leave_message");
+                }
+                placeholderHandler.format(msg, player.getUniqueId())
                         .thenAccept(formatted -> addRecentLeaveMessage(player.getUniqueId(), formatted));
             }
         }).repeat(Duration.ofSeconds(1)).schedule();
@@ -231,6 +249,10 @@ public class VelocityPlayerNotify {
         config = new ConfigManager(dataDirectory.toFile(), "config.yml");
     }
 
+    public void loadPlayerData() {
+        playerData = new ConfigManager(dataDirectory.toFile(), "players.yml");
+    }
+
     public ProxyServer getProxy() {
         return proxy;
     }
@@ -241,6 +263,10 @@ public class VelocityPlayerNotify {
 
     public ConfigManager getConfig() {
         return config;
+    }
+
+    public ConfigManager getPlayerData() {
+        return playerData;
     }
 
     public Set<UUID> getMessageToggles() {

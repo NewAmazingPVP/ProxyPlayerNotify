@@ -141,5 +141,9 @@ webhook:
   enabled: false
   url: ""
   message: "%player% joined %server% at %time%"
+  # Send webhook as Discord embed (recommended). If true, the message above is used as the embed description.
+  use_embed: true
+  # Embed color as decimal RGB (e.g., 3447003 is Discord "blurple").
+  embed_color: 3447003
 
 
