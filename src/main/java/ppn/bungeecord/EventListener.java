@@ -160,21 +160,7 @@ public class EventListener implements Listener {
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
-        boolean papiBridge = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
-        if (papiBridge) {
-            message = message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
-        } else if (plugin.getLuckPerms() != null) {
-            try {
-                if (message.contains("%lp_prefix%")) {
-                    String prefix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getPrefix();
-                    if (prefix != null) message = message.replace("%lp_prefix%", prefix);
-                }
-                if (message.contains("%lp_suffix%")) {
-                    String suffix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getSuffix();
-                    if (suffix != null) message = message.replace("%lp_suffix%", suffix);
-                }
-            } catch (Exception ignored) {}
-        }
+        message = plugin.resolveLuckPermsPlaceholders(message, player);
 
         int color = plugin.getConfig().getInt("webhook.embed_color");
         boolean useEmbed = plugin.getConfig().getBoolean("webhook.use_embed");
@@ -221,21 +207,7 @@ public class EventListener implements Listener {
             message = message.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        boolean papiBridge2 = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
-        if (papiBridge2) {
-            message = message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
-        } else if (plugin.getLuckPerms() != null) {
-            try {
-                if (message.contains("%lp_prefix%")) {
-                    String prefix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getPrefix();
-                    if (prefix != null) message = message.replace("%lp_prefix%", prefix);
-                }
-                if (message.contains("%lp_suffix%")) {
-                    String suffix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getSuffix();
-                    if (suffix != null) message = message.replace("%lp_suffix%", suffix);
-                }
-            } catch (Exception ignored) {}
-        }
+        message = plugin.resolveLuckPermsPlaceholders(message, player);
         int color2 = plugin.getConfig().getInt("webhook.embed_color");
         boolean useEmbed2 = plugin.getConfig().getBoolean("webhook.use_embed");
         String url2 = plugin.getConfig().getString("webhook.url");
@@ -275,21 +247,7 @@ public class EventListener implements Listener {
             message = message.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
         }
         message = message.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        boolean papiBridge3 = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
-        if (papiBridge3) {
-            message = message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
-        } else if (plugin.getLuckPerms() != null) {
-            try {
-                if (message.contains("%lp_prefix%")) {
-                    String prefix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getPrefix();
-                    if (prefix != null) message = message.replace("%lp_prefix%", prefix);
-                }
-                if (message.contains("%lp_suffix%")) {
-                    String suffix = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(player).getCachedData().getMetaData().getSuffix();
-                    if (suffix != null) message = message.replace("%lp_suffix%", suffix);
-                }
-            } catch (Exception ignored) {}
-        }
+        message = plugin.resolveLuckPermsPlaceholders(message, player);
         int color3 = plugin.getConfig().getInt("webhook.embed_color");
         boolean useEmbed3 = plugin.getConfig().getBoolean("webhook.use_embed");
         String url3 = plugin.getConfig().getString("webhook.url");

@@ -3,7 +3,6 @@ package ppn.bungeecord.utils;
 import de.myzelyam.api.vanish.BungeeVanishAPI;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import ppn.bungeecord.BungeePlayerNotify;
@@ -82,25 +81,7 @@ public class MessageSender {
         if (plugin.getDisabledPlayers().contains(targetPlayer.getName().toLowerCase())) {
             return;
         }
-        boolean papiBridge = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
-        if (papiBridge) {
-            finalMessage = finalMessage.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
-        } else if (plugin.getLuckPerms() != null) {
-            if (finalMessage.contains("%lp_prefix%")) {
-                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                if (prefix != null) {
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                }
-            }
-            if (finalMessage.contains("%lp_suffix%")) {
-                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-                String suffix = user.getCachedData().getMetaData().getSuffix();
-                if (suffix != null) {
-                    finalMessage = finalMessage.replace("%lp_suffix%", suffix);
-                }
-            }
-        }
+        finalMessage = plugin.resolveLuckPermsPlaceholders(finalMessage, targetPlayer);
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
                 .thenAccept(formatted -> sendMessageToPlayer(plugin, targetPlayer, formatted));
@@ -129,25 +110,7 @@ public class MessageSender {
                 finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
             }
         }
-        boolean papiBridge = plugin.getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
-        if (papiBridge) {
-            finalMessage = finalMessage.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
-        } else if (plugin.getLuckPerms() != null) {
-            if (finalMessage.contains("%lp_prefix%")) {
-                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-                String prefix = user.getCachedData().getMetaData().getPrefix();
-                if (prefix != null) {
-                    finalMessage = finalMessage.replace("%lp_prefix%", prefix);
-                }
-            }
-            if (finalMessage.contains("%lp_suffix%")) {
-                User user = plugin.getLuckPerms().getPlayerAdapter(ProxiedPlayer.class).getUser(targetPlayer);
-                String suffix = user.getCachedData().getMetaData().getSuffix();
-                if (suffix != null) {
-                    finalMessage = finalMessage.replace("%lp_suffix%", suffix);
-                }
-            }
-        }
+        finalMessage = plugin.resolveLuckPermsPlaceholders(finalMessage, targetPlayer);
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
         plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())

@@ -2,6 +2,7 @@ package ppn.bungeecord;
 
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.cacheddata.CachedMetaData;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 import ppn.ConfigManager;
@@ -245,6 +246,37 @@ public class BungeePlayerNotify extends Plugin {
 
     public LuckPerms getLuckPerms() {
         return luckPerms;
+    }
+
+    public boolean isPapiProxyBridgePresent() {
+        return getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
+    }
+
+    public String resolveLuckPermsPlaceholders(String message, ProxiedPlayer player) {
+        if (message == null) {
+            return null;
+        }
+        if (!message.contains("%lp_prefix%") && !message.contains("%lp_suffix%")) {
+            return message;
+        }
+        if (isPapiProxyBridgePresent()) {
+            return message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        }
+        if (luckPerms == null) {
+            return stripLuckPermsPlaceholders(message);
+        }
+        try {
+            CachedMetaData metaData = luckPerms.getPlayerAdapter(ProxiedPlayer.class).getMetaData(player);
+            String prefix = metaData != null && metaData.getPrefix() != null ? metaData.getPrefix() : "";
+            String suffix = metaData != null && metaData.getSuffix() != null ? metaData.getSuffix() : "";
+            return message.replace("%lp_prefix%", prefix).replace("%lp_suffix%", suffix);
+        } catch (Exception ex) {
+            return stripLuckPermsPlaceholders(message);
+        }
+    }
+
+    private String stripLuckPermsPlaceholders(String message) {
+        return message.replace("%lp_prefix%", "").replace("%lp_suffix%", "");
     }
 
     public Map<String, String> getServerNames() {

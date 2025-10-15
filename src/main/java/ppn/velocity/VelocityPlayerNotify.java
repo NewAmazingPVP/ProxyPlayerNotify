@@ -11,6 +11,8 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.cacheddata.CachedMetaData;
 import ppn.ConfigManager;
 import ppn.PAPIPlaceholderHandler;
 import ppn.PlaceholderHandler;
@@ -331,5 +333,37 @@ public class VelocityPlayerNotify {
 
     public PlaceholderHandler getPlaceholderHandler() {
         return placeholderHandler;
+    }
+
+    public boolean isPapiProxyBridgePresent() {
+        return proxy.getPluginManager().getPlugin("papiproxybridge").isPresent()
+                || proxy.getPluginManager().getPlugin("PAPIProxyBridge").isPresent();
+    }
+
+    public String resolveLuckPermsPlaceholders(String message, Player player) {
+        if (message == null) {
+            return null;
+        }
+        if (!message.contains("%lp_prefix%") && !message.contains("%lp_suffix%")) {
+            return message;
+        }
+        if (isPapiProxyBridgePresent()) {
+            return message.replace("%lp_prefix%", "%luckperms_prefix%").replace("%lp_suffix%", "%luckperms_suffix%");
+        }
+        if (!proxy.getPluginManager().getPlugin("luckperms").isPresent()) {
+            return stripLuckPermsPlaceholders(message);
+        }
+        try {
+            CachedMetaData metaData = LuckPermsProvider.get().getPlayerAdapter(Player.class).getMetaData(player);
+            String prefix = metaData != null && metaData.getPrefix() != null ? metaData.getPrefix() : "";
+            String suffix = metaData != null && metaData.getSuffix() != null ? metaData.getSuffix() : "";
+            return message.replace("%lp_prefix%", prefix).replace("%lp_suffix%", suffix);
+        } catch (Exception ex) {
+            return stripLuckPermsPlaceholders(message);
+        }
+    }
+
+    private String stripLuckPermsPlaceholders(String message) {
+        return message.replace("%lp_prefix%", "").replace("%lp_suffix%", "");
     }
 }
