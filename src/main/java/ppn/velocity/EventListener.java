@@ -10,13 +10,17 @@ import de.myzelyam.api.vanish.VelocityVanishAPI;
 import ppn.Webhook;
 import ppn.velocity.utils.MessageSender;
 
+import net.kyori.adventure.text.Component;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class EventListener {
 
     private final VelocityPlayerNotify plugin;
+    private static final int MAX_SERVER_LOOKUP_ATTEMPTS = 5;
+    private static final long SERVER_LOOKUP_RETRY_MS = 200;
 
     public EventListener(VelocityPlayerNotify plugin) {
         this.plugin = plugin;
@@ -44,31 +48,57 @@ public class EventListener {
         if (firstJoin) {
             plugin.getPlayerData().setOption("players." + player.getUniqueId() + ".joined", true);
         }
-        long joinDelay = firstJoin ? plugin.getConfig().getLong("first_join_message_delay") : plugin.getConfig().getLong("join_message_delay");
-        plugin.getProxy().getScheduler().buildTask(plugin, () -> {
-            if (player.isActive()) {
-                String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
-                if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
-                    return;
-                }
+        long joinDelayMs = (firstJoin ? plugin.getConfig().getLong("first_join_message_delay") : plugin.getConfig().getLong("join_message_delay")) * 50;
+        scheduleJoinBroadcast(player, firstJoin, joinDelayMs, 0);
+        long privateDelayMs = (firstJoin ? plugin.getConfig().getLong("first_join_private_message_delay") : plugin.getConfig().getLong("join_private_message_delay")) * 50;
+        schedulePrivateJoinMessage(player, firstJoin, privateDelayMs, 0);
+    }
 
-                MessageSender.sendMessage(plugin, firstJoin ? "first_join_message" : "join_message", player, server, null);
-                sendJoinWebhook(player, server);
-                plugin.getPlayerLastServer().put(player.getUniqueId(), server);
-            }
-        }).delay(joinDelay * 50, TimeUnit.MILLISECONDS).schedule();
-        long privateDelay = firstJoin ? plugin.getConfig().getLong("first_join_private_message_delay") : plugin.getConfig().getLong("join_private_message_delay");
+    private void scheduleJoinBroadcast(Player player, boolean firstJoin, long delayMs, int attempt) {
         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
-            if (player.isActive()) {
-                String server = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
-                if (plugin.getLimboServers() != null && server != null && plugin.getLimboServers().contains(server.toLowerCase())) {
-                    return;
-                }
-
-                MessageSender.sendPrivateMessage(plugin, firstJoin ? "first_join_private_message" : "join_private_message", player, server);
-                plugin.getPlayerLastServer().put(player.getUniqueId(), server);
+            if (!player.isActive()) {
+                return;
             }
-        }).delay(privateDelay * 50, TimeUnit.MILLISECONDS).schedule();
+            String server = resolveServerName(player);
+            if (server == null) {
+                if (attempt < MAX_SERVER_LOOKUP_ATTEMPTS) {
+                    scheduleJoinBroadcast(player, firstJoin, SERVER_LOOKUP_RETRY_MS, attempt + 1);
+                }
+                return;
+            }
+            if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase())) {
+                return;
+            }
+
+            MessageSender.sendMessage(plugin, firstJoin ? "first_join_message" : "join_message", player, server, null);
+            sendJoinWebhook(player, server);
+            plugin.getPlayerLastServer().put(player.getUniqueId(), server);
+        }).delay(delayMs, TimeUnit.MILLISECONDS).schedule();
+    }
+
+    private void schedulePrivateJoinMessage(Player player, boolean firstJoin, long delayMs, int attempt) {
+        plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+            if (!player.isActive()) {
+                return;
+            }
+            String server = resolveServerName(player);
+            if (server == null) {
+                if (attempt < MAX_SERVER_LOOKUP_ATTEMPTS) {
+                    schedulePrivateJoinMessage(player, firstJoin, SERVER_LOOKUP_RETRY_MS, attempt + 1);
+                }
+                return;
+            }
+            if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase())) {
+                return;
+            }
+
+            MessageSender.sendPrivateMessage(plugin, firstJoin ? "first_join_private_message" : "join_private_message", player, server);
+            plugin.getPlayerLastServer().put(player.getUniqueId(), server);
+        }).delay(delayMs, TimeUnit.MILLISECONDS).schedule();
+    }
+
+    private String resolveServerName(Player player) {
+        return player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse(null);
     }
 
     @Subscribe
@@ -77,7 +107,14 @@ public class EventListener {
             if (event.getPreviousServer().isPresent()) {
                 Player player = event.getPlayer();
                 String lastServer = event.getPreviousServer().get().getServerInfo().getName();
+                if (!player.isActive()) {
+                    return;
+                }
                 String currentServer = event.getServer().getServerInfo().getName();
+                if (currentServer == null) {
+                    plugin.getPlayerLastServer().put(player.getUniqueId(), lastServer);
+                    return;
+                }
                 if (plugin.getLimboServers() != null && currentServer != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
                     MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
                     sendLeaveWebhook(player, lastServer);
@@ -105,6 +142,9 @@ public class EventListener {
                 event.getLoginStatus() != DisconnectEvent.LoginStatus.PRE_SERVER_JOIN) {
             Player player = event.getPlayer();
             String lastServer = plugin.getPlayerLastServer().remove(player.getUniqueId());
+            if (lastServer == null) {
+                lastServer = resolveServerName(player);
+            }
             if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
                 return;
             }
@@ -153,11 +193,15 @@ public class EventListener {
         String url = plugin.getConfig().getString("webhook.url");
         plugin.getPlaceholderHandler().format(message, player.getUniqueId())
                 .thenAccept(formatted -> {
-                    if (useEmbed) {
-                        Webhook.sendEmbed(url, formatted, color);
-                    } else {
-                        Webhook.send(url, formatted);
+                    if (formatted == null || formatted.trim().isEmpty()) {
+                        return;
                     }
+                    CompletableFuture.runAsync(() -> {
+                        Webhook.WebhookResult result = useEmbed ? Webhook.sendEmbed(url, formatted, color) : Webhook.send(url, formatted);
+                        if (!result.isSuccess() && result.getStatusCode() != 0) {
+                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("Webhook join send failed (" + result.getStatusCode() + "): " + result.getError()));
+                        }
+                    });
                 });
     }
 
@@ -200,11 +244,15 @@ public class EventListener {
         String url2 = plugin.getConfig().getString("webhook.url");
         plugin.getPlaceholderHandler().format(message, player.getUniqueId())
                 .thenAccept(formatted -> {
-                    if (useEmbed2) {
-                        Webhook.sendEmbed(url2, formatted, color2);
-                    } else {
-                        Webhook.send(url2, formatted);
+                    if (formatted == null || formatted.trim().isEmpty()) {
+                        return;
                     }
+                    CompletableFuture.runAsync(() -> {
+                        Webhook.WebhookResult result = useEmbed2 ? Webhook.sendEmbed(url2, formatted, color2) : Webhook.send(url2, formatted);
+                        if (!result.isSuccess() && result.getStatusCode() != 0) {
+                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("Webhook switch send failed (" + result.getStatusCode() + "): " + result.getError()));
+                        }
+                    });
                 });
     }
 
@@ -241,11 +289,15 @@ public class EventListener {
         String url3 = plugin.getConfig().getString("webhook.url");
         plugin.getPlaceholderHandler().format(message, player.getUniqueId())
                 .thenAccept(formatted -> {
-                    if (useEmbed3) {
-                        Webhook.sendEmbed(url3, formatted, color3);
-                    } else {
-                        Webhook.send(url3, formatted);
+                    if (formatted == null || formatted.trim().isEmpty()) {
+                        return;
                     }
+                    CompletableFuture.runAsync(() -> {
+                        Webhook.WebhookResult result = useEmbed3 ? Webhook.sendEmbed(url3, formatted, color3) : Webhook.send(url3, formatted);
+                        if (!result.isSuccess() && result.getStatusCode() != 0) {
+                            plugin.getProxy().getConsoleCommandSource().sendMessage(Component.text("Webhook leave send failed (" + result.getStatusCode() + "): " + result.getError()));
+                        }
+                    });
                 });
     }
 }
