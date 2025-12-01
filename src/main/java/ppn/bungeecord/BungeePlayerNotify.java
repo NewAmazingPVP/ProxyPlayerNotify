@@ -171,9 +171,7 @@ public class BungeePlayerNotify extends Plugin {
         noVanishNotifications = config.getBoolean("disable_vanish_notifications");
 
         getProxy().getPluginManager().registerListener(this, new EventListener(this));
-        if ((config.getString("join_message").contains("%lp_prefix%") || config.getString("switch_message").contains("%lp_prefix%") || config.getString("leave_message").contains("%lp_prefix%")
-                || config.getString("join_message").contains("%lp_suffix%") || config.getString("switch_message").contains("%lp_suffix%") || config.getString("leave_message").contains("%lp_suffix%"))
-                && getProxy().getPluginManager().getPlugin("LuckPerms") != null) {
+        if (getProxy().getPluginManager().getPlugin("LuckPerms") != null) {
             try {
                 luckPerms = LuckPermsProvider.get();
             } catch (Throwable t) {
@@ -185,7 +183,7 @@ public class BungeePlayerNotify extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new Reload(this));
         getProxy().getPluginManager().registerCommand(this, new ToggleMessages(this));
 
-        if (getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null) {
+        if (isPapiProxyBridgePresent()) {
             try {
                 placeholderHandler = new PAPIPlaceholderHandler();
             } catch (Exception e) {
@@ -249,7 +247,8 @@ public class BungeePlayerNotify extends Plugin {
     }
 
     public boolean isPapiProxyBridgePresent() {
-        return getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null;
+        return getProxy().getPluginManager().getPlugin("PAPIProxyBridge") != null
+                || getProxy().getPluginManager().getPlugin("papiproxybridge") != null;
     }
 
     public String resolveLuckPermsPlaceholders(String message, ProxiedPlayer player) {
