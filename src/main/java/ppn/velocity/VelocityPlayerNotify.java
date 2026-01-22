@@ -30,7 +30,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.*;
 
-@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.4.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
+@Plugin(id = "proxyplayernotify", name = "ProxyPlayerNotify", authors = "NewAmazingPVP", version = "2.5.0", url = "https://www.spigotmc.org/resources/bungeeplayernotify.108035/", dependencies = {
         @Dependency(id = "luckperms", optional = true),
         @Dependency(id = "papiproxybridge", optional = true),
         @Dependency(id = "premiumvanish", optional = true),

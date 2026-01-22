@@ -1,10 +1,9 @@
 <div align="center">
 
-# **ProxyPlayerNotify v2.4.0**
+# **ProxyPlayerNotify v2.5.0**
 
 *Network‑wide join/leave/switch notifications for proxy servers.*
 
-[![SpigotMC](https://img.shields.io/badge/SpigotMC-Resource-orange)](https://www.spigotmc.org/resources/bungeeplayernotify.108035/)
 ![Platforms](https://img.shields.io/badge/Platforms-BungeeCord%20%7C%20Velocity-5A67D8)
 ![MC](https://img.shields.io/badge/Minecraft-1.8%E2%86%92Latest-2EA043)
 ![Java](https://img.shields.io/badge/Java-17+-1F6FEB)
@@ -13,7 +12,8 @@
 </div>
 
 > TL;DR
-> Drop the jar on your proxy (BungeeCord/Velocity). It broadcasts join/leave/switch messages (with placeholders, MiniMessage or legacy colors), supports per‑player toggles, obeys vanish, and can ping a Discord‑style webhook.
+> Drop the jar on your proxy (BungeeCord/Velocity). It broadcasts join/leave/switch messages (with placeholders,
+> MiniMessage or legacy colors), supports per‑player toggles, obeys vanish, and can ping a Discord‑style webhook.
 
 ---
 
@@ -24,11 +24,11 @@
 * [Installation](#installation)
 * [Quick Start](#quick-start)
 * [Configuration](#configuration)
-  * [Messages & Delays](#messages--delays)
-  * [Servers & Routing](#servers--routing)
-  * [Placeholders](#placeholders)
-  * [Permissions](#permissions)
-  * [Webhook](#webhook)
+    * [Messages & Delays](#messages--delays)
+    * [Servers & Routing](#servers--routing)
+    * [Placeholders](#placeholders)
+    * [Permissions](#permissions)
+    * [Webhook](#webhook)
 * [Commands](#commands)
 * [Troubleshooting](#troubleshooting)
 * [Building from Source](#building-from-source)
@@ -55,7 +55,6 @@
 ## Platforms & Requirements
 
 - Platforms: BungeeCord/Waterfall, Velocity 3.x
-- Minecraft: 1.8 → Latest
 - Java: 17+
 - Optional integrations (soft‑depends): LuckPerms, PAPIProxyBridge, PremiumVanish/SuperVanish
 
@@ -67,8 +66,8 @@
 2. Place it in your proxy `plugins/` folder.
 3. Start the proxy to generate `config.yml`.
 4. Adjust config, then reload:
-   - Bungee: `/reloadProxyNotifyConfig`
-   - Velocity: `reloadProxyNotifyConfig`
+    - Bungee: `/reloadProxyNotifyConfig`
+    - Velocity: `reloadProxyNotifyConfig`
 
 ---
 
@@ -86,7 +85,7 @@ Key options in `config.yml`:
 - Permissions: `permission.permissions`, `permission.notify_message`, `permission.hide_message`
 - Webhook: `webhook.enabled`, `webhook.url`, `webhook.message`
 
-Tip: For multi‑line messages, use YAML lists — the plugin joins them with newlines.
+Tip: For multi‑line messages, use YAML lists - the plugin joins them with newlines.
 
 ---
 
@@ -129,17 +128,18 @@ Tip: For multi‑line messages, use YAML lists — the plugin joins them with ne
 ## Commands
 
 - BungeeCord
-  - `/reloadProxyNotifyConfig` — reloads config (perm: `ppn.reloadProxyNotifyConfig`)
-  - `/togglemessages` — per‑player toggle
+    - `/reloadProxyNotifyConfig` - reloads config (perm: `ppn.reloadProxyNotifyConfig`)
+    - `/togglemessages` - per‑player toggle
 - Velocity
-  - `reloadProxyNotifyConfig` — reloads config (console or permissioned source)
-  - `togglemessages` — per‑player toggle
+    - `reloadProxyNotifyConfig` - reloads config (console or permissioned source)
+    - `togglemessages` - per‑player toggle
 
 ---
 
 ## Troubleshooting
 
-- No placeholders? Ensure LuckPerms/PAPIProxyBridge is installed on the proxy (optional). The plugin runs fine without them.
+- No placeholders? Ensure LuckPerms/PAPIProxyBridge is installed on the proxy (optional). The plugin runs fine without
+  them.
 - Vanish not detected? PremiumVanish/SuperVanish is optional; if absent, notifications aren’t blocked.
 - Messages not visible? Check `permission.*` settings and viewer permissions.
 - Switch/first‑join timing odd? Increase delays to ensure server names are available.
@@ -151,8 +151,6 @@ Tip: For multi‑line messages, use YAML lists — the plugin joins them with ne
 ```bash
 mvn -DskipTests package
 ```
-
-
 
 ## Contributing & Support
 

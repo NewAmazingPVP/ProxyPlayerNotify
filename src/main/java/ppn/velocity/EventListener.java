@@ -7,10 +7,10 @@ import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.Player;
 import de.myzelyam.api.vanish.VelocityVanishAPI;
+import net.kyori.adventure.text.Component;
 import ppn.Webhook;
 import ppn.velocity.utils.MessageSender;
 
-import net.kyori.adventure.text.Component;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletableFuture;

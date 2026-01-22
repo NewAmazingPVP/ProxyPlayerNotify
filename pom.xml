@@ -6,7 +6,7 @@
 
     <groupId>Serversync</groupId>
     <artifactId>ProxyPlayerNotify</artifactId>
-    <version>2.4.0</version>
+    <version>2.5.0</version>
     <packaging>jar</packaging>
 
     <name>Serversync</name>
@@ -58,11 +58,16 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="C:/Plugins Testing/Bungeecord/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="C:/Plugins Testing/Folia/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="C:/Plugins Testing/Paper/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="C:/Plugins Testing/Spigot/plugins"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="C:/Plugins Testing/Velocity/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="C:/Plugins Testing/Bungeecord/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="C:/Plugins Testing/Folia/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="C:/Plugins Testing/Paper/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="C:/Plugins Testing/Spigot/plugins"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      todir="C:/Plugins Testing/Velocity/plugins"/>
                             </target>
                         </configuration>
                     </execution>
