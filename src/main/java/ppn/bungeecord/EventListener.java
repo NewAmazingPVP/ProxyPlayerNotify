@@ -1,157 +1,193 @@
 package ppn.bungeecord;
 
 import de.myzelyam.api.vanish.BungeeVanishAPI;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.event.ServerSwitchEvent;
+import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
-import net.md_5.bungee.event.EventPriority;
 import ppn.Webhook;
 import ppn.bungeecord.utils.MessageSender;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class EventListener implements Listener {
 
     private final BungeePlayerNotify plugin;
-    private final Map<UUID, String> playerLastServer = new HashMap<>();
-    private final Set<UUID> validPlayers = new HashSet<>();
-    private static final int MAX_SERVER_LOOKUP_ATTEMPTS = 5;
-    private static final long SERVER_LOOKUP_RETRY_MS = 200;
+    private final Map<UUID, String> playerLastServer = new ConcurrentHashMap<>();
+    private final Map<UUID, PendingJoin> pendingJoins = new ConcurrentHashMap<>();
 
     public EventListener(BungeePlayerNotify plugin) {
         this.plugin = plugin;
     }
 
-    @EventHandler()
-    public void onRejoin(PostLoginEvent event) {
+    @EventHandler
+    public void onPostLogin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
         if (plugin.getConfig().getBoolean("join_last_server")) {
-            Object last = plugin.getPlayerData().getOption("players." + player.getUniqueId() + ".lastServer");
-            if (last == null) {
-                last = plugin.getConfig().getOption("players." + player.getUniqueId() + ".lastServer");
-            }
-            String lastServer = last != null ? last.toString() : null;
+            String lastServer = getStoredLastServer(player);
             if (lastServer != null) {
-                player.connect(plugin.getProxy().getServerInfo(lastServer));
+                ServerInfo target = plugin.getProxy().getServerInfo(lastServer);
+                if (target != null) {
+                    event.setTarget(target);
+                }
             }
         }
-    }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onJoin(PostLoginEvent event) {
-        ProxiedPlayer player = event.getPlayer();
-        validPlayers.add(player.getUniqueId());
         boolean firstJoin = !plugin.getPlayerData().getBoolean("players." + player.getUniqueId() + ".joined");
         if (firstJoin) {
             plugin.getPlayerData().setOption("players." + player.getUniqueId() + ".joined", true);
         }
-        long joinDelayMs = (firstJoin ? plugin.getConfig().getLong("first_join_message_delay") : plugin.getConfig().getLong("join_message_delay")) * 50;
-        scheduleJoinBroadcast(player, firstJoin, joinDelayMs, 0);
-
-        long privateDelayMs = (firstJoin ? plugin.getConfig().getLong("first_join_private_message_delay") : plugin.getConfig().getLong("join_private_message_delay")) * 50;
-        schedulePrivateJoinMessage(player, firstJoin, privateDelayMs, 0);
-    }
-
-    private void scheduleJoinBroadcast(ProxiedPlayer player, boolean firstJoin, long delayMs, int attempt) {
-        plugin.getProxy().getScheduler().schedule(plugin, () -> {
-            if (!player.isConnected()) {
-                return;
-            }
-            String server = resolveServerName(player);
-            if (server == null) {
-                if (attempt < MAX_SERVER_LOOKUP_ATTEMPTS) {
-                    scheduleJoinBroadcast(player, firstJoin, SERVER_LOOKUP_RETRY_MS, attempt + 1);
-                }
-                return;
-            }
-            if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase())) {
-                return;
-            }
-            MessageSender.sendMessage(plugin, firstJoin ? "first_join_message" : "join_message", player, server, null);
-            sendJoinWebhook(player, server);
-            playerLastServer.put(player.getUniqueId(), server);
-        }, delayMs, TimeUnit.MILLISECONDS);
-    }
-
-    private void schedulePrivateJoinMessage(ProxiedPlayer player, boolean firstJoin, long delayMs, int attempt) {
-        plugin.getProxy().getScheduler().schedule(plugin, () -> {
-            if (!player.isConnected()) {
-                return;
-            }
-            String server = resolveServerName(player);
-            if (server == null) {
-                if (attempt < MAX_SERVER_LOOKUP_ATTEMPTS) {
-                    schedulePrivateJoinMessage(player, firstJoin, SERVER_LOOKUP_RETRY_MS, attempt + 1);
-                }
-                return;
-            }
-            if (plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase())) {
-                return;
-            }
-            MessageSender.sendPrivateMessage(plugin, firstJoin ? "first_join_private_message" : "join_private_message", player, server);
-        }, delayMs, TimeUnit.MILLISECONDS);
-    }
-
-    private String resolveServerName(ProxiedPlayer player) {
-        if (player.getServer() == null || player.getServer().getInfo() == null) {
-            return null;
-        }
-        return player.getServer().getInfo().getName();
+        pendingJoins.put(player.getUniqueId(), new PendingJoin(firstJoin));
     }
 
     @EventHandler
-    public void onSwitch(ServerSwitchEvent event) {
+    public void onServerConnected(ServerConnectedEvent event) {
         ProxiedPlayer player = event.getPlayer();
-        plugin.getProxy().getScheduler().schedule(plugin, () -> {
-            if (event.getFrom() == null) return;
-            String lastServer = event.getFrom().getName();
-            if (player.isConnected()) {
-                String currentServer = resolveServerName(player);
-                if (currentServer == null) {
-                    playerLastServer.put(player.getUniqueId(), lastServer);
-                    return;
-                }
-                if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(currentServer.toLowerCase())) {
-                    MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
-                    sendLeaveWebhook(player, lastServer);
-                } else if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
-                    if (!plugin.getConfig().getStringList("join_private_message").isEmpty()) {
-                        MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
-                    }
-                    MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
-                    sendJoinWebhook(player, currentServer);
-                } else {
-                    MessageSender.sendMessage(plugin, "switch_message", player, currentServer, lastServer);
-                    sendSwitchWebhook(player, currentServer, lastServer);
-                }
-                playerLastServer.put(player.getUniqueId(), currentServer);
-            }
-        }, plugin.getConfig().getLong("switch_message_delay") * 50, TimeUnit.MILLISECONDS);
+        String currentServer = event.getServer().getInfo().getName();
+        if (currentServer == null) {
+            return;
+        }
+
+        UUID uuid = player.getUniqueId();
+        PendingJoin pendingJoin = pendingJoins.get(uuid);
+        String previousServer = playerLastServer.get(uuid);
+
+        if (pendingJoin != null) {
+            handleInitialConnection(player, currentServer, pendingJoin);
+            playerLastServer.put(uuid, currentServer);
+            return;
+        }
+
+        if (previousServer == null || previousServer.equalsIgnoreCase(currentServer)) {
+            playerLastServer.put(uuid, currentServer);
+            return;
+        }
+
+        handleServerTransition(player, currentServer, previousServer);
+        playerLastServer.put(uuid, currentServer);
     }
 
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
         ProxiedPlayer player = event.getPlayer();
-        validPlayers.remove(player.getUniqueId());
-        String lastServer = playerLastServer.remove(player.getUniqueId());
-        if (lastServer == null) {
-            lastServer = resolveServerName(player);
+        UUID uuid = player.getUniqueId();
+        pendingJoins.remove(uuid);
+
+        String lastServer = playerLastServer.remove(uuid);
+        if (lastServer == null && player.getServer() != null && player.getServer().getInfo() != null) {
+            lastServer = player.getServer().getInfo().getName();
         }
-        if (plugin.getLimboServers() != null && lastServer != null && plugin.getLimboServers().contains(lastServer.toLowerCase())) {
+        if (isLimboServer(lastServer)) {
             return;
         }
         if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
-            plugin.getPlayerData().setOption("players." + player.getUniqueId() + ".lastServer", lastServer);
+            plugin.getPlayerData().setOption("players." + uuid + ".lastServer", lastServer);
         }
+
         MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         sendLeaveWebhook(player, lastServer);
+    }
+
+    private void handleInitialConnection(ProxiedPlayer player, String currentServer, PendingJoin pendingJoin) {
+        if (isLimboServer(currentServer)) {
+            return;
+        }
+
+        pendingJoins.remove(player.getUniqueId());
+        scheduleJoinSequence(player, currentServer, pendingJoin.firstJoin());
+    }
+
+    private void handleServerTransition(ProxiedPlayer player, String currentServer, String previousServer) {
+        boolean currentIsLimbo = isLimboServer(currentServer);
+        boolean previousIsLimbo = isLimboServer(previousServer);
+
+        if (currentIsLimbo && previousIsLimbo) {
+            return;
+        }
+        if (currentIsLimbo) {
+            scheduleSwitchDelay(() -> {
+                if (!player.isConnected()) {
+                    return;
+                }
+                MessageSender.sendMessage(plugin, "leave_message", player, null, previousServer);
+                sendLeaveWebhook(player, previousServer);
+            });
+            return;
+        }
+        if (previousIsLimbo) {
+            PendingJoin pendingJoin = pendingJoins.remove(player.getUniqueId());
+            if (pendingJoin != null) {
+                scheduleJoinSequence(player, currentServer, pendingJoin.firstJoin());
+                return;
+            }
+            scheduleSwitchDelay(() -> {
+                if (!player.isConnected()) {
+                    return;
+                }
+                if (!plugin.getConfig().getStringList("join_private_message").isEmpty()) {
+                    MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
+                }
+                MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
+                sendJoinWebhook(player, currentServer);
+            });
+            return;
+        }
+
+        scheduleSwitchDelay(() -> {
+            if (!player.isConnected()) {
+                return;
+            }
+            MessageSender.sendMessage(plugin, "switch_message", player, currentServer, previousServer);
+            sendSwitchWebhook(player, currentServer, previousServer);
+        });
+    }
+
+    private void scheduleJoinSequence(ProxiedPlayer player, String currentServer, boolean firstJoin) {
+        String publicMessageType = firstJoin ? "first_join_message" : "join_message";
+        String privateMessageType = firstJoin ? "first_join_private_message" : "join_private_message";
+        long publicDelayMs = (firstJoin ? plugin.getConfig().getLong("first_join_message_delay") : plugin.getConfig().getLong("join_message_delay")) * 50L;
+        long privateDelayMs = (firstJoin ? plugin.getConfig().getLong("first_join_private_message_delay") : plugin.getConfig().getLong("join_private_message_delay")) * 50L;
+
+        plugin.getProxy().getScheduler().schedule(plugin, () -> {
+            if (!player.isConnected()) {
+                return;
+            }
+            MessageSender.sendMessage(plugin, publicMessageType, player, currentServer, null);
+            sendJoinWebhook(player, currentServer);
+        }, publicDelayMs, TimeUnit.MILLISECONDS);
+
+        plugin.getProxy().getScheduler().schedule(plugin, () -> {
+            if (!player.isConnected()) {
+                return;
+            }
+            MessageSender.sendPrivateMessage(plugin, privateMessageType, player, currentServer);
+        }, privateDelayMs, TimeUnit.MILLISECONDS);
+    }
+
+    private void scheduleSwitchDelay(Runnable action) {
+        long delayMs = plugin.getConfig().getLong("switch_message_delay") * 50L;
+        plugin.getProxy().getScheduler().schedule(plugin, action, delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    private String getStoredLastServer(ProxiedPlayer player) {
+        Object last = plugin.getPlayerData().getOption("players." + player.getUniqueId() + ".lastServer");
+        if (last == null) {
+            last = plugin.getConfig().getOption("players." + player.getUniqueId() + ".lastServer");
+        }
+        return last != null ? last.toString() : null;
+    }
+
+    private boolean isLimboServer(String server) {
+        return server != null && plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase());
     }
 
     private void sendJoinWebhook(ProxiedPlayer player, String server) {
@@ -296,5 +332,8 @@ public class EventListener implements Listener {
                 }
             });
         });
+    }
+
+    private record PendingJoin(boolean firstJoin) {
     }
 }

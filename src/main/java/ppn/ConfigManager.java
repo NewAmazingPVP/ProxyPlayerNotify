@@ -15,9 +15,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ConfigManager {
+    private static final Pattern YAML_KEY_PATTERN = Pattern.compile("^\\s*([A-Za-z0-9_.-]+):(?:\\s|$)");
+
     private final File configFile;
     private Map<String, Object> configMap;
     private final LoadSettings loadSettings;
@@ -26,6 +29,7 @@ public class ConfigManager {
     private final StandardRepresenter representer;
     private final Map<String, String> commentMap;
     private final Set<String> processedPaths;
+    private boolean dirty;
 
     public ConfigManager(File dataFolder, String fileName) {
         if (!dataFolder.exists()) {
@@ -35,7 +39,15 @@ public class ConfigManager {
         this.commentMap = new LinkedHashMap<>();
         this.processedPaths = new HashSet<>();
 
-        this.representer = new StandardRepresenter(DumpSettings.builder().build()) {
+        this.dumpSettings = DumpSettings.builder()
+                .setDefaultFlowStyle(FlowStyle.BLOCK)
+                .setDumpComments(true)
+                .setIndent(2)
+                .setIndicatorIndent(1)
+                .setWidth(4096)
+                .build();
+
+        this.representer = new StandardRepresenter(dumpSettings) {
             @Override
             protected Node representScalar(Tag tag, String value, ScalarStyle style) {
                 if (value.contains("\n")) {
@@ -52,14 +64,6 @@ public class ConfigManager {
                 .setParseComments(true)
                 .build();
 
-        this.dumpSettings = DumpSettings.builder()
-                .setDefaultFlowStyle(FlowStyle.BLOCK)
-                .setDumpComments(true)
-                .setIndent(2)
-                .setIndicatorIndent(0)
-                .setWidth(4096)
-                .build();
-
         loadConfig();
     }
 
@@ -68,17 +72,22 @@ public class ConfigManager {
             try {
                 originalContent = Files.readString(configFile.toPath(), StandardCharsets.UTF_8);
                 Load loader = new Load(loadSettings);
-                configMap = (Map<String, Object>) loader.loadFromString(originalContent);
-                if (configMap == null) {
-                    configMap = new HashMap<>();
+                Object loaded = loader.loadFromString(originalContent);
+                if (loaded instanceof Map<?, ?> map) {
+                    configMap = normalizeMap(map);
+                } else {
+                    configMap = new LinkedHashMap<>();
                 }
                 extractExistingComments();
+                dirty = false;
             } catch (IOException e) {
                 e.printStackTrace();
-                configMap = new HashMap<>();
+                configMap = new LinkedHashMap<>();
+                dirty = false;
             }
         } else {
-            configMap = new HashMap<>();
+            configMap = new LinkedHashMap<>();
+            dirty = true;
             saveConfig();
         }
     }
@@ -90,44 +99,33 @@ public class ConfigManager {
 
         String[] lines = originalContent.split("\n");
         StringBuilder currentComment = new StringBuilder();
-        Stack<String> pathStack = new Stack<>();
-        int indentLevel = 0;
+        Deque<PathEntry> pathStack = new ArrayDeque<>();
 
         for (String line : lines) {
             String trimmed = line.trim();
-            int currentIndent = getIndentLevel(line);
-
-            while (!pathStack.isEmpty() && currentIndent <= indentLevel) {
-                pathStack.pop();
-                indentLevel -= 2;
-            }
 
             if (trimmed.startsWith("#")) {
                 if (currentComment.length() > 0) {
                     currentComment.append("\n");
                 }
                 currentComment.append(line);
-            } else if (!trimmed.isEmpty()) {
-                if (trimmed.contains(":")) {
-                    String key = trimmed.split(":", 2)[0].trim();
+                continue;
+            }
 
-                    if (currentIndent > indentLevel) {
-                        pathStack.push(key);
-                        indentLevel = currentIndent;
-                    } else {
-                        if (!pathStack.isEmpty()) {
-                            pathStack.pop();
-                        }
-                        pathStack.push(key);
-                    }
+            Matcher matcher = YAML_KEY_PATTERN.matcher(line);
+            if (matcher.find()) {
+                int currentIndent = getIndentLevel(line);
+                while (!pathStack.isEmpty() && pathStack.peekLast().indent >= currentIndent) {
+                    pathStack.removeLast();
+                }
 
-                    String currentPath = String.join(".", pathStack);
+                pathStack.addLast(new PathEntry(currentIndent, matcher.group(1)));
+                String currentPath = buildPath(pathStack);
 
-                    if (currentComment.length() > 0) {
-                        commentMap.put(currentPath, currentComment.toString());
-                        processedPaths.add(currentPath);
-                        currentComment = new StringBuilder();
-                    }
+                if (currentComment.length() > 0) {
+                    commentMap.put(currentPath, currentComment.toString());
+                    processedPaths.add(currentPath);
+                    currentComment = new StringBuilder();
                 }
             }
         }
@@ -142,42 +140,31 @@ public class ConfigManager {
     }
 
     public void saveConfig() {
+        if (!dirty && configFile.exists()) {
+            return;
+        }
+
         try {
             Dump dumper = new Dump(dumpSettings, representer);
             String newContent = dumper.dumpToString(configMap);
 
             String[] lines = newContent.split("\n");
             StringBuilder result = new StringBuilder();
-            Stack<String> pathStack = new Stack<>();
-            int currentIndent = 0;
+            Deque<PathEntry> pathStack = new ArrayDeque<>();
 
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
-                String trimmed = line.trim();
-                int lineIndent = getIndentLevel(line);
-
-                while (!pathStack.isEmpty() && lineIndent <= currentIndent) {
-                    pathStack.pop();
-                    currentIndent -= 2;
-                }
-
-                if (trimmed.contains(":")) {
-                    String key = trimmed.split(":", 2)[0].trim();
-
-                    if (lineIndent > currentIndent) {
-                        pathStack.push(key);
-                        currentIndent = lineIndent;
-                    } else {
-                        if (!pathStack.isEmpty()) {
-                            pathStack.pop();
-                        }
-                        pathStack.push(key);
+                Matcher matcher = YAML_KEY_PATTERN.matcher(line);
+                if (matcher.find()) {
+                    int lineIndent = getIndentLevel(line);
+                    while (!pathStack.isEmpty() && pathStack.peekLast().indent >= lineIndent) {
+                        pathStack.removeLast();
                     }
-
-                    String fullPath = String.join(".", pathStack);
+                    pathStack.addLast(new PathEntry(lineIndent, matcher.group(1)));
+                    String fullPath = buildPath(pathStack);
                     String comment = commentMap.get(fullPath);
 
-                    if (comment != null) {
+                    if (comment != null && !comment.isEmpty()) {
                         result.append(comment).append("\n");
                     }
                 }
@@ -190,6 +177,7 @@ public class ConfigManager {
 
             Files.writeString(configFile.toPath(), result.toString(), StandardCharsets.UTF_8);
             originalContent = result.toString();
+            dirty = false;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -200,7 +188,12 @@ public class ConfigManager {
     }
 
     public void setOption(String path, Object value) {
-        setNestedOption(path, value);
+        Object normalizedValue = normalizeValue(value);
+        if (Objects.equals(getNestedOption(path), normalizedValue)) {
+            return;
+        }
+        setNestedOption(path, normalizedValue);
+        dirty = true;
         saveConfig();
     }
 
@@ -220,18 +213,28 @@ public class ConfigManager {
     }
 
     public void addDefault(String path, Object value, String comment) {
+        boolean changed = false;
         if (!processedPaths.contains(path)) {
             if (getNestedOption(path) == null) {
-                setOption(path, value);
+                setNestedOption(path, normalizeValue(value));
+                dirty = true;
+                changed = true;
             }
-            setComment(path, comment);
+            if (setCommentInternal(path, comment)) {
+                dirty = true;
+                changed = true;
+            }
             processedPaths.add(path);
+        }
+        if (changed) {
+            saveConfig();
         }
     }
 
     public void setComment(String path, String comment) {
-        String formattedComment = formatComment(comment);
-        commentMap.put(path, formattedComment);
+        if (setCommentInternal(path, comment)) {
+            dirty = true;
+        }
     }
 
     public String getComment(String path) {
@@ -440,8 +443,66 @@ public class ConfigManager {
         String[] keys = path.split("\\.");
         Map<String, Object> currentMap = configMap;
         for (int i = 0; i < keys.length - 1; i++) {
-            currentMap = (Map<String, Object>) currentMap.computeIfAbsent(keys[i], k -> new HashMap<>());
+            Object nested = currentMap.get(keys[i]);
+            if (!(nested instanceof Map<?, ?>)) {
+                nested = new LinkedHashMap<String, Object>();
+                currentMap.put(keys[i], nested);
+            }
+            currentMap = (Map<String, Object>) nested;
         }
         currentMap.put(keys[keys.length - 1], value);
+    }
+
+    private boolean setCommentInternal(String path, String comment) {
+        String formattedComment = formatComment(comment);
+        String existingComment = commentMap.get(path);
+        if (Objects.equals(existingComment, formattedComment)) {
+            return false;
+        }
+        commentMap.put(path, formattedComment);
+        return true;
+    }
+
+    private Map<String, Object> normalizeMap(Map<?, ?> source) {
+        Map<String, Object> normalized = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : source.entrySet()) {
+            normalized.put(String.valueOf(entry.getKey()), normalizeValue(entry.getValue()));
+        }
+        return normalized;
+    }
+
+    private Object normalizeValue(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            return normalizeMap(map);
+        }
+        if (value instanceof List<?> list) {
+            List<Object> normalized = new ArrayList<>(list.size());
+            for (Object item : list) {
+                normalized.add(normalizeValue(item));
+            }
+            return normalized;
+        }
+        return value;
+    }
+
+    private String buildPath(Deque<PathEntry> pathStack) {
+        StringBuilder builder = new StringBuilder();
+        for (PathEntry entry : pathStack) {
+            if (builder.length() > 0) {
+                builder.append('.');
+            }
+            builder.append(entry.key);
+        }
+        return builder.toString();
+    }
+
+    private static final class PathEntry {
+        private final int indent;
+        private final String key;
+
+        private PathEntry(int indent, String key) {
+            this.indent = indent;
+            this.key = key;
+        }
     }
 }

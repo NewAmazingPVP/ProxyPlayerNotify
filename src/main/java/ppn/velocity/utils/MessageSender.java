@@ -80,7 +80,12 @@ public class MessageSender {
         finalMessage = plugin.resolveLuckPermsPlaceholders(finalMessage, targetPlayer);
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
-                .thenAccept(formatted -> sendMessageToPlayer(plugin, targetPlayer, formatted));
+                .thenAccept(formatted -> {
+                    if (formatted == null || formatted.trim().isEmpty()) {
+                        return;
+                    }
+                    sendMessageToPlayer(plugin, targetPlayer, formatted);
+                });
     }
 
     private static void sendFormattedMessage(VelocityPlayerNotify plugin, String type, Player targetPlayer, String connectedServer, String disconnectedServer) {
@@ -97,19 +102,22 @@ public class MessageSender {
         if (finalMessage.trim().isEmpty()) {
             return;
         }
-        if (type.equals("switch_message") || type.equals("join_message") || type.equals("leave_message")) {
-            if (connectedServer != null) {
-                finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(connectedServer.toLowerCase(), connectedServer));
-            }
-            if (disconnectedServer != null) {
-                finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(disconnectedServer.toLowerCase(), disconnectedServer));
-            }
+        if (connectedServer != null) {
+            finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(connectedServer.toLowerCase(), connectedServer));
+        }
+        if (disconnectedServer != null) {
+            finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(disconnectedServer.toLowerCase(), disconnectedServer));
         }
         finalMessage = plugin.resolveLuckPermsPlaceholders(finalMessage, targetPlayer);
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         finalMessage = finalMessage.replace("%time%", time);
         plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
-                .thenAccept(formatted -> sendMessageToAll(plugin, formatted));
+                .thenAccept(formatted -> {
+                    if (formatted == null || formatted.trim().isEmpty()) {
+                        return;
+                    }
+                    sendMessageToAll(plugin, formatted);
+                });
     }
 
     private static void sendMessageToAll(VelocityPlayerNotify plugin, String message) {

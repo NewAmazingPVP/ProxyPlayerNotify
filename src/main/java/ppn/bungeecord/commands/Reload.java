@@ -6,8 +6,6 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import ppn.bungeecord.BungeePlayerNotify;
 
-import java.util.HashSet;
-
 public class Reload extends Command {
 
     private final BungeePlayerNotify plugin;
@@ -25,15 +23,7 @@ public class Reload extends Command {
                     sender.sendMessage("Reload done");
                     plugin.saveDefaultConfig();
                     plugin.loadConfig();
-
-                    plugin.getServerNames().clear();
-                    plugin.getConfig().getKeys("ServerNames").forEach(server -> plugin.getServerNames().put(server.toLowerCase(), plugin.getConfig().getString("ServerNames." + server)));
-
-                    plugin.setDisabledServers(new HashSet<>(plugin.getConfig().getStringList("DisabledServers")));
-                    plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
-                    plugin.setLimboServers(new HashSet<>(plugin.getConfig().getStringList("LimboServers")));
-                    plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
-                    plugin.setDisabledPlayers(new HashSet<>(plugin.getConfig().getStringList("DisabledPlayers")));
+                    plugin.refreshRuntimeConfig();
                     plugin.getConfig().saveConfig();
                 } else {
                     sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
@@ -43,15 +33,7 @@ public class Reload extends Command {
             sender.sendMessage("Reload done");
             plugin.saveDefaultConfig();
             plugin.loadConfig();
-
-            plugin.getServerNames().clear();
-            plugin.getConfig().getKeys("ServerNames").forEach(server -> plugin.getServerNames().put(server.toLowerCase(), plugin.getConfig().getString("ServerNames." + server)));
-
-            plugin.setDisabledServers(new HashSet<>(plugin.getConfig().getStringList("DisabledServers")));
-            plugin.setPrivateServers(new HashSet<>(plugin.getConfig().getStringList("PrivateServers")));
-            plugin.setLimboServers(new HashSet<>(plugin.getConfig().getStringList("LimboServers")));
-            plugin.setNoVanishNotifications(plugin.getConfig().getBoolean("disable_vanish_notifications"));
-            plugin.setDisabledPlayers(new HashSet<>(plugin.getConfig().getStringList("DisabledPlayers")));
+            plugin.refreshRuntimeConfig();
             plugin.getConfig().saveConfig();
         }
     }

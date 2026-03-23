@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BungeePlayerNotify extends Plugin {
 
@@ -34,7 +35,7 @@ public class BungeePlayerNotify extends Plugin {
     private Set<String> disabledPlayers;
     private boolean noVanishNotifications;
     private PlaceholderHandler placeholderHandler;
-    private final HashMap<UUID, String> recentLeaveMessage = new HashMap<>();
+    private final Map<UUID, String> recentLeaveMessage = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -159,18 +160,8 @@ public class BungeePlayerNotify extends Plugin {
 
         config.saveConfig();
         loadConfig();
+        refreshRuntimeConfig();
 
-        serverNames = new HashMap<>();
-        config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
-
-        disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
-        privateServers = new HashSet<>(config.getStringList("PrivateServers"));
-        limboServers = new HashSet<>(config.getStringList("LimboServers"));
-        disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
-
-        noVanishNotifications = config.getBoolean("disable_vanish_notifications");
-
-        getProxy().getPluginManager().registerListener(this, new EventListener(this));
         if (getProxy().getPluginManager().getPlugin("LuckPerms") != null) {
             try {
                 luckPerms = LuckPermsProvider.get();
@@ -193,6 +184,8 @@ public class BungeePlayerNotify extends Plugin {
         } else {
             placeholderHandler = PlaceholderHandler.noop();
         }
+
+        getProxy().getPluginManager().registerListener(this, new EventListener(this));
         getProxy().getScheduler().schedule(this, () -> {
             for (ProxiedPlayer player : getProxy().getPlayers()) {
                 Object raw = getConfig().getOption("leave_message");
@@ -280,6 +273,21 @@ public class BungeePlayerNotify extends Plugin {
 
     public Map<String, String> getServerNames() {
         return serverNames;
+    }
+
+    public void refreshRuntimeConfig() {
+        if (serverNames == null) {
+            serverNames = new HashMap<>();
+        } else {
+            serverNames.clear();
+        }
+        config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
+
+        disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
+        privateServers = new HashSet<>(config.getStringList("PrivateServers"));
+        limboServers = new HashSet<>(config.getStringList("LimboServers"));
+        disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
+        noVanishNotifications = config.getBoolean("disable_vanish_notifications");
     }
 
     public Set<String> getDisabledServers() {

@@ -24,7 +24,9 @@ public class MessageSender {
         if (val instanceof Iterable<?>) {
             StringBuilder sb = new StringBuilder();
             for (Object o : (Iterable<?>) val) {
-                if (sb.length() > 0) sb.append("\n");
+                if (sb.length() > 0) {
+                    sb.append("\n");
+                }
                 sb.append(o.toString());
             }
             return sb.toString();
@@ -33,19 +35,15 @@ public class MessageSender {
     }
 
     public static void sendMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
-
         if (server != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(server.toLowerCase())) {
             return;
         }
-
         if (plugin.getDisabledPlayers().contains(targetPlayer.getName().toLowerCase())) {
             return;
         }
-
         if (lastServer != null && plugin.getPrivateServers() != null && plugin.getPrivateServers().contains(lastServer.toLowerCase())) {
             return;
         }
-
         if (plugin.isNoVanishNotifications() && isVanishAvailable(plugin)) {
             try {
                 if (BungeeVanishAPI.isInvisible(targetPlayer)) {
@@ -70,7 +68,6 @@ public class MessageSender {
     }
 
     public static void sendPrivateMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server) {
-
         String finalMessage = getMessage(plugin, type).replace("%player%", targetPlayer.getName());
         if (finalMessage.trim().isEmpty()) {
             return;
@@ -83,8 +80,12 @@ public class MessageSender {
         }
         finalMessage = plugin.resolveLuckPermsPlaceholders(finalMessage, targetPlayer);
         finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
-                .thenAccept(formatted -> sendMessageToPlayer(plugin, targetPlayer, formatted));
+        plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
+            if (formatted == null || formatted.trim().isEmpty()) {
+                return;
+            }
+            sendMessageToPlayer(plugin, targetPlayer, formatted);
+        });
     }
 
     private static void sendFormattedMessage(BungeePlayerNotify plugin, String type, ProxiedPlayer targetPlayer, String server, String lastServer) {
@@ -97,74 +98,59 @@ public class MessageSender {
         } else {
             finalMessage = getMessage(plugin, type);
         }
+
         finalMessage = finalMessage.replace("%player%", targetPlayer.getName());
         if (finalMessage.trim().isEmpty()) {
             return;
         }
-
-        if (type.equals("switch_message") || type.equals("join_message") || type.equals("leave_message")) {
-            if (server != null) {
-                finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
-            }
-            if (lastServer != null) {
-                finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
-            }
+        if (server != null) {
+            finalMessage = finalMessage.replace("%server%", plugin.getServerNames().getOrDefault(server.toLowerCase(), server));
         }
+        if (lastServer != null) {
+            finalMessage = finalMessage.replace("%last_server%", plugin.getServerNames().getOrDefault(lastServer.toLowerCase(), lastServer));
+        }
+
         finalMessage = plugin.resolveLuckPermsPlaceholders(finalMessage, targetPlayer);
-        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        finalMessage = finalMessage.replace("%time%", time);
-        plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId())
-                .thenAccept(formatted -> sendMessageToPlayers(plugin, formatted));
+        finalMessage = finalMessage.replace("%time%", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        plugin.getPlaceholderHandler().format(finalMessage, targetPlayer.getUniqueId()).thenAccept(formatted -> {
+            if (formatted == null || formatted.trim().isEmpty()) {
+                return;
+            }
+            sendMessageToPlayers(plugin, formatted);
+        });
     }
 
     private static void sendMessageToPlayers(BungeePlayerNotify plugin, String formatted) {
-        for (ProxiedPlayer pl : plugin.getProxy().getPlayers()) {
-            if (!playerToggle.contains(pl.getUniqueId())) {
-                if (pl.getServer() != null && plugin.getDisabledServers() != null) {
-                    if (!plugin.getDisabledServers().contains(pl.getServer().getInfo().getName().toLowerCase())) {
-                        if (plugin.getConfig().getBoolean("permission.permissions")) {
-                            if (plugin.getConfig().getBoolean("permission.hide_message")) {
-                                if (pl.hasPermission("ppn.view")) {
-                                    sendMessageToPlayer(plugin, pl, formatted);
-                                }
-                            } else {
-                                sendMessageToPlayer(plugin, pl, formatted);
-                            }
-                        } else {
-                            sendMessageToPlayer(plugin, pl, formatted);
-                        }
-                    }
-                } else {
-                    if (plugin.getConfig().getBoolean("permission.permissions")) {
-                        if (plugin.getConfig().getBoolean("permission.hide_message")) {
-                            if (pl.hasPermission("ppn.view")) {
-                                sendMessageToPlayer(plugin, pl, formatted);
-                            }
-                        } else {
-                            sendMessageToPlayer(plugin, pl, formatted);
-                        }
-                    } else {
-                        sendMessageToPlayer(plugin, pl, formatted);
-                    }
-                }
+        for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
+            if (playerToggle.contains(player.getUniqueId())) {
+                continue;
             }
+            if (player.getServer() != null && plugin.getDisabledServers() != null
+                    && plugin.getDisabledServers().contains(player.getServer().getInfo().getName().toLowerCase())) {
+                continue;
+            }
+            if (plugin.getConfig().getBoolean("permission.permissions")
+                    && plugin.getConfig().getBoolean("permission.hide_message")
+                    && !player.hasPermission("ppn.view")) {
+                continue;
+            }
+            sendMessageToPlayer(plugin, player, formatted);
         }
     }
 
     private static void sendMessageToPlayer(BungeePlayerNotify plugin, ProxiedPlayer player, String message) {
+        if (message == null || message.trim().isEmpty()) {
+            return;
+        }
         String[] lines = message.split("\n");
         if (plugin.getConfig().getBoolean("use_minimessage")) {
             for (String line : lines) {
-                String legacy = LEGACY_SERIALIZER.serialize(MINI_MESSAGE.deserialize(line));
-                player.sendMessage(legacy);
+                player.sendMessage(LEGACY_SERIALIZER.serialize(MINI_MESSAGE.deserialize(line)));
             }
-        } else {
-            for (String line : lines) {
-                line = replace(line);
-                line = line.replace("&", "§");
-                line = ChatColor.translateAlternateColorCodes('§', line);
-                player.sendMessage(line);
-            }
+            return;
+        }
+        for (String line : lines) {
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', replace(line)));
         }
     }
 
