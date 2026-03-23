@@ -9,6 +9,7 @@ import ppn.bungeecord.BungeePlayerNotify;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static ppn.bungeecord.commands.ToggleMessages.playerToggle;
@@ -84,7 +85,12 @@ public class MessageSender {
             if (formatted == null || formatted.trim().isEmpty()) {
                 return;
             }
-            sendMessageToPlayer(plugin, targetPlayer, formatted);
+            plugin.getProxy().getScheduler().schedule(plugin, () -> {
+                if (!targetPlayer.isConnected()) {
+                    return;
+                }
+                sendMessageToPlayer(plugin, targetPlayer, formatted);
+            }, 0, TimeUnit.MILLISECONDS);
         });
     }
 
@@ -116,7 +122,7 @@ public class MessageSender {
             if (formatted == null || formatted.trim().isEmpty()) {
                 return;
             }
-            sendMessageToPlayers(plugin, formatted);
+            plugin.getProxy().getScheduler().schedule(plugin, () -> sendMessageToPlayers(plugin, formatted), 0, TimeUnit.MILLISECONDS);
         });
     }
 

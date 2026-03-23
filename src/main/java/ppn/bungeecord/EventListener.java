@@ -23,6 +23,7 @@ public class EventListener implements Listener {
 
     private final BungeePlayerNotify plugin;
     private final Map<UUID, String> playerLastServer = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerLastNonLimboServer = new ConcurrentHashMap<>();
     private final Map<UUID, PendingJoin> pendingJoins = new ConcurrentHashMap<>();
 
     public EventListener(BungeePlayerNotify plugin) {
@@ -60,6 +61,11 @@ public class EventListener implements Listener {
         UUID uuid = player.getUniqueId();
         PendingJoin pendingJoin = pendingJoins.get(uuid);
         String previousServer = playerLastServer.get(uuid);
+        if (!isLimboServer(currentServer)) {
+            playerLastNonLimboServer.put(uuid, currentServer);
+        } else if (previousServer != null && !isLimboServer(previousServer)) {
+            playerLastNonLimboServer.put(uuid, previousServer);
+        }
 
         if (pendingJoin != null) {
             handleInitialConnection(player, currentServer, pendingJoin);
@@ -83,10 +89,17 @@ public class EventListener implements Listener {
         pendingJoins.remove(uuid);
 
         String lastServer = playerLastServer.remove(uuid);
+        String lastNonLimboServer = playerLastNonLimboServer.remove(uuid);
         if (lastServer == null && player.getServer() != null && player.getServer().getInfo() != null) {
             lastServer = player.getServer().getInfo().getName();
         }
+        if (lastServer == null) {
+            lastServer = lastNonLimboServer;
+        }
         if (isLimboServer(lastServer)) {
+            if (lastNonLimboServer != null && plugin.getConfig().getBoolean("join_last_server")) {
+                plugin.getPlayerData().setOption("players." + uuid + ".lastServer", lastNonLimboServer);
+            }
             return;
         }
         if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
@@ -133,9 +146,7 @@ public class EventListener implements Listener {
                 if (!player.isConnected()) {
                     return;
                 }
-                if (!plugin.getConfig().getStringList("join_private_message").isEmpty()) {
-                    MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
-                }
+                MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
                 MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
                 sendJoinWebhook(player, currentServer);
             });
