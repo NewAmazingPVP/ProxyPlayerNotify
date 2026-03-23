@@ -24,6 +24,7 @@ public class EventListener implements Listener {
     private final BungeePlayerNotify plugin;
     private final Map<UUID, String> playerLastServer = new ConcurrentHashMap<>();
     private final Map<UUID, String> playerLastNonLimboServer = new ConcurrentHashMap<>();
+    private final Map<UUID, String> pendingLimboLeave = new ConcurrentHashMap<>();
     private final Map<UUID, PendingJoin> pendingJoins = new ConcurrentHashMap<>();
 
     public EventListener(BungeePlayerNotify plugin) {
@@ -90,16 +91,31 @@ public class EventListener implements Listener {
 
         String lastServer = playerLastServer.remove(uuid);
         String lastNonLimboServer = playerLastNonLimboServer.remove(uuid);
+        String pendingLimboLeaveServer = pendingLimboLeave.remove(uuid);
         if (lastServer == null && player.getServer() != null && player.getServer().getInfo() != null) {
             lastServer = player.getServer().getInfo().getName();
         }
         if (lastServer == null) {
             lastServer = lastNonLimboServer;
         }
+        if (lastServer == null) {
+            plugin.removeRecentLeaveMessage(uuid);
+            return;
+        }
         if (isLimboServer(lastServer)) {
+            if (pendingLimboLeaveServer != null) {
+                if (plugin.getConfig().getBoolean("join_last_server")) {
+                    plugin.getPlayerData().setOption("players." + uuid + ".lastServer", pendingLimboLeaveServer);
+                }
+                MessageSender.sendMessage(plugin, "leave_message", player, null, pendingLimboLeaveServer);
+                sendLeaveWebhook(player, pendingLimboLeaveServer);
+                plugin.removeRecentLeaveMessage(uuid);
+                return;
+            }
             if (lastNonLimboServer != null && plugin.getConfig().getBoolean("join_last_server")) {
                 plugin.getPlayerData().setOption("players." + uuid + ".lastServer", lastNonLimboServer);
             }
+            plugin.removeRecentLeaveMessage(uuid);
             return;
         }
         if (lastServer != null && plugin.getConfig().getBoolean("join_last_server")) {
@@ -108,6 +124,7 @@ public class EventListener implements Listener {
 
         MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
         sendLeaveWebhook(player, lastServer);
+        plugin.removeRecentLeaveMessage(uuid);
     }
 
     private void handleInitialConnection(ProxiedPlayer player, String currentServer, PendingJoin pendingJoin) {
@@ -127,12 +144,23 @@ public class EventListener implements Listener {
             return;
         }
         if (currentIsLimbo) {
+            UUID uuid = player.getUniqueId();
+            pendingLimboLeave.put(uuid, previousServer);
             scheduleSwitchDelay(() -> {
                 if (!player.isConnected()) {
                     return;
                 }
-                MessageSender.sendMessage(plugin, "leave_message", player, null, previousServer);
-                sendLeaveWebhook(player, previousServer);
+                String currentLiveServer = resolveCurrentServer(player);
+                if (currentLiveServer != null && !isLimboServer(currentLiveServer)) {
+                    pendingLimboLeave.remove(uuid);
+                    return;
+                }
+                String leaveServer = pendingLimboLeave.remove(uuid);
+                if (leaveServer == null) {
+                    return;
+                }
+                MessageSender.sendMessage(plugin, "leave_message", player, null, leaveServer);
+                sendLeaveWebhook(player, leaveServer);
             });
             return;
         }
@@ -199,6 +227,13 @@ public class EventListener implements Listener {
 
     private boolean isLimboServer(String server) {
         return server != null && plugin.getLimboServers() != null && plugin.getLimboServers().contains(server.toLowerCase());
+    }
+
+    private String resolveCurrentServer(ProxiedPlayer player) {
+        if (player.getServer() == null || player.getServer().getInfo() == null) {
+            return null;
+        }
+        return player.getServer().getInfo().getName();
     }
 
     private void sendJoinWebhook(ProxiedPlayer player, String server) {

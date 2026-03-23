@@ -203,7 +203,7 @@ public class BungeePlayerNotify extends Plugin {
                 placeholderHandler.format(msg, player.getUniqueId())
                         .thenAccept(formatted -> addRecentLeaveMessage(player.getUniqueId(), formatted));
             }
-        }, 1, TimeUnit.SECONDS);
+        }, 1, 1, TimeUnit.SECONDS);
     }
 
     public void saveDefaultConfig() {
@@ -211,7 +211,11 @@ public class BungeePlayerNotify extends Plugin {
         if (!file.exists()) {
             file.getParentFile().mkdirs();
             try (InputStream in = getClass().getResourceAsStream("/config.yml")) {
-                Files.copy(in, file.toPath());
+                if (in != null) {
+                    Files.copy(in, file.toPath());
+                } else {
+                    file.createNewFile();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -283,10 +287,10 @@ public class BungeePlayerNotify extends Plugin {
         }
         config.getKeys("ServerNames").forEach(server -> serverNames.put(server.toLowerCase(), config.getString("ServerNames." + server)));
 
-        disabledServers = new HashSet<>(config.getStringList("DisabledServers"));
-        privateServers = new HashSet<>(config.getStringList("PrivateServers"));
-        limboServers = new HashSet<>(config.getStringList("LimboServers"));
-        disabledPlayers = new HashSet<>(config.getStringList("DisabledPlayers"));
+        disabledServers = toLowercaseSet(config.getStringList("DisabledServers"));
+        privateServers = toLowercaseSet(config.getStringList("PrivateServers"));
+        limboServers = toLowercaseSet(config.getStringList("LimboServers"));
+        disabledPlayers = toLowercaseSet(config.getStringList("DisabledPlayers"));
         noVanishNotifications = config.getBoolean("disable_vanish_notifications");
     }
 
@@ -335,10 +339,28 @@ public class BungeePlayerNotify extends Plugin {
     }
 
     public void addRecentLeaveMessage(UUID uuid, String message) {
+        if (message == null || message.trim().isEmpty()) {
+            recentLeaveMessage.remove(uuid);
+            return;
+        }
         recentLeaveMessage.put(uuid, message);
     }
 
     public String getRecentLeaveMessage(UUID uuid) {
         return recentLeaveMessage.get(uuid);
+    }
+
+    public void removeRecentLeaveMessage(UUID uuid) {
+        recentLeaveMessage.remove(uuid);
+    }
+
+    private Set<String> toLowercaseSet(List<String> values) {
+        Set<String> normalized = new HashSet<>();
+        for (String value : values) {
+            if (value != null) {
+                normalized.add(value.toLowerCase());
+            }
+        }
+        return normalized;
     }
 }

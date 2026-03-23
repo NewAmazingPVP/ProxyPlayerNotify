@@ -18,16 +18,14 @@ public class Reload extends Command {
     @Override
     public void execute(CommandSender sender, String[] args) {
         if (sender instanceof ProxiedPlayer) {
-            if (args.length < 1) {
-                if (sender.hasPermission("ppn.reloadProxyNotifyConfig")) {
-                    sender.sendMessage("Reload done");
-                    plugin.saveDefaultConfig();
-                    plugin.loadConfig();
-                    plugin.refreshRuntimeConfig();
-                    plugin.getConfig().saveConfig();
-                } else {
-                    sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
-                }
+            if (sender.hasPermission("ppn.reloadProxyNotifyConfig")) {
+                sender.sendMessage("Reload done");
+                plugin.saveDefaultConfig();
+                plugin.loadConfig();
+                plugin.refreshRuntimeConfig();
+                plugin.getConfig().saveConfig();
+            } else {
+                sender.sendMessage(ChatColor.RED + "You do not have ppn.reloadProxyNotifyConfig permission to use this command");
             }
         } else {
             sender.sendMessage("Reload done");

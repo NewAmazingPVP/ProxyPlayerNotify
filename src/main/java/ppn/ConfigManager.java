@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,6 +70,8 @@ public class ConfigManager {
     }
 
     private void loadConfig() {
+        commentMap.clear();
+        processedPaths.clear();
         if (configFile.exists()) {
             try {
                 originalContent = Files.readString(configFile.toPath(), StandardCharsets.UTF_8);
@@ -80,9 +84,10 @@ public class ConfigManager {
                 }
                 extractExistingComments();
                 dirty = false;
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                backupBrokenConfig();
                 configMap = new LinkedHashMap<>();
+                originalContent = "";
                 dirty = false;
             }
         } else {
@@ -214,16 +219,17 @@ public class ConfigManager {
 
     public void addDefault(String path, Object value, String comment) {
         boolean changed = false;
-        if (!processedPaths.contains(path)) {
-            if (getNestedOption(path) == null) {
-                setNestedOption(path, normalizeValue(value));
-                dirty = true;
-                changed = true;
+        if (getNestedOption(path) == null) {
+            setNestedOption(path, normalizeValue(value));
+            dirty = true;
+            changed = true;
+        }
+        if (!processedPaths.contains(path) || setCommentInternal(path, comment)) {
+            if (!processedPaths.contains(path)) {
+                setCommentInternal(path, comment);
             }
-            if (setCommentInternal(path, comment)) {
-                dirty = true;
-                changed = true;
-            }
+            dirty = true;
+            changed = true;
             processedPaths.add(path);
         }
         if (changed) {
@@ -494,6 +500,18 @@ public class ConfigManager {
             builder.append(entry.key);
         }
         return builder.toString();
+    }
+
+    private void backupBrokenConfig() {
+        try {
+            Path source = configFile.toPath();
+            if (!Files.exists(source)) {
+                return;
+            }
+            String backupName = configFile.getName() + ".broken." + System.currentTimeMillis() + ".bak";
+            Files.copy(source, source.resolveSibling(backupName), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ignored) {
+        }
     }
 
     private static final class PathEntry {
