@@ -153,6 +153,8 @@ public class BungeePlayerNotify extends Plugin {
                 "Webhook switch message format\nPlaceholders available: %player%, %server%, %last_server%, %time%");
         config.addDefault("webhook.leave_message", "%player% left %last_server% at %time%",
                 "Webhook leave message format\nPlaceholders available: %player%, %last_server%, %time%");
+        config.addDefault("webhook.join_delay", 0,
+                "Extra delay for join webhooks in ticks\nThis is applied after the normal join message delay.\nIf a player disconnects before a join or switch webhook is sent, their leave webhook is skipped to avoid ban/kick spam.");
         config.addDefault("webhook.use_embed", true,
                 "Send Discord webhook messages as an embed (recommended)");
         config.addDefault("webhook.embed_color", 3447003,

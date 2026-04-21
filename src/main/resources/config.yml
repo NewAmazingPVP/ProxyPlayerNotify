@@ -141,6 +141,12 @@ webhook:
   enabled: false
   url: ""
   message: "%player% joined %server% at %time%"
+  join_message: "%player% joined %server% at %time%"
+  switch_message: "%player% switched from %last_server% to %server% at %time%"
+  leave_message: "%player% left %last_server% at %time%"
+  # Extra delay for join webhooks in ticks after the normal join message delay.
+  # If the player disconnects before a join or switch webhook is sent, the leave webhook is skipped.
+  join_delay: 0
   # Send webhook as Discord embed (recommended). If true, the message above is used as the embed description.
   use_embed: true
   # Embed color as decimal RGB (e.g., 3447003 is Discord "blurple").

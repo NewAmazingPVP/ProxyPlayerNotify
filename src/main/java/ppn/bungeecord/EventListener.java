@@ -14,6 +14,7 @@ import ppn.bungeecord.utils.MessageSender;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +27,7 @@ public class EventListener implements Listener {
     private final Map<UUID, String> playerLastNonLimboServer = new ConcurrentHashMap<>();
     private final Map<UUID, String> pendingLimboLeave = new ConcurrentHashMap<>();
     private final Map<UUID, PendingJoin> pendingJoins = new ConcurrentHashMap<>();
+    private final Set<UUID> activeWebhookSessions = ConcurrentHashMap.newKeySet();
 
     public EventListener(BungeePlayerNotify plugin) {
         this.plugin = plugin;
@@ -34,6 +36,7 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPostLogin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
+        activeWebhookSessions.remove(player.getUniqueId());
         if (plugin.getConfig().getBoolean("join_last_server")) {
             String lastServer = getStoredLastServer(player);
             if (lastServer != null) {
@@ -88,6 +91,7 @@ public class EventListener implements Listener {
         ProxiedPlayer player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         pendingJoins.remove(uuid);
+        boolean sendLeaveWebhook = activeWebhookSessions.remove(uuid);
 
         String lastServer = playerLastServer.remove(uuid);
         String lastNonLimboServer = playerLastNonLimboServer.remove(uuid);
@@ -108,7 +112,9 @@ public class EventListener implements Listener {
                     plugin.getPlayerData().setOption("players." + uuid + ".lastServer", pendingLimboLeaveServer);
                 }
                 MessageSender.sendMessage(plugin, "leave_message", player, null, pendingLimboLeaveServer);
-                sendLeaveWebhook(player, pendingLimboLeaveServer);
+                if (sendLeaveWebhook) {
+                    sendLeaveWebhook(player, pendingLimboLeaveServer);
+                }
                 plugin.removeRecentLeaveMessage(uuid);
                 return;
             }
@@ -123,7 +129,9 @@ public class EventListener implements Listener {
         }
 
         MessageSender.sendMessage(plugin, "leave_message", player, null, lastServer);
-        sendLeaveWebhook(player, lastServer);
+        if (sendLeaveWebhook) {
+            sendLeaveWebhook(player, lastServer);
+        }
         plugin.removeRecentLeaveMessage(uuid);
     }
 
@@ -160,7 +168,9 @@ public class EventListener implements Listener {
                     return;
                 }
                 MessageSender.sendMessage(plugin, "leave_message", player, null, leaveServer);
-                sendLeaveWebhook(player, leaveServer);
+                if (activeWebhookSessions.remove(uuid)) {
+                    sendLeaveWebhook(player, leaveServer);
+                }
             });
             return;
         }
@@ -176,7 +186,7 @@ public class EventListener implements Listener {
                 }
                 MessageSender.sendPrivateMessage(plugin, "join_private_message", player, currentServer);
                 MessageSender.sendMessage(plugin, "join_message", player, currentServer, null);
-                sendJoinWebhook(player, currentServer);
+                scheduleJoinWebhook(player, currentServer);
             });
             return;
         }
@@ -201,7 +211,7 @@ public class EventListener implements Listener {
                 return;
             }
             MessageSender.sendMessage(plugin, publicMessageType, player, currentServer, null);
-            sendJoinWebhook(player, currentServer);
+            scheduleJoinWebhook(player, currentServer);
         }, publicDelayMs, TimeUnit.MILLISECONDS);
 
         plugin.getProxy().getScheduler().schedule(plugin, () -> {
@@ -215,6 +225,16 @@ public class EventListener implements Listener {
     private void scheduleSwitchDelay(Runnable action) {
         long delayMs = plugin.getConfig().getLong("switch_message_delay") * 50L;
         plugin.getProxy().getScheduler().schedule(plugin, action, delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    private void scheduleJoinWebhook(ProxiedPlayer player, String server) {
+        long webhookDelayMs = plugin.getConfig().getLong("webhook.join_delay") * 50L;
+        plugin.getProxy().getScheduler().schedule(plugin, () -> {
+            if (!player.isConnected()) {
+                return;
+            }
+            sendJoinWebhook(player, server);
+        }, webhookDelayMs, TimeUnit.MILLISECONDS);
     }
 
     private String getStoredLastServer(ProxiedPlayer player) {
@@ -277,6 +297,7 @@ public class EventListener implements Listener {
             if (formatted == null || formatted.trim().isEmpty()) {
                 return;
             }
+            activeWebhookSessions.add(player.getUniqueId());
             CompletableFuture.runAsync(() -> {
                 Webhook.WebhookResult result = useEmbed ? Webhook.sendEmbed(url, formatted, color) : Webhook.send(url, formatted);
                 if (!result.isSuccess() && result.getStatusCode() != 0) {
@@ -327,6 +348,7 @@ public class EventListener implements Listener {
             if (formatted == null || formatted.trim().isEmpty()) {
                 return;
             }
+            activeWebhookSessions.add(player.getUniqueId());
             CompletableFuture.runAsync(() -> {
                 Webhook.WebhookResult result = useEmbed2 ? Webhook.sendEmbed(url2, formatted, color2) : Webhook.send(url2, formatted);
                 if (!result.isSuccess() && result.getStatusCode() != 0) {
